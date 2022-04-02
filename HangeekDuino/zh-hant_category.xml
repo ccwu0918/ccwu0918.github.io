@@ -1,0 +1,14 @@
+<xml>
+  <category>
+    <name>myBlocks</name><replace>Arduino首次接觸就上手</replace>
+  </category>
+  <category>
+    <name>myCategory1</name><replace>輸出元件</replace>
+  </category>
+  <category>
+    <name>myCategory2</name><replace>輸入元件</replace>
+  </category>
+  <category>
+    <name>myCategory3</name><replace>藍牙BLE-外接HC10</replace>
+  </category>
+</xml>

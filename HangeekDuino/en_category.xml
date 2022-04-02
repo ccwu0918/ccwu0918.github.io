@@ -1,0 +1,14 @@
+<xml>
+  <category>
+    <name>myBlocks</name><replace>My Blocks</replace>
+  </category>
+  <category>
+    <name>myCategory1</name><replace>Category 1</replace>
+  </category>
+  <category>
+    <name>myCategory2</name><replace>Category 2</replace>
+  </category>
+    <category>
+    <name>myCategory3</name><replace>Category 3</replace>
+  </category>
+</xml>

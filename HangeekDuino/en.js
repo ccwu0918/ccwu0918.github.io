@@ -1,0 +1,15 @@
+Blockly.Msg.digitalWrite = "digitalWrite";
+Blockly.Msg.digitalRead = "digitalRead";
+Blockly.Msg.ledWrite = "LED(D4)";
+Blockly.Msg.buzzer_tone_custom = "buzzer (D5, tone)";
+Blockly.Msg.buzzer_tone_pwm = "buzzer (D5, PWM)";
+Blockly.Msg.buzzer_noTone = "buzzer stop sound";
+Blockly.Msg.OLED_print = "OLED display text";
+Blockly.Msg.buttonRead = "Read button(D6) status";
+Blockly.Msg.rotaryRead = "Read rotary sensor(A0) status";
+Blockly.Msg.soundRead = "Read sound sensor(A2) status";
+Blockly.Msg.lightRead = "Read light sensor(A6) status";
+Blockly.Msg.dhtRead = "Read DHT sensor(D3) status";
+Blockly.Msg.accelRead = "Read Accelerometer sensor(IIC) status";
+Blockly.Msg.airPressureRead = "Read BMP280 airPressure sensor(IIC) status";
+Blockly.Msg.analogRead = "analogRead";

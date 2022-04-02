@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<category id="myBlocks" name="myBlocks">
+   <category id="myCategory1" name="myCategory1">
+      <block type="led_digital">
+         <field name="mode">1</field>
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">4</field>
+            </block>
+         </value>
+      </block>
+	  <block type="led_analog">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">4</field>
+            </block>
+         </value>
+		 <value name="pwm">
+            <block type="math_number">
+               <field name="NUM">128</field>
+            </block>
+         </value>
+      </block>
+      <block type="buzzer_noTone">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">5</field>
+            </block>
+         </value>
+      </block>
+
+      <block type="buzzer_tone_custom">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">5</field>
+            </block>
+         </value>
+         <value name="freq">
+            <block type="math_number">
+               <field name="NUM">440</field>
+            </block>
+         </value>
+      </block>
+      <block type="OLED_print">
+         <value name="x">
+            <block type="math_number">
+               <field name="NUM">0</field>
+            </block>
+         </value>
+         <value name="y">
+            <block type="math_number">
+               <field name="NUM">0</field>
+            </block>
+         </value>
+         <value name="content">
+            <block type="text">
+               <field name="TEXT">hello Arduino!</field>
+            </block>
+         </value>
+      </block>
+	  <block type="OLED_clear">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0x78</field>
+            </block>
+         </value>
+      </block>
+	  
+	  <block type="sgp30Set">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0x58</field>
+            </block>
+         </value>
+      </block>
+   </category>
+   
+   <category id="myCategory2" name="myCategory2">
+      <block type="buttonRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">6</field>
+            </block>
+         </value>
+      </block>
+      <block type="rotaryRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0</field>
+            </block>
+         </value>
+      </block>
+      <block type="soundRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">2</field>
+            </block>
+         </value>
+      </block>
+      <block type="lightRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">6</field>
+            </block>
+         </value>
+      </block>
+      <block type="dhtRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">3</field>
+            </block>
+         </value>
+      </block>
+      <block type="accelRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0x19</field>
+            </block>
+         </value>
+      </block>
+      <block type="airPressureRead">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0x77</field>
+            </block>
+         </value>
+      </block>
+	  <block type="sgp30ReadCO2">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">0x58</field>
+            </block>
+         </value>
+      </block>
+   </category>
+   
+   <category id="myCategory3" name="myCategory3">
+      <block type="ble_setup">
+         <value name="RXpin">
+            <block type="math_number">
+               <field name="NUM">7</field>
+            </block>
+         </value>
+		 <value name="TXpin">
+            <block type="math_number">
+               <field name="NUM">8</field>
+            </block>
+         </value>
+      </block>
+	  
+	  <block type="ble_read">
+         <value name="pin">
+            <block type="math_number">
+               <field name="NUM">6</field>
+            </block>
+         </value>
+      </block>
+	 
+   </category>
+</category>
