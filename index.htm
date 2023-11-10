@@ -1,122 +1,199 @@
-<style>
-/**
- * `@property` is required for the animation to work.
- * Without it, the angle values won’t interpolate properly.
- *
- * @see https://dev.to/afif/we-can-finally-animate-css-gradient-kdk
- */
-@property --bg-angle {
-  inherits: false;
-  initial-value: 0deg;
-  syntax: "<angle>";
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>駭客畫面</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            color: green;
+            font-family: monospace;
+        }
+        canvas {
+            display: block;
+        }
 
-/**
- * To animate the gradient, we set the custom property to 1 full
- * rotation. The animation starts at the default value of `0deg`.
- */
-@keyframes spin {
-  to {
-    --bg-angle: 360deg;
-  }
-}
+      
+        /**
+         * `@property` is required for the animation to work.
+         * Without it, the angle values won’t interpolate properly.
+         *
+         * @see https://dev.to/afif/we-can-finally-animate-css-gradient-kdk
+         */
+        @property --bg-angle {
+          inherits: false;
+          initial-value: 0deg;
+          syntax: "<angle>";
+        }
+        
+        /**
+         * To animate the gradient, we set the custom property to 1 full
+         * rotation. The animation starts at the default value of `0deg`.
+         */
+        @keyframes spin {
+          to {
+            --bg-angle: 360deg;
+          }
+        }
+        
+        
+        article {
+          /* add the animation, but pause it by default */
+          animation: spin 2.5s infinite linear paused;
+          
+          /**
+           * Using `background-origin` we can create a “border” using two gradients. And to
+           * make the gradients better-looking, we use OKLCH.
+           *
+           * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-origin
+           * @see https://evilmartians.com/chronicles/oklch-in-css-why-quit-rgb-hsl
+           */
+          background:
+            /* Background colors don’t work with `background-origin`, so use a gradient. */
+            linear-gradient(
+                to bottom,
+                oklch(0.1 0.2 240 / 0.95),
+                oklch(0.1 0.2 240 / 0.95)
+              )
+              padding-box, /* ends at inner border edges */
+            conic-gradient(
+                from var(--bg-angle) in oklch longer hue,
+                oklch(1 0.37 0) 0 0
+              )
+              border-box; /* extends to outer border edges */
+          
+          /* a clear border lets the background gradient shine through */
+          border: 6px solid transparent;
+        
+          /* unpause the animation on hover */
+          &:hover {
+            animation-play-state: running;
+          }
+        }
+        
+        /******************************************************************
+         * Other styles to make the demo look nice
+         ******************************************************************/
+        
+        * {
+          box-sizing: border-box;
+        }
+        
+        html {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+            Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+          font-size: 18px;
+          line-height: 1.45;
+        }
+        
+        body {
+          margin: 0;
+        }
+        
+        main {
+          background: 
+            radial-gradient(
+                circle, 
+                oklch(0.15 0.2 330 / 0), 
+                oklch(0.15 0.2 330 / 1)
+              ),
+            linear-gradient(
+                344deg in oklch,
+                oklch(0.3 0.37 310),
+                oklch(0.35 0.37 330),
+                oklch(0.3 0.37 310)
+              );
+          display: grid;
+          height: 100svh;
+          place-items: center;
+        }
+        
+        article {
+          border-radius: 1rem;
+          box-shadow: 0.125rem 0.25rem 0.25rem 0.5rem oklch(0.1 0.37 315 / 0.25);
+          color: white;
+          padding: 1rem;
+          width: min(400px, 90vw);
+        
+          & h1 {
+            line-height: 1.1;
+            margin: 0;
+          }
+        
+          & p {
+            margin: 0.75rem 0 0;
+          }
+        }
+      
+    </style>
 
+</head>
+<body>
 
-article {
-  /* add the animation, but pause it by default */
-  animation: spin 2.5s infinite linear paused;
+    <main>
+      <article>
+        <h1>Hey look, this is only CSS!</h1>
+        <p>
+          I didn’t know you could do gradient borders like this. Hover over this element to see the gradient animate!
+          <br/>
+          https://codepen.io/jlengstorf/pen/WNPGMJo
+        </p>
+      </article>
+    </main>
+
   
-  /**
-   * Using `background-origin` we can create a “border” using two gradients. And to
-   * make the gradients better-looking, we use OKLCH.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-origin
-   * @see https://evilmartians.com/chronicles/oklch-in-css-why-quit-rgb-hsl
-   */
-  background:
-    /* Background colors don’t work with `background-origin`, so use a gradient. */
-    linear-gradient(
-        to bottom,
-        oklch(0.1 0.2 240 / 0.95),
-        oklch(0.1 0.2 240 / 0.95)
-      )
-      padding-box, /* ends at inner border edges */
-    conic-gradient(
-        from var(--bg-angle) in oklch longer hue,
-        oklch(1 0.37 0) 0 0
-      )
-      border-box; /* extends to outer border edges */
-  
-  /* a clear border lets the background gradient shine through */
-  border: 6px solid transparent;
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-  /* unpause the animation on hover */
-  &:hover {
-    animation-play-state: running;
-  }
-}
+        let cols, drops;
+        const fontSize = 14;
 
-/******************************************************************
- * Other styles to make the demo look nice
- ******************************************************************/
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
-* {
-  box-sizing: border-box;
-}
+            cols = Math.floor(canvas.width / fontSize);
+            drops = Array(cols).fill(0);
+        }
 
-html {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 18px;
-  line-height: 1.45;
-}
+        function randomChar() {
+            return String.fromCharCode(Math.floor(Math.random() * (127 - 1) + 1));
+        }
 
-body {
-  margin: 0;
-}
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = `${fontSize}px monospace`;
 
-main {
-  background: 
-    radial-gradient(
-        circle, 
-        oklch(0.15 0.2 330 / 0), 
-        oklch(0.15 0.2 330 / 1)
-      ),
-    linear-gradient(
-        344deg in oklch,
-        oklch(0.3 0.37 310),
-        oklch(0.35 0.37 330),
-        oklch(0.3 0.37 310)
-      );
-  display: grid;
-  height: 100svh;
-  place-items: center;
-}
+            // 增加字元的亮度
+            ctx.fillStyle = '#00FF00';  // Brighter green color
 
-article {
-  border-radius: 1rem;
-  box-shadow: 0.125rem 0.25rem 0.25rem 0.5rem oklch(0.1 0.37 315 / 0.25);
-  color: white;
-  padding: 1rem;
-  width: min(400px, 90vw);
+            for (let i = 0; i < cols; i++) {
+                const text = randomChar();
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                // 加快瀑布的流速
+                if (Math.random() < 0.6) {  // Increased the probability to make it faster
+                    drops[i] = (drops[i] + 1) % (canvas.height / fontSize + 1);
+                }
+            }
+        }
 
-  & h1 {
-    line-height: 1.1;
-    margin: 0;
-  }
+        function animate() {
+            draw();
+            requestAnimationFrame(animate);
+        }
 
-  & p {
-    margin: 0.75rem 0 0;
-  }
-}
-</style>
-<main>
-  <article>
-    <h1>Hey look, this is only CSS!</h1>
-    <p>
-      I didn’t know you could do gradient borders like this. Hover over this element to see the gradient animate!
-      <br/>
-      https://codepen.io/jlengstorf/pen/WNPGMJo
-    </p>
-  </article>
-</main>
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        animate();
+    </script>
+</body>
+</html>
+
