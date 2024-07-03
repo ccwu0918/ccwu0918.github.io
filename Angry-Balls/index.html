@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angry Balls by Arthur Chen</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+        }
+        #volumeControl {
+            margin-bottom: 10px;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        #gameInfo, #scoreInfo, #gameOver {
+            position: absolute;
+            color: white;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px black;
+        }
+        #gameInfo { top: 10px; left: 10px; }
+        #scoreInfo { top: 10px; right: 10px; text-align: right; }
+        #gameOver {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        #restartButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="volumeControl">
+        <label for="volumeSlider">音量: </label>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="gameInfo">關卡: <span id="level">1</span> | 生命: <span id="lives">3</span> | 剩餘砲彈: <span id="ammo">3</span></div>
+        <div id="scoreInfo">分數: <span id="score">0</span><br>最高分: <span id="highScore">0</span></div>
+        <div id="gameOver">
+            <h2>遊戲結束</h2>
+            <h3>Angry Balls</h3>
+	    <h3>by Arthur Chen & Ai助手</h3>
+            <p>你的分數: <span id="finalScore"></span></p>
+            <p>最高分: <span id="finalHighScore"></span></p>
+            <button id="restartButton">重新開始</button>
+        </div>
+    </div>
+    
+    <audio id="backgroundMusic" src="background.mp3" loop></audio>
+    <audio id="launchSound" src="launch.mp3"></audio>
+    <audio id="hitSound" src="hit.mp3"></audio>
+    <audio id="levelCompleteSound" src="level_complete.mp3"></audio>
+    <audio id="gameOverSound" src="game_over.mp3"></audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverDiv = document.getElementById('gameOver');
+        const restartButton = document.getElementById('restartButton');
+        const volumeSlider = document.getElementById('volumeSlider');
+
+        // 載入背景圖片
+        const backgroundImage = new Image();
+        backgroundImage.src = '背景.jpg';
+        backgroundImage.onload = function() {
+            console.log('背景圖片已加載');
+            initializeLevel();
+            gameLoop();
+        };
+
+        // 遊戲狀態
+        let bird = { x: 100, y: 200, radius: 20, color: 'red', velocity: { x: 0, y: 0 } };
+        let slingshot = { x: 100, y: 300 };
+        let targets = [];
+        let isDragging = false;
+        let isLaunched = false;
+        let level = 1;
+        let lives = 3;
+        let ammo = 3;
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') || 0;
+
+        // 音效
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const launchSound = document.getElementById('launchSound');
+        const hitSound = document.getElementById('hitSound');
+        const levelCompleteSound = document.getElementById('levelCompleteSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+
+        // 音量控制
+        volumeSlider.addEventListener('input', function() {
+            const volume = parseFloat(this.value);
+            backgroundMusic.volume = volume;
+            launchSound.volume = volume;
+            hitSound.volume = volume;
+            levelCompleteSound.volume = volume;
+            gameOverSound.volume = volume;
+        });
+
+        // 開始背景音樂
+        document.body.addEventListener('click', function() {
+            backgroundMusic.play().catch(function(error) {
+                console.error('背景音樂播放失敗:', error);
+            });
+        });
+
+        function initializeLevel() {
+            console.log('初始化關卡');
+            targets = [];
+            let targetCount = Math.min(2 + Math.floor(level / 2), 10);
+            let baseY = 350;
+            let baseWidth = 50;
+            let baseHeight = 50;
+
+            for (let i = 0; i < targetCount; i++) {
+                let x = 600 + Math.random() * 150;
+                let y = baseY - (i * 50);
+                let width = baseWidth - (i * 2);
+                let height = baseHeight - (i * 2);
+                let color = ['green', 'blue', 'yellow', 'purple'][i % 4];
+
+                targets.push({ x, y, width, height, color });
+            }
+
+            resetBird();
+            ammo = 3 + Math.floor(level / 3);
+            updateGameInfo();
+        }
+
+        function updateGameInfo() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('ammo').textContent = ammo;
+            document.getElementById('score').textContent = score;
+            document.getElementById('highScore').textContent = highScore;
+        }
+
+        function updateScore(points) {
+            score += points;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+            }
+            updateGameInfo();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+            if (isLaunched) {
+                bird.x += bird.velocity.x;
+                bird.y += bird.velocity.y;
+                bird.velocity.y += 0.2;
+
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    if (checkCollision(bird, targets[i])) {
+                        hitSound.play();
+                        updateScore(10 * (i + 1));
+                        targets.splice(i, 1);
+                    }
+                }
+
+                if (bird.x > canvas.width || bird.y > canvas.height || bird.x < 0 || targets.length === 0) {
+                    if (targets.length === 0) {
+                        levelCompleteSound.play();
+                        updateScore(100 * level);
+                        level++;
+                        initializeLevel();
+                    } else {
+                        ammo--;
+                        if (ammo === 0) {
+                            lives--;
+                            if (lives === 0) {
+                                gameOverSound.play();
+                                gameOver();
+                            } else {
+                                initializeLevel();
+                            }
+                        } else {
+                            resetBird();
+                        }
+                    }
+                    updateGameInfo();
+                }
+            }
+        }
+
+        function draw() {
+            // 繪製背景圖片
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+            // 繪製ball
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            ctx.fillStyle = bird.color;
+            ctx.fill();
+            ctx.closePath();
+
+            // 繪製彈弓
+            if (!isLaunched) {
+                ctx.beginPath();
+                ctx.moveTo(slingshot.x, slingshot.y);
+                ctx.lineTo(bird.x, bird.y);
+                ctx.strokeStyle = 'brown';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            // 繪製目標
+            targets.forEach(target => {
+                ctx.fillStyle = target.color;
+                ctx.fillRect(target.x, target.y, target.width, target.height);
+            });
+        }
+
+        function checkCollision(circle, rect) {
+            let distX = Math.abs(circle.x - rect.x - rect.width / 2);
+            let distY = Math.abs(circle.y - rect.y - rect.height / 2);
+
+            if (distX > (rect.width / 2 + circle.radius)) { return false; }
+            if (distY > (rect.height / 2 + circle.radius)) { return false; }
+
+            if (distX <= (rect.width / 2)) { return true; }
+            if (distY <= (rect.height / 2)) { return true; }
+
+            let dx = distX - rect.width / 2;
+            let dy = distY - rect.height / 2;
+            return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+        }
+
+        function resetBird() {
+            bird.x = slingshot.x;
+            bird.y = slingshot.y;
+            bird.velocity = { x: 0, y: 0 };
+            isLaunched = false;
+        }
+
+        function gameOver() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalHighScore').textContent = highScore;
+            gameOverDiv.style.display = 'block';
+        }
+
+        function restartGame() {
+            level = 1;
+            lives = 3;
+            score = 0;
+            gameOverDiv.style.display = 'none';
+            initializeLevel();
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            let mouseX = e.clientX - rect.left;
+            let mouseY = e.clientY - rect.top;
+
+            if (Math.sqrt((mouseX - bird.x) ** 2 + (mouseY - bird.y) ** 2) < bird.radius) {
+                isDragging = true;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging && !isLaunched) {
+                let rect = canvas.getBoundingClientRect();
+                bird.x = e.clientX - rect.left;
+                bird.y = e.clientY - rect.top;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                isLaunched = true;
+                bird.velocity.x = (slingshot.x - bird.x) * 0.2;
+                bird.velocity.y = (slingshot.y - bird.y) * 0.2;
+                launchSound.play();
+            }
+        });
+
+        restartButton.addEventListener('click', restartGame);
+
+        // 初始化遊戲
+        backgroundImage.onload = function() {
+            console.log('背景圖片已加載');
+            initializeLevel();
+            gameLoop();
+        };
+
+        console.log('腳本已加載');
+    </script>
+</body>
+</html>
