@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
-    <!-- Markdown 解析器 (用於顯示好看的 AI 回覆) -->
+    <!-- Markdown 解析器 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -38,6 +38,18 @@
         }
 
         .subtitle { color: #94a3b8; margin-top: 5px; font-size: 0.9rem; }
+
+        /* --- API Key Input --- */
+        .api-key-section {
+            background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 12px;
+            margin: 20px 0; border: 1px dashed #475569; text-align: left;
+        }
+        .api-key-label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; display: block; font-weight: 600; }
+        .api-key-input {
+            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569;
+            background: #0f172a; color: white; font-family: monospace; box-sizing: border-box;
+        }
+        .api-key-input:focus { border-color: #a855f7; outline: none; }
 
         /* --- 錢包資訊列 --- */
         .wallet-info-container {
@@ -147,9 +159,9 @@
         .ai-result-box {
             background: #0f172a; padding: 12px; border-radius: 8px; margin-top: 10px;
             border: 1px solid #a855f7; font-size: 0.85rem; line-height: 1.5; text-align: left;
-            max-height: 200px; overflow-y: auto; color: #e2e8f0;
+            max-height: 300px; overflow-y: auto; color: #e2e8f0;
         }
-        .ai-result-box h3 { margin-top: 0; color: #d946ef; font-size: 1rem; }
+        .ai-result-box img { max-width: 100%; border-radius: 8px; }
         .ai-result-box p { margin-bottom: 8px; }
 
         /* --- NFT Grid --- */
@@ -198,9 +210,6 @@
         const { useState, useEffect, useRef } = React;
         const ethers = window.ethers;
 
-        // Gemini API Key (Inject from environment)
-        const apiKey = ""; 
-
         // 預設合約地址
         const DEFAULT_ADDRESS = "0xB2061d8eDc4D6792Be6aed586034CeAa54D9A3eF";
 
@@ -229,9 +238,9 @@
             "function setBaseURI(string memory _newBaseURI) public"
         ];
 
-        // --- Gemini AI Helper Function ---
-        async function callGeminiAPI(prompt) {
-            if (!apiKey) return "⚠️ API Key not configured";
+        // --- Gemini AI (Text) Helper Function ---
+        async function callGeminiAPI(apiKey, prompt) {
+            if (!apiKey) return "⚠️ 請先設定 API Key";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
             try {
@@ -246,7 +255,34 @@
                 return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
             } catch (error) {
                 console.error("Gemini AI Error:", error);
-                return "❌ 生成失敗，請稍後再試。";
+                return "❌ 生成失敗，請檢查 API Key 或網路連線。";
+            }
+        }
+
+        // --- Imagen AI (Image) Helper Function ---
+        async function callImagenAPI(apiKey, prompt) {
+            if (!apiKey) return null;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        instances: [{ prompt: prompt }], 
+                        parameters: { sampleCount: 1 } 
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
+                    return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+                }
+                return null;
+            } catch (error) {
+                console.error("Imagen AI Error:", error);
+                return null;
             }
         }
 
@@ -256,6 +292,7 @@
             const [isOwner, setIsOwner] = useState(false);
             const [isConnecting, setIsConnecting] = useState(false);
             const [isMinting, setIsMinting] = useState(false);
+            const [apiKey, setApiKey] = useState("");
             
             const [supply, setSupply] = useState(0);
             const [quantity, setQuantity] = useState(1);
@@ -272,8 +309,8 @@
             const [inputAddress, setInputAddress] = useState(DEFAULT_ADDRESS);
             
             // AI Admin State
-            const [announcementDraft, setAnnouncementDraft] = useState("");
-            const [isDrafting, setIsDrafting] = useState(false);
+            const [generatedAdminImage, setGeneratedAdminImage] = useState(null);
+            const [isGeneratingAdminImage, setIsGeneratingAdminImage] = useState(false);
             
             const [status, setStatus] = useState("");
             const [error, setError] = useState("");
@@ -361,7 +398,7 @@
                 setNewMaxMint("");
                 setNewNotRevealedURI("");
                 setNewBaseURI("");
-                setAnnouncementDraft("");
+                setGeneratedAdminImage(null);
             };
             
             const handleUpdateContractAddress = () => {
@@ -446,21 +483,20 @@
                 }
             };
 
-            // AI Function: Generate Announcement
-            const handleDraftAnnouncement = async () => {
+            // AI Function: Generate Admin Image
+            const handleGenerateAdminImage = async () => {
                 if (!apiKey) return alert("請先設定 API Key");
-                setIsDrafting(true);
-                const prompt = `你是 NquMeta NFT 專案的社群經理。請撰寫一篇簡短、興奮的繁體中文 Twitter 公告，鼓勵大家來鑄造。
-                目前數據：
-                - 已鑄造：${supply}/10
-                - 價格：${currentMintPrice} ETH
-                - 狀態：${isSaleActive ? "火熱進行中 🔥" : "即將開始 ⏳"}
-                - 特色：ERC721A Gas 優化、盲盒機制、AI 賦能。
-                請加入一些 Emoji，語氣要 FOMO 但專業。`;
-
-                const result = await callGeminiAPI(prompt);
-                setAnnouncementDraft(result);
-                setIsDrafting(false);
+                setIsGeneratingAdminImage(true);
+                const prompt = "A high quality, cyberpunk style promotional image for a NFT project named NquMeta. Featuring a glowing mysterious blind box, neon lights, futuristic city background, digital art, 4k resolution.";
+                
+                const imageUrl = await callImagenAPI(apiKey, prompt);
+                
+                if (imageUrl) {
+                    setGeneratedAdminImage(imageUrl);
+                } else {
+                    alert("圖片生成失敗，請檢查 API Key 或稍後再試。");
+                }
+                setIsGeneratingAdminImage(false);
             };
 
             // Admin Actions
@@ -611,6 +647,17 @@
                             <p className="subtitle">ERC721A Gas Optimized Collection</p>
                         </header>
 
+                        <div className="api-key-section">
+                            <label className="api-key-label">🔑 Google Gemini API Key (Required for AI features)</label>
+                            <input 
+                                type="password" 
+                                className="api-key-input"
+                                placeholder="Paste your API Key here..." 
+                                value={apiKey} 
+                                onChange={(e) => setApiKey(e.target.value)}
+                            />
+                        </div>
+
                         {account && isOwner && (
                             <div className="admin-panel">
                                 <div className="admin-title">🔴 管理員控制台 (Admin Dashboard)</div>
@@ -666,15 +713,15 @@
                                     </div>
                                 </div>
 
-                                {/* AI Announcement Feature */}
+                                {/* AI Image Generation Feature */}
                                 <div style={{marginTop: "20px", paddingTop: "15px", borderTop: "1px solid rgba(255,255,255,0.1)"}}>
-                                    <div className="admin-label" style={{marginBottom: "5px"}}>✨ AI 智能社群公告</div>
-                                    <button className="ai-btn" onClick={handleDraftAnnouncement} disabled={isDrafting}>
-                                        {isDrafting ? "思考中..." : "✨ 草擬進度公告"}
+                                    <div className="admin-label" style={{marginBottom: "5px"}}>✨ AI 宣傳圖片生成</div>
+                                    <button className="ai-btn" onClick={handleGenerateAdminImage} disabled={isGeneratingAdminImage}>
+                                        {isGeneratingAdminImage ? "生成中..." : "✨ 生成圖片"}
                                     </button>
-                                    {announcementDraft && (
+                                    {generatedAdminImage && (
                                         <div className="ai-result-box">
-                                            <div dangerouslySetInnerHTML={{ __html: marked.parse(announcementDraft) }} />
+                                            <img src={generatedAdminImage} alt="Generated Admin Asset" />
                                         </div>
                                     )}
                                 </div>
@@ -728,6 +775,7 @@
                                                     isTransferring={transferringId === id}
                                                     isRevealed={isRevealed}
                                                     contractAddress={targetContractAddress}
+                                                    apiKey={apiKey}
                                                 />
                                             ))}
                                         </div>
@@ -746,7 +794,7 @@
         }
 
         // --- 子元件：NFT 卡片 ---
-        function NFTCard({ tokenId, onTransfer, isTransferring, isRevealed, contractAddress }) {
+        function NFTCard({ tokenId, onTransfer, isTransferring, isRevealed, contractAddress, apiKey }) {
             const [toAddress, setToAddress] = useState("");
             const [metaImage, setMetaImage] = useState(null);
             const [loadingMeta, setLoadingMeta] = useState(false);
@@ -786,7 +834,7 @@
             const handleGenerateStory = async () => {
                 setIsGeneratingStory(true);
                 const prompt = `你是 NquMeta 元宇宙的說書人。請為 NquMeta NFT #${tokenId} 創作一個簡短（50字以內）、神秘且帶有 Cyberpunk 風格的角色背景故事。如果這張卡片尚未解盲，請描述它散發出的神秘能量。請用繁體中文回答。`;
-                const story = await callGeminiAPI(prompt);
+                const story = await callGeminiAPI(apiKey, prompt);
                 setBackstory(story);
                 setIsGeneratingStory(false);
             };
