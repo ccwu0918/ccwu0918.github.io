@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NQU Meta - 盲盒NFT Minting DApp</title>
+    <title>NQU Meta - 盲盒 NFT 鑄造平台 NFT Minting DApp</title>
     
     <!-- 1. 載入必要的函式庫 -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -174,8 +174,12 @@
         const { useState, useEffect, useRef } = React;
         const ethers = window.ethers;
 
-        // 預設合約地址
-        const DEFAULT_ADDRESS = "0x0FfFF4a1Ef4857047b717419702228DC92FFf09A";
+        // 預設合約地址 "0x0FfFF4a1Ef4857047b717419702228DC92FFf09A"
+        const DEFAULT_ADDRESS = "0xB2061d8eDc4D6792Be6aed586034CeAa54D9A3eF";
+
+        // ⚠️ 合約地址"0x0FfFF4a1Ef4857047b717419702228DC92FFf09A"
+        // ⚠️ 請替換成您在 Remix 部署後的合約地址
+        const CONTRACT_ADDRESS = "0xB2061d8eDc4D6792Be6aed586034CeAa54D9A3eF";        
 
         // ⚠️ ABI
         const CONTRACT_ABI = [
@@ -566,7 +570,7 @@
                 <div className="app-container">
                     <div className="card">
                         <header>
-                            <h1>💎 NQU Meta - 盲盒NFT Minting DApp</h1>
+                            <h1>💎 NQU Meta - 盲盒 NFT 鑄造平台</h1>
                             <p className="subtitle">ERC721A Gas Optimized Collection</p>
                         </header>
 
