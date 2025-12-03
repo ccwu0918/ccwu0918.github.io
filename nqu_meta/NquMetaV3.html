@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NquMeta NFT Minting DApp</title>
+    
+    <!-- 1. 載入必要的函式庫 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+
+    <style>
+        /* --- 基礎樣式 --- */
+        body {
+            margin: 0; padding: 0; background-color: #0f172a; color: #e2e8f0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding-top: 50px; padding-bottom: 50px;
+        }
+
+        .app-container { width: 100%; max-width: 520px; padding: 20px; }
+
+        .card {
+            background: #1e293b; border-radius: 20px; padding: 40px 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid #334155;
+            text-align: center; margin-bottom: 20px; position: relative;
+            overflow: hidden;
+        }
+
+        header h1 {
+            margin: 0; background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 2.5rem; font-weight: 800;
+        }
+
+        .subtitle { color: #94a3b8; margin-top: 5px; font-size: 0.9rem; }
+
+        /* --- 狀態與統計 --- */
+        .stats-container {
+            display: flex; justify-content: space-between; margin: 30px 0;
+            background: #0f172a; padding: 15px; border-radius: 12px;
+        }
+        .stat-box { display: flex; flex-direction: column; }
+        .label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 1.2rem; font-weight: bold; color: #f1f5f9; }
+
+        /* --- 按鈕樣式 --- */
+        button { cursor: pointer; transition: all 0.2s; font-weight: 600; border: none; }
+        
+        .connect-btn {
+            width: 100%; padding: 15px; background: #3b82f6; color: white;
+            border-radius: 12px; font-size: 1rem;
+        }
+        .connect-btn:hover { background: #2563eb; }
+
+        .address-display {
+            background: #334155; display: inline-block; padding: 5px 12px;
+            border-radius: 20px; font-size: 0.9rem; color: #cbd5e1; margin-bottom: 20px;
+        }
+
+        .mint-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white; border-radius: 12px; font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+        .mint-btn:disabled { background: #475569; box-shadow: none; cursor: wait; }
+        .mint-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6); }
+
+        .quantity-selector { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px; }
+        .quantity-selector button {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid #475569;
+            background: transparent; color: white; font-size: 1.2rem;
+        }
+        .quantity-selector button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .quantity-selector span { font-size: 1.5rem; font-weight: bold; }
+
+        .status-message { margin-top: 20px; min-height: 24px; font-size: 0.9rem; }
+        .error-text { color: #ef4444; }
+        .info-text { color: #10b981; }
+
+        /* --- Admin Panel --- */
+        .admin-panel {
+            background: #312e81; /* 深紫色背景區隔 */
+            border: 1px solid #6366f1;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .admin-title { font-size: 0.9rem; color: #a5b4fc; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .admin-controls { display: grid; grid-template-columns: 1fr; gap: 10px; } /* 改為單欄，因為移除了按鈕 */
+        .admin-btn {
+            padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; color: white;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .admin-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+        .status-on { background-color: #4ade80; box-shadow: 0 0 5px #4ade80; }
+        .status-off { background-color: #ef4444; }
+
+        /* --- NFT Grid --- */
+        .nft-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px; margin-top: 20px;
+        }
+        .nft-card {
+            background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+            padding: 10px; text-align: center; transition: transform 0.2s;
+            display: flex; flex-direction: column; align-items: center;
+            position: relative;
+        }
+        .nft-card:hover { transform: translateY(-3px); border-color: #6366f1; }
+        
+        /* 圖片容器 */
+        .nft-image-box {
+            width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden;
+            background: #1e293b; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .nft-image { width: 100%; height: 100%; object-fit: cover; }
+        .nft-placeholder { font-size: 2rem; }
+        
+        .nft-id { font-size: 1rem; font-weight: bold; color: #a78bfa; margin-bottom: 5px; }
+        
+        .transfer-input {
+            width: 90%; padding: 6px; margin-bottom: 6px; border-radius: 4px;
+            border: 1px solid #475569; background: #1e293b; color: white; font-size: 0.75rem;
+        }
+        .transfer-btn {
+            width: 100%; padding: 6px; font-size: 0.75rem; background: #ef4444;
+            color: white; border-radius: 4px; margin-bottom: 5px;
+        }
+        .transfer-btn:hover { background: #dc2626; }
+
+        /* 新增：開啟盲盒按鈕樣式 */
+        .reveal-btn {
+            width: 100%; padding: 6px; font-size: 0.75rem; background: #f59e0b;
+            color: black; border-radius: 4px; margin-top: 5px; font-weight: bold;
+        }
+        .reveal-btn:hover { background: #d97706; }
+        
+        .section-title {
+            text-align: left; margin-top: 30px; margin-bottom: 15px;
+            font-size: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 10px; color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const ethers = window.ethers;
+
+        // ⚠️ 請替換成您在 Remix 部署後的合約地址
+        // ⚠️ 合約地址 "0x0FfFF4a1Ef4857047b717419702228DC92FFf09A"
+        const CONTRACT_ADDRESS = "0xB2061d8eDc4D6792Be6aed586034CeAa54D9A3eF";
+
+        // ⚠️ ABI
+        const CONTRACT_ABI = [
+            "function mintNquMeta(uint256 tokenQuantity) public payable",
+            "function totalSupply() view returns (uint256)",
+            "function MAX_SUPPLY() view returns (uint256)",
+            "function ownerOf(uint256 tokenId) view returns (address)",
+            "function safeTransferFrom(address from, address to, uint256 tokenId)",
+            "function tokenURI(uint256 tokenId) view returns (string)",
+            "function _isSaleActive() view returns (bool)",
+            "function _revealed() view returns (bool)",
+            "function owner() view returns (address)",
+            "function flipSaleActive() public",
+            "function flipReveal() public"
+        ];
+
+        function App() {
+            const [account, setAccount] = useState(null);
+            const [isOwner, setIsOwner] = useState(false);
+            const [isConnecting, setIsConnecting] = useState(false);
+            const [isMinting, setIsMinting] = useState(false);
+            
+            const [supply, setSupply] = useState(0);
+            const [quantity, setQuantity] = useState(1);
+            const [isSaleActive, setIsSaleActive] = useState(false);
+            const [isRevealed, setIsRevealed] = useState(false);
+            
+            const [status, setStatus] = useState("");
+            const [error, setError] = useState("");
+            const [userNFTs, setUserNFTs] = useState([]);
+            const [transferringId, setTransferringId] = useState(null);
+            const [isAdminAction, setIsAdminAction] = useState(false);
+
+            // Ref 用來避免閉包問題，確保 interval 拿到最新的 account
+            const accountRef = useRef(account);
+            accountRef.current = account;
+
+            useEffect(() => {
+                checkIfWalletIsConnected();
+                if (window.ethereum) {
+                    window.ethereum.on('accountsChanged', handleAccountsChanged);
+                }
+                
+                // --- 自動更新機制 ---
+                // 每 30 秒自動檢查一次販售狀態
+                const intervalId = setInterval(() => {
+                    if (accountRef.current) {
+                        console.log("Auto-refreshing contract data...");
+                        // 傳入 false 代表這是背景更新，不要顯示 "錢包連接成功" 等提示干擾使用者
+                        fetchContractData(accountRef.current, true); 
+                    }
+                }, 30000); // 30000 ms = 30 seconds
+
+                return () => {
+                    if (window.ethereum) {
+                        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+                    }
+                    clearInterval(intervalId);
+                };
+            }, []);
+
+            const handleAccountsChanged = (accounts) => {
+                if (accounts.length > 0) {
+                    setAccount(accounts[0]);
+                    fetchContractData(accounts[0]);
+                } else {
+                    setAccount(null);
+                    setIsOwner(false);
+                    setStatus("請連接錢包");
+                    setUserNFTs([]);
+                }
+            };
+
+            const checkIfWalletIsConnected = async () => {
+                if (window.location.protocol === 'file:') return;
+                if (window.ethereum) {
+                    try {
+                        const provider = new ethers.BrowserProvider(window.ethereum);
+                        const accounts = await provider.listAccounts();
+                        if (accounts.length > 0) {
+                            setAccount(accounts[0].address);
+                            fetchContractData(accounts[0].address);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            };
+
+            const connectWallet = async () => {
+                if (window.location.protocol === 'file:') return setError("⚠️ 請使用 Local Server 執行。");
+                if (typeof window.ethereum === 'undefined') return setError("未偵測到 MetaMask。");
+                setIsConnecting(true);
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const accounts = await provider.send("eth_requestAccounts", []);
+                    if (accounts && accounts.length > 0) {
+                        setAccount(accounts[0]);
+                        setError("");
+                        setStatus("錢包連接成功 🟢");
+                        await fetchContractData(accounts[0]);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    setError("連接失敗");
+                } finally {
+                    setIsConnecting(false);
+                }
+            };
+
+            const fetchContractData = async (currentAccount, isBackground = false) => {
+                if (!window.ethereum) return;
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+                    const total = await contract.totalSupply();
+                    const saleActive = await contract._isSaleActive();
+                    const revealed = await contract._revealed();
+                    const contractOwner = await contract.owner();
+
+                    setSupply(total.toString());
+                    setIsSaleActive(saleActive);
+                    setIsRevealed(revealed);
+                    
+                    if (currentAccount && contractOwner.toLowerCase() === currentAccount.toLowerCase()) {
+                        setIsOwner(true);
+                    } else {
+                        setIsOwner(false);
+                    }
+
+                    // 只有在非背景更新時，才更新狀態文字，避免覆蓋使用者的操作提示 (如 "鑄造中...")
+                    // 但如果是販售狀態改變，則強制更新
+                    if (!isBackground) {
+                         if (!saleActive) setStatus("⚠️ 販售暫停中 (Paused)");
+                         else setStatus("🟢 販售進行中 (Active)");
+                    } else {
+                        // 背景更新只更新販售狀態提示
+                        if (!saleActive) setStatus("⚠️ 販售暫停中 (Paused)");
+                        else if (status.includes("暫停")) setStatus("🟢 販售進行中 (Active)"); 
+                    }
+
+                    if (currentAccount) {
+                        const ownedIds = [];
+                        const maxSupply = 10;
+                        for (let i = 1; i <= maxSupply; i++) {
+                            try {
+                                const owner = await contract.ownerOf(i);
+                                if (owner.toLowerCase() === currentAccount.toLowerCase()) {
+                                    ownedIds.push(i);
+                                }
+                            } catch (e) {}
+                        }
+                        setUserNFTs(ownedIds);
+                    }
+
+                } catch (err) {
+                    console.error("數據讀取錯誤:", err);
+                }
+            };
+
+            const toggleSale = async () => {
+                if (!isOwner) return;
+                setIsAdminAction(true);
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    const tx = await contract.flipSaleActive();
+                    setStatus("正在切換販售狀態...");
+                    await tx.wait();
+                    setStatus("✅ 販售狀態已更新");
+                    fetchContractData(account);
+                } catch (err) {
+                    console.error(err);
+                    alert("操作失敗");
+                } finally { setIsAdminAction(false); }
+            };
+
+            // 全域開啟盲盒 (此函式現在由卡片按鈕觸發)
+            const toggleReveal = async () => {
+                if (!isOwner) return;
+                if (!confirm("確定要開啟盲盒嗎？這是一個全域設定，所有 NFT 都將被揭示。")) return;
+                
+                setIsAdminAction(true);
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    const tx = await contract.flipReveal();
+                    setStatus("正在開啟盲盒...");
+                    await tx.wait();
+                    setStatus("✅ 盲盒已開啟！");
+                    fetchContractData(account);
+                } catch (err) {
+                    console.error(err);
+                    alert("操作失敗");
+                } finally { setIsAdminAction(false); }
+            };
+
+            const mintNFT = async () => {
+                if (!account) return;
+                setIsMinting(true);
+                setError("");
+                setStatus("等待確認中... 🦊");
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    const pricePerToken = ethers.parseEther("0.0001");
+                    const totalPrice = pricePerToken * BigInt(quantity);
+                    const tx = await contract.mintNquMeta(quantity, { value: totalPrice });
+                    setStatus("交易發送成功！區塊確認中... 🧱");
+                    await tx.wait(1);
+                    setStatus(`🎉 鑄造成功！`);
+                    fetchContractData(account);
+                } catch (err) {
+                    console.error(err);
+                    setError(err.reason ? `合約錯誤: ${err.reason}` : "交易失敗");
+                } finally { setIsMinting(false); }
+            };
+
+            const handleTransfer = async (tokenId, toAddress) => {
+                if (!ethers.isAddress(toAddress)) return alert("無效地址");
+                if (!confirm(`確定轉送 #${tokenId} 給 ${toAddress}?`)) return;
+                setTransferringId(tokenId);
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    const tx = await contract.safeTransferFrom(account, toAddress, tokenId);
+                    setStatus("轉送中...");
+                    await tx.wait();
+                    setStatus(`✅ #${tokenId} 轉送成功`);
+                    fetchContractData(account);
+                } catch (err) {
+                    alert("轉送失敗");
+                } finally { setTransferringId(null); }
+            };
+
+            return (
+                <div className="app-container">
+                    <div className="card">
+                        <header>
+                            <h1>💎 NquMeta NFT</h1>
+                            <p className="subtitle">ERC721A Gas Optimized Collection</p>
+                        </header>
+
+                        {/* --- Admin Panel --- */}
+                        {account && isOwner && (
+                            <div className="admin-panel">
+                                <div className="admin-title">🔴 管理員控制台 (Admin Dashboard)</div>
+                                <div className="admin-controls">
+                                    <button className="admin-btn" onClick={toggleSale} disabled={isAdminAction}>
+                                        <span className={`status-indicator ${isSaleActive ? 'status-on' : 'status-off'}`}></span>
+                                        {isSaleActive ? "關閉販售" : "開啟販售"}
+                                    </button>
+                                    {/* 移除了開啟盲盒按鈕，改到下方卡片 */}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="stats-container">
+                            <div className="stat-box">
+                                <span className="label">已鑄造</span>
+                                <span className="value">{supply} / 10</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="label">狀態</span>
+                                <span className="value" style={{color: isSaleActive ? '#4ade80' : '#ef4444'}}>
+                                    {isSaleActive ? "進行中" : "暫停"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {!account ? (
+                            <button className="connect-btn" onClick={connectWallet} disabled={isConnecting}>
+                                {isConnecting ? "連接中..." : "連接錢包"}
+                            </button>
+                        ) : (
+                            <div>
+                                <div className="quantity-selector">
+                                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isMinting}>-</button>
+                                    <span>{quantity}</span>
+                                    <button onClick={() => setQuantity(Math.min(5, quantity + 1))} disabled={isMinting}>+</button>
+                                </div>
+                                <button className="mint-btn" onClick={mintNFT} disabled={isMinting || !isSaleActive}>
+                                    {isMinting ? "鑄造中..." : (isSaleActive ? `立即鑄造 ${quantity} 個 (0.0001 ETH)` : "目前無法鑄造")}
+                                </button>
+
+                                {userNFTs.length > 0 && (
+                                    <div>
+                                        <h3 className="section-title">🖼️ 我的收藏 ({userNFTs.length})</h3>
+                                        <div className="nft-grid">
+                                            {userNFTs.map(id => (
+                                                <NFTCard 
+                                                    key={id} 
+                                                    tokenId={id} 
+                                                    onTransfer={handleTransfer} 
+                                                    isTransferring={transferringId === id}
+                                                    isRevealed={isRevealed}
+                                                    isOwner={isOwner}
+                                                    onReveal={toggleReveal}
+                                                    isAdminAction={isAdminAction}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="status-message">
+                            {error && <p className="error-text">{error}</p>}
+                            {status && <p className="info-text">{status}</p>}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- 子元件：NFT 卡片 ---
+        function NFTCard({ tokenId, onTransfer, isTransferring, isRevealed, isOwner, onReveal, isAdminAction }) {
+            const [toAddress, setToAddress] = useState("");
+            const [metaImage, setMetaImage] = useState(null);
+            const [loadingMeta, setLoadingMeta] = useState(false);
+
+            useEffect(() => {
+                fetchMetadata();
+            }, [isRevealed, tokenId]);
+
+            const fetchMetadata = async () => {
+                setLoadingMeta(true);
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+                    
+                    // 1. 取得 tokenURI
+                    // 即便未開啟盲盒，通常也有 notRevealedUri 可以讀取圖片
+                    const uri = await contract.tokenURI(tokenId);
+                    
+                    if (uri) {
+                        // 2. 解析 IPFS Gateway
+                        let httpUri = uri;
+                        if (uri.startsWith("ipfs://")) {
+                            httpUri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+                        }
+
+                        // 3. 讀取 JSON
+                        const response = await fetch(httpUri);
+                        const metadata = await response.json();
+                        
+                        // 4. 解析圖片 IPFS
+                        if (metadata.image) {
+                            let imgUrl = metadata.image;
+                            if (imgUrl.startsWith("ipfs://")) {
+                                imgUrl = imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+                            }
+                            setMetaImage(imgUrl);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Metadata error:", err);
+                    setMetaImage(null);
+                } finally {
+                    setLoadingMeta(false);
+                }
+            };
+
+            return (
+                <div className="nft-card">
+                    <div className="nft-image-box">
+                        {loadingMeta ? (
+                            <span style={{fontSize: "0.8rem", color: "#64748b"}}>Loading...</span>
+                        ) : (
+                            metaImage ? (
+                                <img 
+                                    src={metaImage} 
+                                    className="nft-image" 
+                                    alt={`NFT #${tokenId}`}
+                                    onError={(e) => {e.target.style.display='none';}} 
+                                />
+                            ) : (
+                                <span className="nft-placeholder">{isRevealed ? "🖼️" : "🎁"}</span>
+                            )
+                        )}
+                    </div>
+                    
+                    <span className="nft-id">#{tokenId}</span>
+                    <span style={{fontSize: "0.75rem", color: "#64748b", marginBottom: "8px"}}>
+                        {isRevealed ? "已開啟" : "未開啟"}
+                    </span>
+                    
+                    {/* 開啟盲盒按鈕 (只在未開啟 + 是Owner 時顯示) */}
+                    {!isRevealed && isOwner && (
+                        <button 
+                            className="reveal-btn"
+                            onClick={onReveal}
+                            disabled={isAdminAction}
+                        >
+                            {isAdminAction ? "開啟中..." : "🔓 開啟盲盒"}
+                        </button>
+                    )}
+
+                    {/* 轉贈輸入框 */}
+                    <input 
+                        type="text" placeholder="接收地址 0x..." className="transfer-input"
+                        value={toAddress} onChange={(e) => setToAddress(e.target.value)}
+                        disabled={isTransferring}
+                        style={{marginTop: "5px"}}
+                    />
+                    <button 
+                        className="transfer-btn"
+                        disabled={isTransferring || !toAddress}
+                        onClick={() => onTransfer(tokenId, toAddress)}
+                    >
+                        {isTransferring ? "..." : "轉贈"}
+                    </button>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
