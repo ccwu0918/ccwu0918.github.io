@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NQU Web3 去中心化銀行</title>
+    <title>NQU Coin Web3 去中心化銀行</title>
     <!-- 1. Ethers.js v6 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <!-- 2. Tailwind CSS -->
@@ -17,11 +17,9 @@
 
     <style>
         body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
-        /* 動畫效果 */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         
-        /* 隱藏 Input type=number 的上下箭頭 */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -33,34 +31,51 @@
 
 <!-- 頂部導航 -->
 <nav class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-40">
-    <div class="container mx-auto flex justify-between items-center">
+    <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        
+        <!-- Logo -->
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-building-columns text-2xl"></i>
-            <h1 class="text-xl font-bold hidden md:block">NQU Web3 去中心化銀行</h1>
-            <h1 class="text-xl font-bold md:hidden">NQU Bank</h1>
+            <h1 class="text-xl font-bold hidden md:block">NQU Coin Web3 去中心化銀行</h1>
+            <h1 class="text-xl font-bold md:hidden">NQU Coin Bank</h1>
         </div>
 
-        <div class="flex gap-3 items-center">
-            <!-- 未連線 -->
+        <!-- 右側功能區 -->
+        <div class="flex flex-wrap gap-3 items-center justify-center">
+            
+            <!-- 1. 網路選擇器 (新增功能) -->
+            <div class="relative">
+                <i class="fa-solid fa-network-wired absolute left-3 top-3 text-blue-200"></i>
+                <select id="networkSelector" onchange="handleNetworkChange()" class="bg-blue-700 text-white pl-9 pr-4 py-2.5 rounded-lg border border-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-white transition cursor-pointer font-mono text-sm">
+                    <option value="sepolia">Sepolia 測試鏈 (預設)</option>
+                    <option value="mainnet">Ethereum 主網</option>
+                    <option value="localhost">Localhost (8545)</option>
+                </select>
+            </div>
+
+            <!-- 未連線按鈕 -->
             <button id="btnConnect" onclick="connectWallet()" class="bg-white text-blue-600 hover:bg-blue-50 px-5 py-2.5 rounded-lg font-bold transition shadow-md flex items-center gap-2">
                 <i class="fa-solid fa-wallet"></i> 連接錢包
             </button>
 
-            <!-- 已連線 -->
-            <div id="connectedActions" class="hidden flex items-center gap-3 animate-fade-in">
+            <!-- 已連線狀態 -->
+            <div id="connectedActions" class="hidden flex flex-wrap items-center gap-3 animate-fade-in justify-center">
                 <div id="roleTags" class="flex gap-2"></div>
+                
                 <!-- 縮略地址 -->
                 <div class="hidden md:flex bg-blue-700 bg-opacity-50 px-3 py-2 rounded-lg items-center gap-2 border border-blue-500">
                     <i class="fa-regular fa-id-card text-blue-200"></i>
                     <span id="navWalletAddress" class="font-mono text-sm font-semibold">0x...</span>
                 </div>
+                
                 <!-- 狀態標籤 -->
                 <div class="bg-blue-400 bg-opacity-30 text-blue-100 px-4 py-2 rounded-lg font-bold flex items-center gap-2 border border-blue-400 select-none">
-                    <i class="fa-solid fa-check"></i> 錢包已連接
+                    <i class="fa-solid fa-check"></i> 已連接
                 </div>
+                
                 <!-- 斷開連線 -->
                 <button onclick="disconnect()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-right-from-bracket"></i> 斷開連線
+                    <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </div>
@@ -72,10 +87,13 @@
     <!-- 1. 頂部資訊 -->
     <div class="card bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center border border-gray-200 gap-4">
         <div class="w-full">
-            <label class="text-xs text-gray-500 font-bold uppercase">智能合約地址</label>
-            <div class="flex gap-2 mt-1">
+            <div class="flex justify-between mb-1">
+                <label class="text-xs text-gray-500 font-bold uppercase">當前網路合約地址</label>
+                <span id="networkLabel" class="text-xs font-bold text-blue-600 bg-blue-100 px-2 rounded">Sepolia</span>
+            </div>
+            <div class="flex gap-2">
                 <code class="bg-gray-100 p-2 rounded text-sm w-full break-all font-mono text-gray-600" id="contractAddressDisplay">Loading...</code>
-                <a href="#" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center whitespace-nowrap"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> 查看</a>
+                <a href="#" id="etherscanLink" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center whitespace-nowrap"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> 查看</a>
             </div>
         </div>
     </div>
@@ -88,7 +106,7 @@
             <h3 class="font-semibold text-blue-100 mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-vault"></i> 銀行總儲備金
             </h3>
-            <div class="text-4xl font-bold mb-4 tracking-tight"><span id="totalDeposit">0.00</span> <span class="text-xl token-symbol opacity-80">NQU</span></div>
+            <div class="text-4xl font-bold mb-4 tracking-tight"><span id="totalDeposit">0.00</span> <span class="text-xl token-symbol opacity-80">TOKEN</span></div>
             <div class="flex justify-between items-end border-t border-blue-500 pt-4 mt-2">
                 <div>
                     <p class="text-xs text-blue-200">目前費率 (VIP: 0%)</p>
@@ -103,67 +121,60 @@
             <h3 class="font-semibold text-gray-500 mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-sack-dollar"></i> 您的存款餘額
             </h3>
-            <div class="text-4xl font-bold text-gray-800 mb-4 tracking-tight"><span id="myBalance">0.00</span> <span class="text-xl text-gray-500 token-symbol">NQU</span></div>
+            <div class="text-4xl font-bold text-gray-800 mb-4 tracking-tight"><span id="myBalance">0.00</span> <span class="text-xl text-gray-500 token-symbol">TOKEN</span></div>
             <div class="flex justify-between items-end border-t border-gray-100 pt-4 mt-2">
                 <div><p class="text-xs text-gray-400">錢包餘額</p><p class="font-bold text-gray-600 font-mono" id="walletBalance">0.00</p></div>
                 <div class="text-right"><p class="text-xs text-gray-400">授權狀態</p><p class="font-bold text-green-600" id="allowanceText">Checking...</p></div>
             </div>
         </div>
 
-        <!-- 3. 收款 QR Code 顯示區 -->
+        <!-- 3. 收款 QR Code 顯示區 (未連線前隱藏) -->
         <div id="receiveSection" class="hidden bg-white p-6 rounded-xl shadow-md border border-gray-200 relative text-center animate-fade-in flex flex-col justify-center items-center">
             <h3 class="text-lg font-bold text-gray-800 mb-2">
                 <i class="fa-solid fa-qrcode text-blue-500 mr-2"></i> 我的收款碼
             </h3>
             <p class="text-xs text-gray-500 mb-3">讓對方掃描此條碼以轉帳給您</p>
-            
-            <!-- QR Code 容器 -->
             <div id="qrcode" class="flex justify-center mb-3 p-2 border-2 border-dashed border-gray-300 rounded-lg inline-block"></div>
-            
-            <p class="font-mono text-xs text-gray-600 bg-gray-100 p-2 rounded break-all w-full text-center" id="displayQrAddress">...</p>
+            <p class="font-mono text-xs text-gray-600 bg-gray-100 p-2 rounded break-all w-full text-center" id="displayQrAddress">請先連接錢包</p>
         </div>
     </div>
 
     <!-- 4. 用戶功能區 (三欄) -->
-    <div id="userActions" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <div id="mainInterface" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 opacity-50 pointer-events-none transition-opacity duration-300">
         
-        <!-- A. 存款卡片 -->
+        <!-- A. 存款 -->
         <div class="bg-white rounded-xl p-6 shadow-md border-t-4 border-green-500 hover:shadow-lg transition">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i class="fa-solid fa-plus"></i></div>
                 存款 (Deposit)
             </h3>
             <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">NQU</span>)</label>
-                <!-- 增減按鈕群組 -->
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">TOKEN</span>)</label>
                 <div class="flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
                     <button onclick="adjustAmount('depositInput', -1)" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 border-r border-gray-200 text-gray-600 font-bold active:bg-gray-300 transition">-</button>
                     <input type="number" id="depositInput" class="w-full p-3 bg-transparent text-center outline-none font-bold text-gray-700" placeholder="0.1">
                     <button onclick="adjustAmount('depositInput', 1)" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 border-l border-gray-200 text-gray-600 font-bold active:bg-gray-300 transition">+</button>
                 </div>
             </div>
-            
             <div id="approveContainer" class="hidden mb-3 animate-fade-in">
                 <button onclick="approveToken()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center gap-2">
                     <i class="fa-solid fa-file-signature"></i> 步驟 1: 授權代幣
                 </button>
                 <p class="text-xs text-center text-gray-400 mt-1">首次存款需先授權</p>
             </div>
-            
             <button id="btnDeposit" onclick="deposit()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition shadow-green-200 shadow-lg flex justify-center items-center gap-2">
                 <i class="fa-solid fa-download"></i> 存入資金
             </button>
         </div>
 
-        <!-- B. 提款卡片 -->
+        <!-- B. 提款 -->
         <div class="bg-white rounded-xl p-6 shadow-md border-t-4 border-red-500 hover:shadow-lg transition">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><i class="fa-solid fa-minus"></i></div>
                 提款 (Withdraw)
             </h3>
             <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">NQU</span>)</label>
-                <!-- 增減按鈕群組 -->
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">TOKEN</span>)</label>
                 <div class="flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-red-500">
                     <button onclick="adjustAmount('withdrawInput', -1)" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 border-r border-gray-200 text-gray-600 font-bold active:bg-gray-300 transition">-</button>
                     <input type="number" id="withdrawInput" class="w-full p-3 bg-transparent text-center outline-none font-bold text-gray-700" placeholder="0.1">
@@ -175,34 +186,29 @@
             </button>
         </div>
 
-        <!-- C. 轉帳卡片 (含掃描與調整) -->
+        <!-- C. 轉帳 -->
         <div class="bg-white rounded-xl p-6 shadow-md border-t-4 border-purple-500 hover:shadow-lg transition flex flex-col h-full">
             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
                 內部轉帳 (Transfer)
             </h3>
-            
             <div class="mb-3">
                 <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">收款人地址</label>
                 <div class="flex gap-2">
                     <input type="text" id="transferTo" class="w-full p-3 border border-gray-200 bg-gray-50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm font-mono" placeholder="0x...">
-                    <!-- 掃描按鈕 -->
                     <button onclick="toggleScanner()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 rounded-lg transition" title="掃描 QR Code">
                         <i class="fa-solid fa-qrcode text-xl"></i>
                     </button>
                 </div>
             </div>
-
             <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">NQU</span>)</label>
-                <!-- 增減按鈕群組 -->
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">金額 (<span class="token-symbol">TOKEN</span>)</label>
                 <div class="flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
                     <button onclick="adjustAmount('transferAmount', -1)" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 border-r border-gray-200 text-gray-600 font-bold active:bg-gray-300 transition">-</button>
                     <input type="number" id="transferAmount" class="w-full p-3 bg-transparent text-center outline-none font-bold text-gray-700" placeholder="0.1">
                     <button onclick="adjustAmount('transferAmount', 1)" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 border-l border-gray-200 text-gray-600 font-bold active:bg-gray-300 transition">+</button>
                 </div>
             </div>
-
             <button onclick="transfer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition shadow-purple-200 shadow-lg flex justify-center items-center gap-2 mt-auto">
                 <i class="fa-solid fa-paper-plane"></i> 轉帳給他人
             </button>
@@ -217,26 +223,17 @@
         </div>
     </div>
 
-    <!-- ==================================================== -->
-    <!--           QR Code 掃描器 Modal (預設隱藏)            -->
-    <!-- ==================================================== -->
+    <!-- Scanner Modal -->
     <div id="scannerModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col justify-center items-center">
         <div class="bg-white p-4 rounded-xl w-full max-w-md relative">
             <h3 class="text-lg font-bold text-center mb-4">掃描錢包地址</h3>
-            <!-- 掃描區域 -->
             <div id="reader" style="width: 100%;"></div>
-            
-            <button onclick="toggleScanner()" class="mt-4 w-full bg-red-500 text-white py-2 rounded-lg font-bold">
-                關閉掃描器
-            </button>
+            <button onclick="toggleScanner()" class="mt-4 w-full bg-red-500 text-white py-2 rounded-lg font-bold">關閉掃描器</button>
         </div>
     </div>
 
-    <!-- ==================================================== -->
-    <!--               管理員後台 (Admin Panel)               -->
-    <!-- ==================================================== -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="hidden animate-fade-in pb-20">
-        <!-- Header -->
         <div class="flex items-center gap-2 mb-4">
             <i class="fa-solid fa-user-shield text-2xl text-gray-700"></i>
             <h2 class="text-2xl font-bold text-gray-800">管理員控制台</h2>
@@ -244,131 +241,90 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <!-- A. 費率時間鎖 -->
+            <!-- Timelock -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center">
-                    <i class="fa-regular fa-clock text-gray-500 mr-2"></i> 費率時間鎖
-                </h4>
-                
+                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-regular fa-clock mr-2"></i> 費率時間鎖</h4>
                 <div class="bg-gray-50 rounded-lg p-4 mb-4 text-center">
-                    <p class="text-xs text-gray-500 mb-1">目前排程狀態</p>
+                    <p class="text-xs text-gray-500 mb-1">排程狀態</p>
                     <p id="timelockStatus" class="font-bold text-orange-500 text-lg">無待處理更新</p>
                 </div>
-                
-                <!-- Queue Section -->
                 <div id="queueSection">
-                    <div class="relative mb-2">
-                        <span class="absolute left-3 top-2 text-gray-400 text-sm"><i class="fa-solid fa-percent"></i></span>
-                        <input type="number" id="newFeeRate" placeholder="新費率 (bps, 100=1%)" class="w-full pl-8 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 outline-none">
-                    </div>
-                    <button onclick="queueFeeRate()" class="w-full bg-gray-700 text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition font-bold shadow-md">
-                        1. 公告新費率 (Queue)
-                    </button>
+                    <input type="number" id="newFeeRate" placeholder="新費率 (bps)" class="w-full mb-2 p-2 border rounded text-sm">
+                    <button onclick="queueFeeRate()" class="w-full bg-gray-700 text-white py-2 rounded font-bold">1. 公告新費率</button>
                 </div>
-
-                <!-- Execute Section -->
                 <div id="executeSection" class="hidden mt-2">
-                     <button onclick="executeFeeRate()" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition font-bold shadow-md animate-pulse">
-                        2. 執行更新 (Execute)
-                    </button>
-                    <p class="text-xs text-center text-gray-400 mt-2"><i class="fa-solid fa-triangle-exclamation"></i> 必須等待 2 天鎖定期滿</p>
+                     <button onclick="executeFeeRate()" class="w-full bg-green-600 text-white py-2 rounded font-bold animate-pulse">2. 執行更新</button>
                 </div>
             </div>
-
-            <!-- B. 黑名單管理 -->
+            <!-- Blacklist -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center">
-                    <i class="fa-solid fa-ban text-red-500 mr-2"></i> 黑名單管理
-                </h4>
-                <p class="text-xs text-gray-500 mb-3">加入黑名單將凍結該地址的所有資產操作。</p>
-                
-                <div class="relative mb-3">
-                    <span class="absolute left-3 top-2 text-gray-400 text-sm"><i class="fa-solid fa-wallet"></i></span>
-                    <input type="text" id="blacklistAddr" placeholder="0x..." class="w-full pl-8 p-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-red-500 outline-none">
-                </div>
-                
+                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-ban mr-2 text-red-500"></i> 黑名單</h4>
+                <input type="text" id="blacklistAddr" placeholder="0x..." class="w-full mb-2 p-2 border rounded font-mono text-sm">
                 <div class="flex gap-2">
-                    <button onclick="setBlacklist(true)" class="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm hover:bg-red-700 transition font-bold shadow-md">加入黑名單</button>
-                    <button onclick="setBlacklist(false)" class="flex-1 bg-gray-500 text-white py-2 rounded-lg text-sm hover:bg-gray-600 transition font-bold shadow-md">移除</button>
+                    <button onclick="setBlacklist(true)" class="flex-1 bg-red-600 text-white py-2 rounded font-bold">加入</button>
+                    <button onclick="setBlacklist(false)" class="flex-1 bg-gray-500 text-white py-2 rounded font-bold">移除</button>
                 </div>
             </div>
-
-            <!-- C. 系統控制 -->
+            <!-- System Control -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center">
-                    <i class="fa-solid fa-sliders text-blue-500 mr-2"></i> 系統控制
-                </h4>
-                
-                <!-- VIP -->
-                <div class="mb-4">
-                    <label class="text-xs font-bold text-gray-500 mb-1 block">VIP 設定</label>
-                    <div class="flex gap-2">
-                        <div class="relative flex-1">
-                            <span class="absolute left-3 top-2 text-gray-400 text-sm"><i class="fa-solid fa-user"></i></span>
-                            <input type="text" id="vipAddr" placeholder="VIP地址..." class="w-full pl-8 p-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-yellow-500 outline-none">
-                        </div>
-                        <button onclick="setVIP(true)" class="bg-yellow-500 text-white px-3 rounded-lg hover:bg-yellow-600 shadow-md transition"><i class="fa-solid fa-crown"></i></button>
-                    </div>
+                <h4 class="font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-sliders mr-2 text-blue-500"></i> 系統控制</h4>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="vipAddr" placeholder="VIP Address" class="w-full p-2 border rounded text-sm font-mono">
+                    <button onclick="setVIP(true)" class="bg-yellow-500 text-white px-3 rounded"><i class="fa-solid fa-crown"></i></button>
                 </div>
-
-                <!-- Pause -->
-                <div class="border-t pt-4">
-                    <div class="flex gap-3">
-                        <button onclick="setPaused(true)" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-pause"></i> 暫停系統
-                        </button>
-                        <button onclick="setPaused(false)" class="flex-1 bg-green-50 text-green-600 border border-green-200 py-2 rounded-lg text-sm font-bold hover:bg-green-100 transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-play"></i> 恢復營運
-                        </button>
-                    </div>
+                <div class="flex gap-2 border-t pt-4">
+                    <button onclick="setPaused(true)" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded font-bold">暫停</button>
+                    <button onclick="setPaused(false)" class="flex-1 bg-green-50 text-green-600 border border-green-200 py-2 rounded font-bold">恢復</button>
                 </div>
             </div>
-
-            <!-- D. 危險與財務區 -->
+            <!-- Finance -->
             <div class="md:col-span-2 lg:col-span-3 bg-red-50 border border-red-200 rounded-xl p-6 shadow-sm">
-                <h4 class="font-bold text-red-800 mb-4 border-b border-red-200 pb-2 flex items-center">
-                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> 危險與財務區
-                </h4>
-                
+                <h4 class="font-bold text-red-800 mb-4 border-b border-red-200 pb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i> 危險與財務區</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Accumulated Fees -->
-                    <div class="bg-white p-5 rounded-lg border border-red-100 shadow-sm">
-                        <h5 class="text-sm text-gray-600 font-bold mb-2">銀行累積收益</h5>
-                        <div class="flex items-end gap-2 mb-4">
-                             <span class="text-3xl font-bold text-gray-800" id="adminFees">0.0</span>
-                             <span class="text-sm text-gray-500 mb-1 token-symbol">NQU</span>
-                        </div>
-                        <button onclick="claimFees()" class="w-full bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 shadow-md transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-coins"></i> 提領所有收益
-                        </button>
+                    <div class="bg-white p-5 rounded-lg border border-red-100">
+                        <h5 class="text-sm font-bold text-gray-600 mb-2">銀行累積收益</h5>
+                        <p class="text-3xl font-bold text-gray-800 mb-4"><span id="adminFees">0.0</span> <span class="token-symbol text-sm">TOKEN</span></p>
+                        <button onclick="claimFees()" class="w-full bg-orange-500 text-white py-2 rounded font-bold">提領收益</button>
                     </div>
-
-                    <!-- Shutdown & Refund -->
-                    <div class="bg-white p-5 rounded-lg border border-red-100 shadow-sm">
-                        <h5 class="text-sm text-red-600 font-bold mb-2">緊急清算操作</h5>
-                        <button onclick="triggerShutdown()" class="w-full bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 shadow-md transition mb-3 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-radiation"></i> 觸發清算模式 (Shutdown)
-                        </button>
-                        
-                        <div class="relative">
-                            <textarea id="refundList" rows="2" placeholder="批次退款地址 (一行一個)..." class="w-full p-2 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-gray-500 outline-none resize-none bg-gray-50"></textarea>
-                        </div>
-                        
-                        <button onclick="batchRefund()" class="w-full bg-gray-800 text-white py-2 rounded-lg font-bold hover:bg-gray-900 shadow-md transition mt-2 text-sm flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-users-slash"></i> 執行批次退款 (Robust Refund)
-                        </button>
+                    <div class="bg-white p-5 rounded-lg border border-red-100">
+                        <h5 class="text-sm font-bold text-red-600 mb-2">緊急操作</h5>
+                        <button onclick="triggerShutdown()" class="w-full bg-red-600 text-white py-2 rounded font-bold mb-3">觸發清算 (Shutdown)</button>
+                        <textarea id="refundList" rows="2" placeholder="批次退款地址..." class="w-full p-2 border rounded text-xs mb-2"></textarea>
+                        <button onclick="batchRefund()" class="w-full bg-gray-800 text-white py-2 rounded font-bold">執行批次退款</button>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
-    // ================= CONFIG =================
-    const CONTRACT_ADDRESS = "0xF84f73632200836C09F9f7FF5df8745E81d84ebc"; 
+    // ================= NETWORK CONFIG =================
+    // 在這裡定義多網路支援
+    // 重要：請確保 Sepolia 的 contractAddress 是正確的
+    const NETWORKS = {
+        sepolia: {
+            chainId: "0xaa36a7", // 11155111
+            name: "Sepolia 測試鏈",
+            contractAddress: "0xF84f73632200836C09F9f7FF5df8745E81d84ebc", // Sepolia 地址
+            explorer: "https://sepolia.etherscan.io"
+        },
+        mainnet: {
+            chainId: "0x1", // 1
+            name: "Ethereum 主網",
+            contractAddress: "0xF84f73632200836C09F9f7FF5df8745E81d84ebc", // 若主網地址不同請修改
+            explorer: "https://etherscan.io"
+        },
+        localhost: {
+            chainId: "0x539", // 1337
+            name: "Localhost",
+            contractAddress: "0xF84f73632200836C09F9f7FF5df8745E81d84ebc",
+            explorer: ""
+        }
+    };
+
+    // 預設網路
+    let currentNetworkKey = "sepolia";
 
     // ABI
     const BANK_ABI = [
@@ -405,21 +361,98 @@
     ];
 
     let provider, signer, bankContract, tokenContract;
-    let userAddress, tokenDecimals = 18, tokenSymbol = "ETH";
+    let userAddress, tokenDecimals = 18, tokenSymbol = "TOKEN";
     let html5QrcodeScanner = null;
 
-    document.getElementById("contractAddressDisplay").innerText = CONTRACT_ADDRESS;
+    // 初始化：顯示預設合約地址
+    updateNetworkUI();
+
+    // 監聽網路選擇變更
+    async function handleNetworkChange() {
+        const selector = document.getElementById("networkSelector");
+        currentNetworkKey = selector.value;
+        updateNetworkUI();
+        
+        // 如果已經連線，嘗試切換網路並重新整理
+        if (userAddress) {
+            await switchNetwork(currentNetworkKey);
+            // 重新連線以刷新合約物件
+            connectWallet(); 
+        }
+    }
+
+    function updateNetworkUI() {
+        const netConfig = NETWORKS[currentNetworkKey];
+        document.getElementById("contractAddressDisplay").innerText = netConfig.contractAddress;
+        document.getElementById("networkLabel").innerText = netConfig.name;
+        
+        const scanLink = document.getElementById("etherscanLink");
+        if(netConfig.explorer) {
+            scanLink.href = `${netConfig.explorer}/address/${netConfig.contractAddress}`;
+            scanLink.style.display = "flex";
+        } else {
+            scanLink.style.display = "none";
+        }
+    }
+
+    // 核心：切換網路
+    async function switchNetwork(networkKey) {
+        if(!window.ethereum) return;
+        const targetChainId = NETWORKS[networkKey].chainId;
+        
+        try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: targetChainId }],
+            });
+        } catch (switchError) {
+            // 錯誤代碼 4902 表示錢包尚未新增此網路，這裡可以實作 wallet_addEthereumChain
+            if (switchError.code === 4902) {
+                alert("您的錢包尚未新增此網路，請手動新增。");
+            } else {
+                console.error(switchError);
+                throw new Error("切換網路失敗");
+            }
+        }
+    }
 
     // 1. 連接錢包
     async function connectWallet() {
         if (!window.ethereum) return alert("請安裝 MetaMask");
         try {
+            // A. 先嘗試切換到選定的網路
+            await switchNetwork(currentNetworkKey);
+
             provider = new ethers.BrowserProvider(window.ethereum);
             signer = await provider.getSigner();
             userAddress = await signer.getAddress();
+            
+            // B. 再次檢查是否真的在正確的網路上 (防止使用者拒絕切換)
+            const network = await provider.getNetwork();
+            const targetChainIdBigInt = BigInt(NETWORKS[currentNetworkKey].chainId);
+            
+            if (network.chainId !== targetChainIdBigInt) {
+                throw new Error(`網路錯誤！請切換至 ${NETWORKS[currentNetworkKey].name}`);
+            }
 
-            bankContract = new ethers.Contract(CONTRACT_ADDRESS, BANK_ABI, signer);
-            const tokenAddr = await bankContract.authorizedToken();
+            // C. 檢查合約是否存在
+            const contractAddr = NETWORKS[currentNetworkKey].contractAddress;
+            const code = await provider.getCode(contractAddr);
+            if (code === "0x") {
+                throw new Error(`在 ${NETWORKS[currentNetworkKey].name} 上找不到合約，請確認地址是否正確。`);
+            }
+
+            bankContract = new ethers.Contract(contractAddr, BANK_ABI, signer);
+            
+            // D. 讀取代幣合約
+            let tokenAddr;
+            try {
+                tokenAddr = await bankContract.authorizedToken();
+            } catch (err) {
+                console.error("讀取 authorizedToken 失敗", err);
+                throw new Error("無法讀取合約資料 (可能 ABI 不符或網路擁塞)");
+            }
+
             tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
             
             try { 
@@ -429,23 +462,25 @@
 
             document.querySelectorAll(".token-symbol").forEach(el => el.innerText = tokenSymbol);
             updateNavbarState(true);
-            generateMyQRCode(userAddress); // 生成收款碼
+            generateMyQRCode(userAddress); 
             await loadData();
-            log("錢包連線成功！", "text-green-400");
+            log(`成功連接至 ${NETWORKS[currentNetworkKey].name}`, "text-green-400");
 
         } catch (err) {
             console.error(err);
             alert("連線失敗: " + err.message);
+            disconnect();
         }
     }
 
     function disconnect() {
         updateNavbarState(false);
         userAddress = null;
+        bankContract = null;
         document.getElementById("myBalance").innerText = "0.00";
         document.getElementById("walletBalance").innerText = "0.00";
         document.getElementById("adminPanel").classList.add("hidden");
-        document.getElementById("receiveSection").classList.add("hidden"); // 隱藏收款碼
+        document.getElementById("receiveSection").classList.add("hidden");
         log("已斷開連線", "text-gray-400");
     }
 
@@ -455,16 +490,33 @@
             document.getElementById("connectedActions").classList.remove("hidden");
             const shortAddr = userAddress.substring(0, 6) + "..." + userAddress.substring(38);
             document.getElementById("navWalletAddress").innerText = shortAddr;
+            document.getElementById("mainInterface").classList.remove("opacity-50", "pointer-events-none");
+            
+            // 鎖定網路選擇器避免操作中切換
+            document.getElementById("networkSelector").disabled = true;
+            document.getElementById("networkSelector").classList.add("opacity-50", "cursor-not-allowed");
         } else {
             document.getElementById("btnConnect").classList.remove("hidden");
             document.getElementById("connectedActions").classList.add("hidden");
+            document.getElementById("mainInterface").classList.add("opacity-50", "pointer-events-none");
+            
+            // 解鎖網路選擇器
+            document.getElementById("networkSelector").disabled = false;
+            document.getElementById("networkSelector").classList.remove("opacity-50", "cursor-not-allowed");
         }
+    }
+
+    // 監聽 MetaMask 的網路變更事件 (如果使用者從外部切換)
+    if (window.ethereum) {
+        window.ethereum.on('chainChanged', () => {
+            // 重新整理頁面以確保狀態正確
+            window.location.reload();
+        });
     }
 
     async function loadData() {
         if (!bankContract) return;
         
-        // 讀取銀行全域數據
         const totalDep = await bankContract.totalDeposit();
         const feeRate = await bankContract.feeRate();
         const isPaused = await bankContract.paused();
@@ -472,7 +524,6 @@
         
         document.getElementById("totalDeposit").innerText = ethers.formatUnits(totalDep, tokenDecimals);
         
-        // 費率顯示更新
         const feeRateVal = Number(feeRate) / 100;
         document.getElementById("currentFeeRate").innerHTML = `${feeRateVal}% <span class="text-xs opacity-75">(VIP: 0%)</span>`;
 
@@ -481,7 +532,6 @@
         if (isShutdown) statusHtml = '<span class="text-red-600 font-bold">☢️ 清算中</span>';
         document.getElementById("systemStatus").innerHTML = statusHtml;
 
-        // 讀取個人餘額
         const myBal = await bankContract.balances(userAddress);
         const walletBal = await tokenContract.balanceOf(userAddress);
         document.getElementById("myBalance").innerText = ethers.formatUnits(myBal, tokenDecimals);
@@ -489,8 +539,7 @@
 
         await checkRoles();
         
-        // 授權檢查
-        const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+        const allowance = await tokenContract.allowance(userAddress, NETWORKS[currentNetworkKey].contractAddress);
         if (allowance == 0) {
             document.getElementById("allowanceText").innerText = "未授權";
             document.getElementById("allowanceText").className = "font-bold text-red-500";
@@ -517,7 +566,6 @@
             tagsDiv.innerHTML += `<span class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">Admin</span>`;
             document.getElementById("adminPanel").classList.remove("hidden");
             
-            // 如果是管理員，順便更新一下管理員面板的數據
             await checkTimelock();
             const fees = await bankContract.accumulatedFees();
             document.getElementById("adminFees").innerText = ethers.formatUnits(fees, tokenDecimals);
@@ -525,9 +573,7 @@
         if (isVIP) tagsDiv.innerHTML += `<span class="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">VIP</span>`;
         if (isBlacklisted) {
             tagsDiv.innerHTML += `<span class="bg-black text-white px-2 py-1 rounded text-xs font-bold">Blacklisted</span>`;
-            document.getElementById("userActions").classList.add("opacity-50", "pointer-events-none");
-        } else {
-            document.getElementById("userActions").classList.remove("opacity-50", "pointer-events-none");
+            document.getElementById("mainInterface").classList.add("opacity-50", "pointer-events-none");
         }
     }
 
@@ -561,21 +607,17 @@
         }
     }
 
-    // ================= 功能增強：+/- 金額調整 =================
     function adjustAmount(inputId, delta) {
         const input = document.getElementById(inputId);
         let currentValue = parseFloat(input.value) || 0;
         let newValue = currentValue + delta;
         if (newValue < 0) newValue = 0;
-        // 處理浮點數精度問題
         input.value = Math.round(newValue * 10000) / 10000;
     }
 
-    // ================= 功能增強：生成 QR Code =================
     function generateMyQRCode(address) {
         const container = document.getElementById("qrcode");
-        container.innerHTML = ""; // 清空舊的
-        
+        container.innerHTML = "";
         new QRCode(container, {
             text: address,
             width: 150,
@@ -584,57 +626,42 @@
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
         });
-        
         document.getElementById("displayQrAddress").innerText = address;
         document.getElementById("receiveSection").classList.remove("hidden");
     }
 
-    // ================= 功能增強：掃描 QR Code =================
     function toggleScanner() {
         const modal = document.getElementById("scannerModal");
         if (modal.classList.contains("hidden")) {
-            // 開啟掃描器
             modal.classList.remove("hidden");
             html5QrcodeScanner = new Html5Qrcode("reader");
-            
             html5QrcodeScanner.start(
-                { facingMode: "environment" }, // 後置鏡頭
+                { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText, decodedResult) => {
-                    // 掃描成功回調
+                (decodedText) => {
                     if(ethers.isAddress(decodedText)) {
                         document.getElementById("transferTo").value = decodedText;
-                        toggleScanner(); // 關閉掃描器
+                        toggleScanner();
                         log("地址掃描成功！");
                     } else {
-                        alert("掃描到的內容不是有效的錢包地址");
+                        alert("無效的錢包地址");
                     }
-                },
-                (errorMessage) => {
-                    // 掃描錯誤或無結果 (忽略)
                 }
-            ).catch(err => {
-                alert("無法啟動相機: " + err);
-                toggleScanner();
-            });
-
+            ).catch(err => { alert("無法啟動相機: " + err); toggleScanner(); });
         } else {
-            // 關閉掃描器
             if(html5QrcodeScanner) {
                 html5QrcodeScanner.stop().then(() => {
                     html5QrcodeScanner.clear();
                     modal.classList.add("hidden");
                 }).catch(err => console.log(err));
-            } else {
-                modal.classList.add("hidden");
-            }
+            } else { modal.classList.add("hidden"); }
         }
     }
 
-    // ================= 交易功能 =================
     async function approveToken() {
+        if (!bankContract) return alert("請先連接錢包！");
         try {
-            const tx = await tokenContract.approve(CONTRACT_ADDRESS, ethers.MaxUint256);
+            const tx = await tokenContract.approve(NETWORKS[currentNetworkKey].contractAddress, ethers.MaxUint256);
             log("授權發送中...", "text-yellow-400");
             await tx.wait();
             log("授權成功！");
@@ -643,6 +670,7 @@
     }
 
     async function deposit() {
+        if (!bankContract) return alert("請先連接錢包！");
         const val = document.getElementById("depositInput").value;
         if (!val) return;
         try {
@@ -656,6 +684,7 @@
     }
 
     async function withdraw() {
+        if (!bankContract) return alert("請先連接錢包！");
         const val = document.getElementById("withdrawInput").value;
         if (!val) return;
         try {
@@ -669,6 +698,7 @@
     }
 
     async function transfer() {
+        if (!bankContract) return alert("請先連接錢包！");
         const to = document.getElementById("transferTo").value;
         const val = document.getElementById("transferAmount").value;
         if (!to || !val) return alert("請輸入完整資訊");
@@ -682,90 +712,43 @@
         } catch (e) { log(e.reason||e.message, "text-red-500"); }
     }
 
-    // ================= 管理員功能 (完整版) =================
-
     async function queueFeeRate() {
+        if (!bankContract) return alert("請先連接錢包！");
         const rate = document.getElementById("newFeeRate").value;
-        try {
-            const tx = await bankContract.queueFeeRateUpdate(rate);
-            log("已發送排程請求...");
-            await tx.wait();
-            log("排程成功，進入鎖定期");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        try { const tx = await bankContract.queueFeeRateUpdate(rate); log("排程請求中..."); await tx.wait(); log("排程成功"); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function executeFeeRate() {
-        try {
-            const tx = await bankContract.executeFeeRateUpdate();
-            log("正在執行費率更新...");
-            await tx.wait();
-            log("費率更新完畢！");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        if (!bankContract) return alert("請先連接錢包！");
+        try { const tx = await bankContract.executeFeeRateUpdate(); log("更新中..."); await tx.wait(); log("費率更新完畢"); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function setBlacklist(status) {
+        if (!bankContract) return alert("請先連接錢包！");
         const addr = document.getElementById("blacklistAddr").value;
-        if(!addr) return;
-        try {
-            const tx = await bankContract.setBlacklist(addr, status);
-            log(`黑名單設定: ${status}`);
-            await tx.wait();
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        try { const tx = await bankContract.setBlacklist(addr, status); log("黑名單更新中..."); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function setVIP(status) {
+        if (!bankContract) return alert("請先連接錢包！");
         const addr = document.getElementById("vipAddr").value;
-        if(!addr) return;
-        try {
-            const tx = await bankContract.setVIP(addr, status);
-            await tx.wait();
-            log("VIP 設定成功");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        try { const tx = await bankContract.setVIP(addr, status); log("VIP更新中..."); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function setPaused(state) {
-        try {
-            const tx = await bankContract.setPaused(state);
-            await tx.wait();
-            log(state ? "系統已暫停" : "系統已恢復");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        if (!bankContract) return alert("請先連接錢包！");
+        try { const tx = await bankContract.setPaused(state); log("狀態更新中..."); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function claimFees() {
-        try {
-            const tx = await bankContract.adminClaimFees();
-            await tx.wait();
-            log("收益提領成功");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        if (!bankContract) return alert("請先連接錢包！");
+        try { const tx = await bankContract.adminClaimFees(); log("提領中..."); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function triggerShutdown() {
-        if(!confirm("⚠️ 危險：確定要進入清算模式嗎？此操作不可逆！")) return;
-        try {
-            const tx = await bankContract.triggerShutdown();
-            await tx.wait();
-            log("已進入清算模式", "text-red-500");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        if (!bankContract) return alert("請先連接錢包！");
+        if(!confirm("確定要清算？")) return;
+        try { const tx = await bankContract.triggerShutdown(); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
-
     async function batchRefund() {
+        if (!bankContract) return alert("請先連接錢包！");
         const text = document.getElementById("refundList").value;
-        if (!text) return;
-        const addresses = text.split('\n').map(a => a.trim()).filter(a => a !== "");
-        try {
-            const tx = await bankContract.batchRefund(addresses);
-            log("批次退款執行中...");
-            await tx.wait();
-            log("批次退款完畢");
-            loadData();
-        } catch (e) { log(e.message, "text-red-500"); }
+        const addrs = text.split('\n').map(a=>a.trim()).filter(a=>a!=="");
+        try { const tx = await bankContract.batchRefund(addrs); await tx.wait(); loadData(); } catch(e){log(e.message,"text-red-500")}
     }
 
     function log(msg, colorClass = "text-green-400") {
