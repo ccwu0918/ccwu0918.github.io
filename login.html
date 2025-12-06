@@ -133,6 +133,7 @@
             userInfoCard.classList.toggle('hidden', !loggedIn);
             
             if (loggedIn) {
+                // 修正：檢查 user.email，如果為空則顯示 '無電子郵件'
                 document.getElementById('display-name').textContent = user.displayName || '無名稱';
                 document.getElementById('display-email').textContent = user.email || '無電子郵件';
                 document.getElementById('display-uid').textContent = user.uid;
@@ -143,9 +144,8 @@
             }
         }
         
-        // --- Firebase 配置管理 ---
+        // --- Firebase 配置管理 (與前一版本相同) ---
         function loadConfig() {
-            // 1. 優先使用全域變數 (Canvas 提供)
             if (typeof __firebase_config !== 'undefined') {
                 try {
                     firebaseConfig = JSON.parse(__firebase_config);
@@ -156,8 +156,6 @@
                     console.warn("解析全域 __firebase_config 失敗:", e);
                 }
             }
-
-            // 2. 其次使用 sessionStorage 中儲存的配置
             const savedConfig = sessionStorage.getItem('firebaseConfig');
             if (savedConfig) {
                 try {
@@ -167,37 +165,31 @@
                     return true;
                 } catch (e) {
                     console.error("解析 sessionStorage 配置失敗:", e);
-                    sessionStorage.removeItem('firebaseConfig'); // 清除錯誤的配置
+                    sessionStorage.removeItem('firebaseConfig');
                 }
             }
-            
-            // 3. 如果都沒有，使用空物件 (等待使用者輸入)
             configInput.value = JSON.stringify({}, null, 2);
             return false;
         }
 
-        // 新增：嘗試格式化 JSON
         function formatJsonInput() {
             try {
                 const configText = configInput.value.trim();
-                if (!configText) return; // Allow empty input
+                if (!configText) return; 
                 const config = JSON.parse(configText);
                 configInput.value = JSON.stringify(config, null, 2);
                 return true;
             } catch (error) {
-                // 如果格式化失敗，不顯示錯誤，讓 saveConfig 處理
                 return false;
             }
         }
 
         function saveConfig() {
-            // 嘗試在儲存前格式化 JSON，幫助檢查格式
             formatJsonInput();
 
             try {
                 const configText = configInput.value.trim();
                 if (configText === '{}' || configText === '') {
-                    // 允許儲存空物件，但給出提示
                     sessionStorage.removeItem('firebaseConfig');
                     firebaseConfig = {};
                     showMessage("配置已清除。請輸入有效的配置後再嘗試登入。", true);
@@ -206,7 +198,6 @@
 
                 const config = JSON.parse(configText);
                 
-                // 執行基本檢查
                 if (!config.apiKey || !config.projectId) {
                     showMessage("儲存失敗：Firebase 配置應包含 'apiKey' 和 'projectId' 等必要欄位。", true);
                     return;
@@ -216,13 +207,12 @@
                 firebaseConfig = config;
                 showMessage("Firebase 配置已成功儲存到瀏覽器。請重新整理頁面以初始化服務。", false);
             } catch (error) {
-                // 這裡捕獲 JSON.parse 錯誤，並提供更詳細的提示
                 showMessage("儲存失敗：請確保輸入**有效的 JSON 格式**！常見錯誤包括：缺少雙引號、尾隨逗號或使用單引號等。", true);
                 console.error("儲存配置錯誤:", error);
             }
         }
 
-        // --- Firebase 服務初始化 ---
+        // --- Firebase 服務初始化 (與前一版本相同) ---
         function initializeFirebase() {
             if (Object.keys(firebaseConfig).length === 0) {
                 showMessage("⚠️ 警告：Firebase 配置遺失。請在上方區塊輸入配置後儲存。", true);
@@ -234,16 +224,9 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 
-                // 設定 Firestore 日誌級別
-                // setLogLevel('Debug'); 
-
-                // 設置認證持久性為當前會話 (可選，避免下次重新整理時一直記住)
                 setPersistence(auth, browserSessionPersistence);
-                
-                // 執行初始認證流程 (用於 Canvas 環境)
                 initialAuth();
 
-                // 監聽認證狀態
                 onAuthStateChanged(auth, (user) => {
                     updateUI(user);
                     if (user && !user.isAnonymous) {
@@ -272,14 +255,17 @@
             }
         }
 
-        // --- Firestore 邏輯 ---
+        // --- Firestore 邏輯 (使用修正後的 email 值) ---
         const getStudentDocPath = (uid) => 
             `artifacts/${appId}/public/data/students/${uid}`;
 
-        async function saveStudentData(userCredential) {
+        async function saveStudentData(userCredential, correctedEmail) {
             if (!db) return;
             
-            const { uid, displayName, email } = userCredential;
+            // 使用修正後的 Email，如果 correctedEmail 存在，則覆蓋 userCredential.email
+            const finalEmail = correctedEmail || userCredential.email || '';
+            const { uid, displayName } = userCredential;
+            
             const studentDocRef = doc(db, getStudentDocPath(uid));
             
             try {
@@ -288,18 +274,17 @@
                 const studentData = {
                     userId: uid,
                     displayName: displayName || '未知學生',
-                    email: email || '',
+                    email: finalEmail, // 使用最終確定的 Email
                     lastLoginAt: new Date().toISOString(),
                 };
 
                 if (!docSnap.exists()) {
-                    // 新增首次登入時間
                     studentData.createdAt = new Date().toISOString();
                     await setDoc(studentDocRef, studentData);
                     showMessage(`新學生資料已新增: ${displayName} (${uid})`);
                 } else {
-                    // 更新登入時間
                     await setDoc(studentDocRef, { 
+                        email: finalEmail, // 確保 Email 資訊也被更新
                         lastLoginAt: studentData.lastLoginAt 
                     }, { merge: true });
                     showMessage(`學生資料已更新: ${displayName} (${uid})`);
@@ -310,7 +295,26 @@
             }
         }
 
-        // --- 認證事件處理 ---
+        // --- JWT Token 解析輔助函式 ---
+        function parseJwt(token) {
+            try {
+                // JWT 格式為 header.payload.signature
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                // 使用 atob 解碼 base64
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error("解析 JWT 失敗:", e);
+                return null;
+            }
+        };
+
+
+        // --- 認證事件處理 (加入 ID Token 解析) ---
         async function handleGoogleSignIn() {
             if (!auth) {
                 showMessage("認證服務尚未初始化。", true);
@@ -322,35 +326,44 @@
 
             try {
                 const provider = new GoogleAuthProvider();
-                
-                // ********* 修正：明確要求 Email 權限 *********
                 provider.addScope('email'); 
-                // ***************************************
-
-                // 可以在此處設定 { hd: 'your-school-domain.edu' } 限制學校網域 (選用)
-                // provider.setCustomParameters({ hd: 'your-school-domain.edu' }); 
-
+                
                 const result = await signInWithPopup(auth, provider);
-                await saveStudentData(result.user);
+                const user = result.user;
+                
+                let correctedEmail = null;
+                
+                // **** 新增步驟：解析 ID Token 嘗試獲取 Email ****
+                const idToken = await user.getIdToken();
+                const payload = parseJwt(idToken);
+                
+                if (payload && payload.email) {
+                    correctedEmail = payload.email;
+                    // 如果 user.email 是空的，但 ID Token 裡有 Email，則手動更新 Auth 狀態以便 UI 顯示
+                    if (!user.email) {
+                        // 雖然不能直接修改 Firebase user 物件，但我們可以記錄並用於 UI/DB 更新
+                        console.log(`從 ID Token 取得 Email: ${correctedEmail}`);
+                        user.email = correctedEmail; // 暫時修改 user 物件用於 UI
+                    }
+                }
+                // ********************************************
+
+                // 將使用者資訊和解析到的 Email 傳遞給儲存函式
+                await saveStudentData(user, correctedEmail);
                 
             } catch (error) {
                 console.error("Google 登入失敗:", error);
                 
-                let errorMessage = '登入失敗，請檢查網路或重試。'; // Fallback message
+                let errorMessage = '登入失敗，請檢查網路或重試。'; 
                 
                 if (error.code) {
-                    // 處理常見的 Firebase 認證錯誤
                     if (error.code === 'auth/popup-closed-by-user') {
                         errorMessage = "登入視窗已被關閉或彈出式視窗被阻擋。";
-                    } else if (error.code === 'auth/cancelled-popup-request') {
-                        errorMessage = "登入嘗試被取消。";
                     } else if (error.code === 'auth/unauthorized-domain') {
-                        // 提供具體指導
                         errorMessage = "認證錯誤 [auth/unauthorized-domain]: 此網域未授權。請務必將您目前頁面所在的網域加入 Firebase Console -> Authentication -> Settings -> Authorized domains 清單中！";
                     } else if (error.code === 'auth/operation-not-allowed') {
                         errorMessage = "Firebase 設定錯誤：Google 登入方式未在 Firebase Console 中啟用。";
                     } else {
-                        // 顯示原始錯誤代碼
                         errorMessage = `認證錯誤 [${error.code}]: ${error.message}`;
                     }
                 } else if (error.message && error.message.includes('A Firebase project ID is required')) {
@@ -368,7 +381,6 @@
             toggleLoading(true);
             try {
                 await signOut(auth);
-                // 登出後重新執行匿名登入以保持 Canvas 環境的連線
                 await initialAuth(); 
                 showMessage('您已成功登出。', false);
             } catch (error) {
@@ -381,13 +393,9 @@
 
         // --- 初始化應用程式 ---
         window.onload = function() {
-            // 1. 載入或設定配置
             loadConfig();
-            
-            // 2. 初始化 Firebase 服務並啟動認證監聽
             initializeFirebase();
 
-            // 3. 設定事件監聽器
             googleSignInBtn.addEventListener('click', handleGoogleSignIn);
             if (signOutBtn) signOutBtn.addEventListener('click', handleSignOut);
             
@@ -396,12 +404,10 @@
                 const isHidden = configFormContainer.classList.toggle('hidden');
                 configArrow.classList.toggle('rotate-180', !isHidden);
                 if (!isHidden) {
-                     // 在展開時嘗試格式化 JSON，提升使用者體驗
                      formatJsonInput();
                 }
             });
 
-            // 在輸入框失去焦點時嘗試格式化 (幫助使用者檢查)
             configInput.addEventListener('blur', formatJsonInput);
         };
     </script>
