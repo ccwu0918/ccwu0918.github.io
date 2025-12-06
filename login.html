@@ -38,7 +38,7 @@
                     儲存配置到瀏覽器
                 </button>
                 <p class="text-xs text-gray-500">
-                    注意：此配置僅作為全域變數 (`__firebase_config`) 不存在時的備用。
+                    注意：此配置僅作為全域變數 (`firebase_config`) 不存在時的備用。
                 </p>
             </div>
         </div>
@@ -95,8 +95,21 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         let app, auth, db;
+        
+        // ********* 修正 1: 硬編碼 Firebase 配置作為預設值 *********
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCs54DFYaBJn3B1pPrtYhWcDY7HVwuVJnY",
+            authDomain: "aiquiz-7c15c.firebaseapp.com",
+            projectId: "aiquiz-7c15c",
+            storageBucket: "aiquiz-7c15c.firebasestorage.app",
+            messagingSenderId: "504770628758",
+            appId: "1:504770628758:web:347706dd78d7a2f6f406b7",
+            measurementId: "G-3FNYN6XJNW"
+        };
         let firebaseConfig = {};
-        let currentStudentEmail = null; // 新增：用於儲存最可靠的 Email，作為 UI 顯示的 fallback
+        // ************************************************************
+
+        let currentStudentEmail = null; 
 
         // DOM 元素快取
         const msgBox = document.getElementById('message-box');
@@ -148,18 +161,20 @@
             }
         }
         
-        // --- Firebase 配置管理 (無變動) ---
+        // --- Firebase 配置管理 ---
         function loadConfig() {
-            if (typeof __firebase_config !== 'undefined') {
+            // ********* 修正 2: 檢查新的全域變數名稱 `firebase_config` *********
+            if (typeof firebase_config !== 'undefined') {
                 try {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                    console.log("使用全域變數 Firebase 配置。");
+                    firebaseConfig = JSON.parse(firebase_config);
+                    console.log("使用全域變數 firebase_config 配置。");
                     configInput.value = JSON.stringify(firebaseConfig, null, 2);
                     return true;
                 } catch (e) {
-                    console.warn("解析全域 __firebase_config 失敗:", e);
+                    console.warn("解析全域 firebase_config 失敗:", e);
                 }
             }
+            // ********************************************************************
 
             const savedConfig = sessionStorage.getItem('firebaseConfig');
             if (savedConfig) {
@@ -174,8 +189,11 @@
                 }
             }
             
-            configInput.value = JSON.stringify({}, null, 2);
-            return false;
+            // 如果沒有全域變數和 sessionStorage 儲存，使用硬編碼的 DEFAULT_FIREBASE_CONFIG
+            firebaseConfig = DEFAULT_FIREBASE_CONFIG;
+            configInput.value = JSON.stringify(firebaseConfig, null, 2);
+            console.log("使用預設硬編碼的 Firebase 配置。");
+            return true;
         }
 
         function formatJsonInput() {
@@ -194,12 +212,14 @@
             formatJsonInput();
             try {
                 const configText = configInput.value.trim();
-                if (configText === '{}' || configText === '') {
+                if (configText === '{}' || configText === JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2) || configText === '') {
+                    // 如果輸入是空或與預設配置相同，則不做 sessionStorage 儲存，但仍需設定 firebaseConfig
                     sessionStorage.removeItem('firebaseConfig');
-                    firebaseConfig = {};
-                    showMessage("配置已清除。請輸入有效的配置後再嘗試登入。", true);
+                    firebaseConfig = DEFAULT_FIREBASE_CONFIG;
+                    showMessage("配置已重置或與預設值相同，已使用預設配置。", false);
                     return;
                 }
+                
                 const config = JSON.parse(configText);
                 if (!config.apiKey || !config.projectId) {
                     showMessage("儲存失敗：Firebase 配置應包含 'apiKey' 和 'projectId' 等必要欄位。", true);
@@ -216,7 +236,7 @@
 
         // --- Firebase 服務初始化 (無變動) ---
         function initializeFirebase() {
-            if (Object.keys(firebaseConfig).length === 0) {
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
                 showMessage("⚠️ 警告：Firebase 配置遺失。請在上方區塊輸入配置後儲存。", true);
                 return;
             }
@@ -243,26 +263,39 @@
             }
         }
 
+        // ********* 修正 3: 修訂 initialAuth 函數以處理 Custom Token 失敗時的 Fallback *********
         async function initialAuth() {
             if (!auth) return;
-            try {
-                if (initialAuthToken) {
+            
+            // 1. 嘗試使用自定義 Token 登入 (如果存在)
+            if (initialAuthToken) {
+                try {
                     await signInWithCustomToken(auth, initialAuthToken);
                     console.log("使用自定義 Token 登入成功。");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("使用匿名方式登入成功。");
+                    return; // 成功就直接返回
+                } catch (error) {
+                    // 忽略 auth/custom-token-mismatch 錯誤，因為這是預期中專案不匹配的行為。
+                    console.warn("初始認證失敗 (自定義 Token 無效，將嘗試匿名登入):", error.message);
+                    // 繼續執行匿名登入作為 fallback
                 }
+            }
+            
+            // 2. 執行匿名登入
+            try {
+                await signInAnonymously(auth);
+                console.log("使用匿名方式登入成功。");
             } catch (error) {
-                console.error("初始認證失敗:", error);
+                console.error("匿名登入失敗:", error);
+                showMessage("錯誤：無法完成初始匿名登入。", true);
             }
         }
+        // *****************************************************************************************
+
 
         // --- Firestore 邏輯 ---
         const getStudentDocPath = (uid) => 
             `artifacts/${appId}/public/data/students/${uid}`;
 
-        // ********* 修正：接受 Email 參數，並用於儲存 *********
         async function saveStudentData(userCredential, emailToSave) {
             if (!db) return;
             
@@ -337,7 +370,8 @@
                     } else if (error.code === 'auth/cancelled-popup-request') {
                         errorMessage = "登入嘗試被取消。";
                     } else if (error.code === 'auth/unauthorized-domain') {
-                        errorMessage = "認證錯誤 [auth/unauthorized-domain]: 此網域未授權。請務必將您目前頁面所在的網域加入 Firebase Console -> Authentication -> Settings -> Authorized domains 清單中！";
+                        // 修正：提供更明確的修復指南
+                        errorMessage = "認證錯誤 [auth/unauthorized-domain]: 此網域未授權。請務必將您目前頁面所在的網域加入 Firebase Console -> Authentication -> Settings -> **Authorized domains** 清單中！";
                     } else if (error.code === 'auth/operation-not-allowed') {
                         errorMessage = "Firebase 設定錯誤：Google 登入方式未在 Firebase Console 中啟用。";
                     } else {
