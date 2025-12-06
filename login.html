@@ -26,6 +26,23 @@
         <!-- 系統訊息顯示區 -->
         <div id="message-box" class="hidden p-3 text-sm rounded-lg transition-all duration-300"></div>
 
+        <!-- Firebase 設定區塊 -->
+        <div id="config-section" class="border border-gray-200 rounded-lg p-4 space-y-3">
+            <button id="toggle-config-btn" class="w-full flex justify-between items-center text-left text-sm font-semibold text-gray-700 hover:text-indigo-600 transition-colors">
+                <span>Firebase 配置設定 (備用)</span>
+                <svg id="config-arrow" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div id="config-form-container" class="hidden space-y-3">
+                <textarea id="firebase-config-input" rows="5" class="w-full p-2 border border-gray-300 rounded-md text-xs font-mono focus:ring-indigo-500 focus:border-indigo-500" placeholder='{"apiKey": "YOUR_API_KEY", "authDomain": "YOUR_AUTH_DOMAIN", "projectId": "YOUR_PROJECT_ID", ...}'></textarea>
+                <button id="save-config-btn" class="w-full px-4 py-2 text-sm font-medium rounded-lg text-white bg-green-500 hover:bg-green-600 transition duration-150 ease-in-out">
+                    儲存配置到瀏覽器
+                </button>
+                <p class="text-xs text-gray-500">
+                    注意：此配置僅作為全域變數 (`__firebase_config`) 不存在時的備用。
+                </p>
+            </div>
+        </div>
+
         <!-- 登入狀態顯示區 -->
         <div id="auth-status-container" class="space-y-4">
             <!-- 登入按鈕 -->
@@ -77,19 +94,9 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // ********* 硬編碼的預設 Firebase 配置 *********
-        let firebaseConfig = {
-            apiKey: "AIzaSyCs54DFYaBJn3B1pPrtYhWcDY7HVwuVJnY",
-            authDomain: "aiquiz-7c15c.firebaseapp.com",
-            projectId: "aiquiz-7c15c",
-            storageBucket: "aiquiz-7c15c.firebasestorage.app",
-            messagingSenderId: "504770628758",
-            appId: "1:504770628758:web:347706dd78d7a2f6f406b7",
-            measurementId: "G-3FNYN6XJNW"
-        };
-        // ********************************************
-
         let app, auth, db;
+        let firebaseConfig = {};
+        let currentStudentEmail = null; // 新增：用於儲存最可靠的 Email，作為 UI 顯示的 fallback
 
         // DOM 元素快取
         const msgBox = document.getElementById('message-box');
@@ -97,8 +104,13 @@
         const signOutBtn = document.getElementById('sign-out-btn');
         const userInfoCard = document.getElementById('user-info-card');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const configInput = document.getElementById('firebase-config-input');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        const toggleConfigBtn = document.getElementById('toggle-config-btn');
+        const configFormContainer = document.getElementById('config-form-container');
+        const configArrow = document.getElementById('config-arrow');
 
-        // --- UI 輔助函式 (與前一版本相同) ---
+        // --- UI 輔助函式 ---
         function showMessage(text, isError = false) {
             msgBox.textContent = text;
             msgBox.className = `p-3 text-sm rounded-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-indigo-50 text-indigo-700'}`;
@@ -122,30 +134,100 @@
             userInfoCard.classList.toggle('hidden', !loggedIn);
             
             if (loggedIn) {
+                // 優先使用 user.email，否則使用全局儲存的 email，最後才是 '無電子郵件'
+                const displayEmail = user.email || currentStudentEmail || '無電子郵件';
+
                 document.getElementById('display-name').textContent = user.displayName || '無名稱';
-                document.getElementById('display-email').textContent = user.email || '無電子郵件';
+                document.getElementById('display-email').textContent = displayEmail;
                 document.getElementById('display-uid').textContent = user.uid;
             } else {
+                // 如果是匿名或未登入，顯示登入按鈕
                 googleSignInBtn.classList.remove('hidden');
                 googleSignInBtn.textContent = '透過 Google Education 帳號登入';
+                currentStudentEmail = null; // 登出時重置 email 
             }
         }
         
-        // --- Firebase 服務初始化 ---
-        function initializeFirebase(config) {
-            if (!config || !config.apiKey) {
-                showMessage("⚠️ 警告：Firebase 配置遺失或不完整。", true);
+        // --- Firebase 配置管理 (無變動) ---
+        function loadConfig() {
+            if (typeof __firebase_config !== 'undefined') {
+                try {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                    console.log("使用全域變數 Firebase 配置。");
+                    configInput.value = JSON.stringify(firebaseConfig, null, 2);
+                    return true;
+                } catch (e) {
+                    console.warn("解析全域 __firebase_config 失敗:", e);
+                }
+            }
+
+            const savedConfig = sessionStorage.getItem('firebaseConfig');
+            if (savedConfig) {
+                try {
+                    firebaseConfig = JSON.parse(savedConfig);
+                    console.log("使用 sessionStorage 儲存的 Firebase 配置。");
+                    configInput.value = JSON.stringify(firebaseConfig, null, 2);
+                    return true;
+                } catch (e) {
+                    console.error("解析 sessionStorage 配置失敗:", e);
+                    sessionStorage.removeItem('firebaseConfig');
+                }
+            }
+            
+            configInput.value = JSON.stringify({}, null, 2);
+            return false;
+        }
+
+        function formatJsonInput() {
+            try {
+                const configText = configInput.value.trim();
+                if (!configText) return;
+                const config = JSON.parse(configText);
+                configInput.value = JSON.stringify(config, null, 2);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function saveConfig() {
+            formatJsonInput();
+            try {
+                const configText = configInput.value.trim();
+                if (configText === '{}' || configText === '') {
+                    sessionStorage.removeItem('firebaseConfig');
+                    firebaseConfig = {};
+                    showMessage("配置已清除。請輸入有效的配置後再嘗試登入。", true);
+                    return;
+                }
+                const config = JSON.parse(configText);
+                if (!config.apiKey || !config.projectId) {
+                    showMessage("儲存失敗：Firebase 配置應包含 'apiKey' 和 'projectId' 等必要欄位。", true);
+                    return;
+                }
+                sessionStorage.setItem('firebaseConfig', configText);
+                firebaseConfig = config;
+                showMessage("Firebase 配置已成功儲存到瀏覽器。請重新整理頁面以初始化服務。", false);
+            } catch (error) {
+                showMessage("儲存失敗：請確保輸入**有效的 JSON 格式**！常見錯誤包括：缺少雙引號、尾隨逗號或使用單引號等。", true);
+                console.error("儲存配置錯誤:", error);
+            }
+        }
+
+        // --- Firebase 服務初始化 (無變動) ---
+        function initializeFirebase() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                showMessage("⚠️ 警告：Firebase 配置遺失。請在上方區塊輸入配置後儲存。", true);
                 return;
             }
             
             try {
-                // 覆寫預設配置，確保使用最新或載入的配置
-                firebaseConfig = config; 
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 
                 setPersistence(auth, browserSessionPersistence);
+                
                 initialAuth();
 
                 onAuthStateChanged(auth, (user) => {
@@ -164,39 +246,27 @@
         async function initialAuth() {
             if (!auth) return;
             try {
-                // *** 修正: 由於我們使用的是自定義/硬編碼的配置，Canvas 環境的 Token 無效，故直接使用匿名登入。 ***
-                await signInAnonymously(auth);
-                console.log("使用匿名方式登入成功。");
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("使用自定義 Token 登入成功。");
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("使用匿名方式登入成功。");
+                }
             } catch (error) {
                 console.error("初始認證失敗:", error);
             }
         }
 
-        // --- Firestore 邏輯 (與前一版本相同) ---
+        // --- Firestore 邏輯 ---
         const getStudentDocPath = (uid) => 
             `artifacts/${appId}/public/data/students/${uid}`;
 
-        function parseJwt(token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-            } catch (e) {
-                console.error("解析 JWT 失敗:", e);
-                return null;
-            }
-        };
-
-
-        async function saveStudentData(userCredential, correctedEmail) {
+        // ********* 修正：接受 Email 參數，並用於儲存 *********
+        async function saveStudentData(userCredential, emailToSave) {
             if (!db) return;
             
-            const finalEmail = correctedEmail || userCredential.email || '';
             const { uid, displayName } = userCredential;
-            
             const studentDocRef = doc(db, getStudentDocPath(uid));
             
             try {
@@ -205,7 +275,7 @@
                 const studentData = {
                     userId: uid,
                     displayName: displayName || '未知學生',
-                    email: finalEmail,
+                    email: emailToSave || '', // 使用傳入的 Email
                     lastLoginAt: new Date().toISOString(),
                 };
 
@@ -215,8 +285,8 @@
                     showMessage(`新學生資料已新增: ${displayName} (${uid})`);
                 } else {
                     await setDoc(studentDocRef, { 
-                        email: finalEmail,
-                        lastLoginAt: studentData.lastLoginAt 
+                        lastLoginAt: studentData.lastLoginAt,
+                        email: emailToSave // 確保 Email 資訊也被更新
                     }, { merge: true });
                     showMessage(`學生資料已更新: ${displayName} (${uid})`);
                 }
@@ -226,7 +296,7 @@
             }
         }
 
-        // --- 認證事件處理 (與前一版本相同) ---
+        // --- 認證事件處理 ---
         async function handleGoogleSignIn() {
             if (!auth) {
                 showMessage("認證服務尚未初始化。", true);
@@ -238,35 +308,34 @@
 
             try {
                 const provider = new GoogleAuthProvider();
-                provider.addScope('email'); 
                 
+                // ********* 修正：明確要求 Email 和 Profile 權限 *********
+                provider.addScope('email'); 
+                provider.addScope('profile');
+                // ******************************************************
+
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
                 
-                let correctedEmail = null;
-                
-                // 解析 ID Token 嘗試獲取 Email
-                const idToken = await user.getIdToken();
-                const payload = parseJwt(idToken);
-                
-                if (payload && payload.email) {
-                    correctedEmail = payload.email;
-                    if (!user.email) {
-                        console.log(`從 ID Token 取得 Email: ${correctedEmail}`);
-                        user.email = correctedEmail; // 暫時修改 user 物件用於 UI
-                    }
-                }
+                // **修正：從 result 中提取最可靠的 Email**
+                let retrievedEmail = user.email || (result.additionalUserInfo.profile ? result.additionalUserInfo.profile.email : '');
+                currentStudentEmail = retrievedEmail; // 更新全局變數用於 UI 顯示 (作為 user.email 的 fallback)
 
-                await saveStudentData(user, correctedEmail);
+                await saveStudentData(user, retrievedEmail); // 傳遞最可靠的 Email
+                
+                // Manually trigger UI update with the user object, which will now use the global fallback
+                updateUI(user);
                 
             } catch (error) {
                 console.error("Google 登入失敗:", error);
                 
-                let errorMessage = '登入失敗，請檢查網路或重試。'; 
+                let errorMessage = '登入失敗，請檢查網路或重試。'; // Fallback message
                 
                 if (error.code) {
                     if (error.code === 'auth/popup-closed-by-user') {
                         errorMessage = "登入視窗已被關閉或彈出式視窗被阻擋。";
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        errorMessage = "登入嘗試被取消。";
                     } else if (error.code === 'auth/unauthorized-domain') {
                         errorMessage = "認證錯誤 [auth/unauthorized-domain]: 此網域未授權。請務必將您目前頁面所在的網域加入 Firebase Console -> Authentication -> Settings -> Authorized domains 清單中！";
                     } else if (error.code === 'auth/operation-not-allowed') {
@@ -299,65 +368,24 @@
             }
         }
 
-
-        // --- 初始化應用程式 (符合您的要求) ---
-        const initApp = async () => {
-            // 由於沒有外部 manualConfig，直接跳過第一個 if 判斷。
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const encryptedConfig = urlParams.get('config');
-            
-            if (encryptedConfig) {
-                try {
-                    // 解碼 Base64
-                    const decoded = atob(encryptedConfig);
-                    const configObj = JSON.parse(decoded);
-                    
-                    // 儲存到 localStorage
-                    localStorage.setItem('firebase_config', JSON.stringify(configObj));
-                    
-                    // 清理 URL，保留 student mode
-                    const cleanUrl = window.location.pathname + (urlParams.has('mode') ? '?mode=student' : '');
-                    window.history.replaceState({}, document.title, cleanUrl);
-                    
-                    // 使用新的配置初始化
-                    console.log("從 URL 載入新配置並儲存。");
-                    initializeFirebase(configObj);
-                    return;
-
-                } catch (e) { 
-                    console.error("Config decode failed or JSON parse error", e); 
-                }
-            }
-
-            const storedConfig = localStorage.getItem('firebase_config');
-            if (storedConfig) {
-                try {
-                    const config = JSON.parse(storedConfig);
-                    if (config && config.apiKey) {
-                        // 使用儲存的配置初始化
-                        console.log("從 localStorage 載入配置。");
-                        initializeFirebase(config);
-                        return;
-                    }
-                } catch (e) { 
-                    console.error("Stored config parse failed, removing.", e);
-                    localStorage.removeItem('firebase_config'); 
-                }
-            }
-
-            // 最後使用硬編碼的預設配置
-            console.log("使用硬編碼的預設配置。");
-            initializeFirebase(firebaseConfig);
-        };
-
-        // 啟動應用程式
+        // --- 初始化應用程式 (無變動) ---
         window.onload = function() {
-            initApp();
-            
-            // 設定事件監聽器
+            loadConfig();
+            initializeFirebase();
+
             googleSignInBtn.addEventListener('click', handleGoogleSignIn);
             if (signOutBtn) signOutBtn.addEventListener('click', handleSignOut);
+            
+            saveConfigBtn.addEventListener('click', saveConfig);
+            toggleConfigBtn.addEventListener('click', () => {
+                const isHidden = configFormContainer.classList.toggle('hidden');
+                configArrow.classList.toggle('rotate-180', !isHidden);
+                if (!isHidden) {
+                     formatJsonInput();
+                }
+            });
+
+            configInput.addEventListener('blur', formatJsonInput);
         };
     </script>
 </body>
