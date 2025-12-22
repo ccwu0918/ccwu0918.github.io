@@ -3126,10 +3126,32 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
-
-                    // --- Student Logic (Updated with Randomization) ---
-
-                    // 1. 新增：洗牌演算法 (Fisher-Yates Shuffle)
+                    // --- Student Logic (Updated with Anti-Cheating & Randomization) ---
+                    
+                    // 防作弊狀態
+                    const isTakingQuiz = ref(false);
+                    const switchCount = ref(0);
+                    
+                    // 視窗切換監聽器
+                    const handleVisibilityChange = () => {
+                        if (isTakingQuiz.value && document.hidden) {
+                            switchCount.value++;
+                            showAlert(
+                                "警告！偵測到視窗切換", 
+                                `測驗期間請勿離開畫面！\n這已經是第 ${switchCount.value} 次切換離開。`, 
+                                "error"
+                            );
+                        }
+                    };
+                    
+                    // 註冊監聽 (放在 onMounted 內)
+                    onMounted(async () => {
+                        // ... 其他初始化代碼 ...
+                        document.addEventListener("visibilitychange", handleVisibilityChange);
+                        // ... 其他代碼 ...
+                    });
+                    
+                    // 洗牌演算法
                     const generateShuffledIndices = (length) => {
                         const indices = Array.from({ length }, (_, i) => i);
                         for (let i = indices.length - 1; i > 0; i--) {
@@ -3138,47 +3160,41 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                         return indices;
                     };
-
+                    
                     const startQuiz = async () => {
                         if (!activeQuizId.value) {
                             showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
                             return;
                         }
-
+                    
                         try {
                             const doc = await db.collection('quizzes').doc(activeQuizId.value).get();
                             if (doc.exists) {
                                 const quizData = doc.data();
                                 
-                                // --- 修改開始：題目隨機排序邏輯 ---
-                                
-                                // 1. 取得原始題目陣列
+                                // 1. 亂數排序邏輯
                                 const originalQuestions = quizData.questions || [];
-                                
-                                // 2. 產生不重複的亂數索引陣列 (例如: [2, 0, 1, 3])
                                 const shuffledIndices = generateShuffledIndices(originalQuestions.length);
                                 
-                                // 3. 根據亂數陣列重新排列題目，並加入 _originalIndex 標記
-                                // 這樣我們既改變了顯示順序，又保留了它原本是第幾題的資訊
                                 const randomizedQuestions = shuffledIndices.map(originalIndex => {
-                                    // 複製原題目物件，並塞入 _originalIndex
                                     return {
                                         ...originalQuestions[originalIndex],
                                         _originalIndex: originalIndex
                                     };
                                 });
-
-                                // 4. 將洗牌後的題目放回 quizData
                                 quizData.questions = randomizedQuestions;
-                                
-                                // --- 修改結束 ---
-
+                    
+                                // 2. 啟動防作弊偵測
+                                isTakingQuiz.value = true;
+                                switchCount.value = 0;
+                    
+                                // 3. 設定狀態
                                 activeQuiz.value = { id: doc.id, ...quizData };
                                 currentQuestionIndex.value = 0;
                                 studentAnswers.value = [];
                                 currentAnswer.value = null;
-                                highlights.value = []; // Clear highlights
-                                nextHighlightId.value = 0; // Reset ID counter
+                                highlights.value = [];
+                                nextHighlightId.value = 0;
                                 goToView('quiz');
                             } else {
                                 showAlert("錯誤", "找不到該測驗，可能已被刪除。", "error");
@@ -3188,74 +3204,64 @@ Output format must be a strict JSON Array without Markdown markers:
                             showAlert("錯誤", "載入測驗失敗", "error");
                         }
                     };
-
+                    
                     const selectAnswer = (idx) => {
                         currentAnswer.value = idx;
                     };
-
+                    
                     const prevQuestion = () => {
                         if (currentQuestionIndex.value > 0) {
                             currentQuestionIndex.value--;
-                            // studentAnswers 記錄的是當下(亂序後)的順序，這在作答時是正確的 UI 行為
                             currentAnswer.value = studentAnswers.value[currentQuestionIndex.value] || null;
                         }
                     };
-
+                    
                     const nextQuestion = () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案再繼續", "warning"); return; }
-                        
-                        // 儲存答案 (此時 studentAnswers 的順序是對應到亂序後的題目)
                         studentAnswers.value[currentQuestionIndex.value] = currentAnswer.value;
-
+                    
                         currentQuestionIndex.value++;
                         currentAnswer.value = studentAnswers.value[currentQuestionIndex.value] || null;
                     };
-
+                    
                     const progressPercent = computed(() => {
                         if (!activeQuiz.value) return 0;
                         return ((currentQuestionIndex.value + 1) / activeQuiz.value.questions.length) * 100;
                     });
-
+                    
                     const submitQuiz = async () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案", "warning"); return; }
                         
-                        // 儲存最後一題的答案
+                        // 儲存最後一題
                         studentAnswers.value[currentQuestionIndex.value] = currentAnswer.value;
-
-                        // --- 修改開始：成績計算與答案還原 ---
-
+                    
+                        // 關閉防作弊偵測
+                        isTakingQuiz.value = false;
+                    
                         let correctCount = 0;
-                        // 這裡的 activeQuiz.value.questions 已經是亂序過的
-                        // studentAnswers.value 也是對應亂序過的
-                        // 所以直接比對 (idx 對 idx) 是正確的
                         activeQuiz.value.questions.forEach((q, idx) => {
                             if (q.answer == studentAnswers.value[idx]) correctCount++;
                         });
-
+                    
                         score.value = Math.round((correctCount / activeQuiz.value.questions.length) * 100);
-
-                        // 關鍵步驟：還原答案順序
-                        // 為了讓老師看到的報表順序正確，我們必須把學生亂序的答案填回原始的索引位置
+                    
+                        // 還原答案順序
                         const originalOrderAnswers = new Array(activeQuiz.value.questions.length);
-                        
                         activeQuiz.value.questions.forEach((q, currentIdx) => {
-                            // q._originalIndex 是我們在 startQuiz 加入的原始索引
-                            // studentAnswers.value[currentIdx] 是學生針對這題的回答
                             originalOrderAnswers[q._originalIndex] = studentAnswers.value[currentIdx];
                         });
-
-                        // 儲存到資料庫
+                    
+                        // 寫入資料庫 (包含 violationCount)
                         await db.collection('results').add({
                             quizId: activeQuiz.value.id,
                             studentName: studentName.value,
                             score: score.value,
-                            answers: originalOrderAnswers, // 這裡存入還原順序後的答案
+                            answers: originalOrderAnswers,
                             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : []
+                            highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
+                            violationCount: switchCount.value // 紀錄違規次數
                         });
-
-                        // --- 修改結束 ---
-
+                    
                         goToView('result');
                     };
 
