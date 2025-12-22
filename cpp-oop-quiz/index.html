@@ -1180,9 +1180,9 @@
                                 <i class="fa-regular fa-id-card"></i>
                             </div>
                             <h3 class="text-xl font-bold mb-2">準備測驗</h3>
-                            <p class="text-slate-400 text-sm mb-6">請輸入您的學號-姓名，系統將自動載入老師啟用的測驗</p>
+                            <p class="text-slate-400 text-sm mb-6">請輸入您的姓名，系統將自動載入老師啟用的測驗</p>
 
-                            <input type="text" v-model="studentName" placeholder="s110312345-王小明"
+                            <input type="text" v-model="studentName" placeholder="王小明"
                                 class="w-full p-3 border border-slate-200 rounded-xl mb-4 focus:ring-2 focus:ring-sky-500 outline-none text-center">
 
                             <div v-if="activeQuizId" class="mb-4 text-center">
@@ -1460,7 +1460,8 @@
                                     <div>
                                         <p class="font-bold text-slate-700 mb-1">方式二：永久寫入 (適合發布)</p>
                                         <p class="text-xs">直接編輯 <code>index.html</code> 原始碼，將內容填入
-                                            <code>manualConfig</code> 變數。學生開啟網頁即可直接使用，無需任何設定。</p>
+                                            <code>manualConfig</code> 變數。學生開啟網頁即可直接使用，無需任何設定。
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -1653,7 +1654,8 @@
                                 <li>輸入 App 暱稱 (例如: Quiz App)。</li>
                                 <li>點擊「註冊應用程式 (Register app)」。</li>
                                 <li><strong class="text-violet-600">關鍵步驟：</strong>複製出現的
-                                    <code>const firebaseConfig = { ... }</code> 程式碼區塊。</li>
+                                    <code>const firebaseConfig = { ... }</code> 程式碼區塊。
+                                </li>
                             </ul>
                         </div>
                     </section>
@@ -1662,7 +1664,8 @@
                     <section class="flex gap-4 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                         <div
                             class="flex-shrink-0 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
-                            <i class="fa-solid fa-code"></i></div>
+                            <i class="fa-solid fa-code"></i>
+                        </div>
                         <div>
                             <h4 class="text-lg font-bold text-slate-800 mb-2">進階：如何寫死設定 (Hardcode)</h4>
                             <p class="text-slate-600 mb-2 text-sm">若您希望學生打開網頁即可直接使用，無需掃描 QR Code 或輸入設定，請執行此步驟：</p>
@@ -2013,6 +2016,21 @@ service cloud.firestore {
                         if (isStudentView.value && isConfigured.value) {
                             goToView('student-login');
                         }
+
+                        // ... 其他初始化代碼 ...
+
+                        // 1. 分頁切換偵測
+                        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+                        // 2. 全螢幕狀態偵測 (包含標準與 Safari 前綴)
+                        document.addEventListener("fullscreenchange", handleFullscreenChange);
+                        document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+                        // 3. 焦點偵測
+                        window.addEventListener("blur", handleWindowBlur);
+                        window.addEventListener("focus", handleWindowFocus);
+
+                        // ... 其他代碼 ...
 
                         // Highlight code on mount and updates
                         nextTick(() => {
@@ -3126,31 +3144,71 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
-                    // --- Student Logic (Updated with Anti-Cheating & Randomization) ---
-                    
+
+                    // --- Student Logic (Updated with Anti-Cheating, Locking & Randomization) ---
+
                     // 防作弊狀態
                     const isTakingQuiz = ref(false);
                     const switchCount = ref(0);
-                    
-                    // 視窗切換監聽器
-                    const handleVisibilityChange = () => {
-                        if (isTakingQuiz.value && document.hidden) {
+
+                    // --- 新增：進入全螢幕函數 ---
+                    const enterFullscreen = () => {
+                        const elem = document.documentElement;
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen().catch(err => console.log("Fullscreen blocked:", err));
+                        } else if (elem.webkitRequestFullscreen) { /* Safari */
+                            elem.webkitRequestFullscreen();
+                        } else if (elem.msRequestFullscreen) { /* IE11 */
+                            elem.msRequestFullscreen();
+                        }
+                    };
+
+                    // --- 新增：全螢幕狀態監聽 ---
+                    const handleFullscreenChange = () => {
+                        // 如果正在作答，且偵測到目前沒有全螢幕元素 (代表退出了全螢幕)
+                        if (isTakingQuiz.value && !document.fullscreenElement && !document.webkitFullscreenElement) {
                             switchCount.value++;
                             showAlert(
-                                "警告！偵測到視窗切換", 
-                                `測驗期間請勿離開畫面！\n這已經是第 ${switchCount.value} 次切換離開。`, 
+                                "警告！請勿退出全螢幕",
+                                `測驗期間請保持全螢幕模式！\n請點擊確定以返回全螢幕。\n(違規次數: ${switchCount.value})`,
+                                "error"
+                            );
+                            // 嘗試重新進入全螢幕 (通常需要使用者互動，所以放在 Alert 關閉後的邏輯會更好，這裡做盡力嘗試)
+                            setTimeout(enterFullscreen, 100);
+                        }
+                    };
+
+                    // --- 修改：視窗切換/失去焦點監聽器 ---
+                    const handleVisibilityChange = () => {
+                        // 偵測是否隱藏 (切換分頁/縮小)
+                        if (isTakingQuiz.value && document.hidden) {
+                            switchCount.value++;
+                            // 嘗試將視窗拉回焦點 (瀏覽器通常會阻擋此行為，但我們保留這行做最大努力嘗試)
+                            window.focus();
+
+                            showAlert(
+                                "警告！偵測到離開測驗視窗",
+                                `測驗期間禁止切換頁面或縮小視窗！\n請立即回到測驗。\n(違規次數: ${switchCount.value})`,
                                 "error"
                             );
                         }
                     };
-                    
-                    // 註冊監聽 (放在 onMounted 內)
-                    onMounted(async () => {
-                        // ... 其他初始化代碼 ...
-                        document.addEventListener("visibilitychange", handleVisibilityChange);
-                        // ... 其他代碼 ...
-                    });
-                    
+
+                    // 額外偵測失去焦點 (例如點擊了 taskbar 或其他分割視窗)
+                    const handleWindowBlur = () => {
+                        if (isTakingQuiz.value && !document.hidden) {
+                            // 如果視窗還在顯示但失去了焦點
+                            // 這裡不計次，只做輕微警告，避免誤判
+                            document.title = "⚠️ 請回到測驗！";
+                        }
+                    };
+
+                    const handleWindowFocus = () => {
+                        if (isTakingQuiz.value) {
+                            document.title = "C++物件導向程式設計"; // 恢復標題
+                        }
+                    };
+
                     // 洗牌演算法
                     const generateShuffledIndices = (length) => {
                         const indices = Array.from({ length }, (_, i) => i);
@@ -3160,22 +3218,22 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                         return indices;
                     };
-                    
+
                     const startQuiz = async () => {
                         if (!activeQuizId.value) {
                             showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
                             return;
                         }
-                    
+
                         try {
                             const doc = await db.collection('quizzes').doc(activeQuizId.value).get();
                             if (doc.exists) {
                                 const quizData = doc.data();
-                                
+
                                 // 1. 亂數排序邏輯
                                 const originalQuestions = quizData.questions || [];
                                 const shuffledIndices = generateShuffledIndices(originalQuestions.length);
-                                
+
                                 const randomizedQuestions = shuffledIndices.map(originalIndex => {
                                     return {
                                         ...originalQuestions[originalIndex],
@@ -3183,11 +3241,14 @@ Output format must be a strict JSON Array without Markdown markers:
                                     };
                                 });
                                 quizData.questions = randomizedQuestions;
-                    
-                                // 2. 啟動防作弊偵測
+
+                                // 2. 啟動防作弊偵測 & 進入全螢幕
                                 isTakingQuiz.value = true;
                                 switchCount.value = 0;
-                    
+
+                                // 嘗試進入全螢幕 (必須由使用者動作觸發，startQuiz 是由點擊觸發的，所以通常有效)
+                                enterFullscreen();
+
                                 // 3. 設定狀態
                                 activeQuiz.value = { id: doc.id, ...quizData };
                                 currentQuestionIndex.value = 0;
@@ -3204,53 +3265,56 @@ Output format must be a strict JSON Array without Markdown markers:
                             showAlert("錯誤", "載入測驗失敗", "error");
                         }
                     };
-                    
+
                     const selectAnswer = (idx) => {
                         currentAnswer.value = idx;
                     };
-                    
+
                     const prevQuestion = () => {
                         if (currentQuestionIndex.value > 0) {
                             currentQuestionIndex.value--;
                             currentAnswer.value = studentAnswers.value[currentQuestionIndex.value] || null;
                         }
                     };
-                    
+
                     const nextQuestion = () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案再繼續", "warning"); return; }
                         studentAnswers.value[currentQuestionIndex.value] = currentAnswer.value;
-                    
+
                         currentQuestionIndex.value++;
                         currentAnswer.value = studentAnswers.value[currentQuestionIndex.value] || null;
                     };
-                    
+
                     const progressPercent = computed(() => {
                         if (!activeQuiz.value) return 0;
                         return ((currentQuestionIndex.value + 1) / activeQuiz.value.questions.length) * 100;
                     });
-                    
+
                     const submitQuiz = async () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案", "warning"); return; }
-                        
+
                         // 儲存最後一題
                         studentAnswers.value[currentQuestionIndex.value] = currentAnswer.value;
-                    
-                        // 關閉防作弊偵測
+
+                        // 關閉防作弊偵測 & 退出全螢幕
                         isTakingQuiz.value = false;
-                    
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen().catch(() => { }); // 忽略錯誤
+                        }
+
                         let correctCount = 0;
                         activeQuiz.value.questions.forEach((q, idx) => {
                             if (q.answer == studentAnswers.value[idx]) correctCount++;
                         });
-                    
+
                         score.value = Math.round((correctCount / activeQuiz.value.questions.length) * 100);
-                    
+
                         // 還原答案順序
                         const originalOrderAnswers = new Array(activeQuiz.value.questions.length);
                         activeQuiz.value.questions.forEach((q, currentIdx) => {
                             originalOrderAnswers[q._originalIndex] = studentAnswers.value[currentIdx];
                         });
-                    
+
                         // 寫入資料庫 (包含 violationCount)
                         await db.collection('results').add({
                             quizId: activeQuiz.value.id,
@@ -3261,7 +3325,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
                             violationCount: switchCount.value // 紀錄違規次數
                         });
-                    
+
                         goToView('result');
                     };
 
@@ -3315,6 +3379,4 @@ Output format must be a strict JSON Array without Markdown markers:
 
 </body>
 
-
 </html>
-
