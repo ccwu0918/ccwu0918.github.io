@@ -2054,6 +2054,7 @@ service cloud.firestore {
                     ]);
 
                     // --- Initialization ---
+
                     onMounted(async () => {
                         const urlParams = new URLSearchParams(window.location.search);
                         if (urlParams.has('mode') && urlParams.get('mode') === 'student') {
@@ -2064,22 +2065,40 @@ service cloud.firestore {
                         if (isStudentView.value && isConfigured.value) {
                             goToView('student-login');
                         }
-
-                        // ... 其他初始化代碼 ...
-
+                    
+                        // ... (原本的程式碼) ...
+                    
                         // 1. 分頁切換偵測
                         document.addEventListener("visibilitychange", handleVisibilityChange);
-
-                        // 2. 全螢幕狀態偵測 (包含標準與 Safari 前綴)
+                    
+                        // 2. 全螢幕狀態偵測
                         document.addEventListener("fullscreenchange", handleFullscreenChange);
                         document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-
+                    
                         // 3. 焦點偵測
                         window.addEventListener("blur", handleWindowBlur);
                         window.addEventListener("focus", handleWindowFocus);
-
-                        // ... 其他代碼 ...
-
+                    
+                        // ==========================================
+                        // ★★★ 在此處加入禁止開發者工具的程式碼 ★★★
+                        // ==========================================
+                        
+                        // 禁止右鍵
+                        document.addEventListener('contextmenu', e => e.preventDefault());
+                        
+                        // 禁止 F12 與相關快捷鍵
+                        document.addEventListener('keydown', (e) => {
+                            if (
+                                e.key === 'F12' || 
+                                (e.ctrlKey && (e.key === 'u' || e.key === 'U')) ||
+                                (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase()))
+                            ) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        });
+                        // ==========================================
+                    
                         // Highlight code on mount and updates
                         nextTick(() => {
                             Prism.highlightAll();
@@ -3515,5 +3534,6 @@ Output format must be a strict JSON Array without Markdown markers:
 </body>
 
 </html>
+
 
 
