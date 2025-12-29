@@ -428,6 +428,16 @@
                                     {{ getActiveQuizTitle }}
                                 </h3>
                             </div>
+                            <div class="flex gap-2 mr-2">
+                                <button v-if="quizStatusConfig.showExplanations" @click="toggleExplanations(false)"
+                                    class="bg-white/90 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition shadow-md flex items-center whitespace-nowrap">
+                                    <i class="fa-regular fa-eye mr-2"></i>解析: 已開啟
+                                </button>
+                                <button v-else @click="toggleExplanations(true)"
+                                    class="bg-slate-800/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800/40 transition shadow-md flex items-center whitespace-nowrap border border-white/30 backdrop-blur-sm">
+                                    <i class="fa-regular fa-eye-slash mr-2"></i>解析: 已隱藏
+                                </button>
+                            </div>
                             <button @click="deactivateQuiz"
                                 class="relative z-10 bg-white text-green-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-green-50 transition shadow-md flex items-center whitespace-nowrap">
                                 <i class="fa-solid fa-stop mr-2"></i> 結束測驗
@@ -1111,11 +1121,22 @@
                                             <h4 class="text-xl font-bold text-slate-800">{{
                                                 selectedStudentResult.studentName }}</h4>
                                         </div>
-                                        <div class="text-right">
+                                        <div class="text-right">                       
                                             <span class="text-sm text-slate-500">測驗得分</span>
-                                            <div class="text-3xl font-bold"
-                                                :class="getScoreColor(selectedStudentResult.score)">{{
-                                                selectedStudentResult.score }}</div>
+                                                <div class="text-3xl font-bold" :class="getScoreColor(selectedStudentResult.score)">{{ selectedStudentResult.score }}
+                                                </div>
+                                                <div v-if="selectedStudentResult.violationCount > 0" class="mt-2 animate-pulse">
+                                                <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-bold border border-red-200">
+                                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                                                    違規切換: {{ selectedStudentResult.violationCount }} 次
+                                                </span>
+                                            </div>
+                                            <div v-else class="mt-2">
+                                                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-bold border border-green-200">
+                                                        <i class="fa-solid fa-check-circle mr-1"></i>
+                                                        紀錄良好無切換
+                                                    </span>
+                                            </div>                                            
                                         </div>
                                     </div>
 
@@ -1210,10 +1231,16 @@
                     <div v-else-if="currentView === 'quiz'"
                         :class="activeQuiz.questionType === 'reading-comprehension' ? 'max-w-7xl mx-auto w-full' : 'max-w-2xl mx-auto w-full'">
                         <!-- Header (Same for both types) -->
-                        <div class="mb-6 flex justify-between items-center">
+                        <div class="mb-6 flex justify-between items-center flex-wrap gap-2">
                             <span class="text-slate-500 font-medium">考生：{{ studentName }}</span>
-                            <div class="text-sky-600 font-bold bg-sky-50 px-3 py-1 rounded-lg">
-                                第 {{ currentQuestionIndex + 1 }} / {{ activeQuiz.questions.length }} 題
+                            
+                            <div class="flex items-center gap-3">
+                                <div class="text-sky-600 font-bold bg-sky-50 px-3 py-1 rounded-lg border border-sky-100 shadow-sm">
+                                    第 {{ currentQuestionIndex + 1 }} / {{ activeQuiz.questions.length }} 題
+                                </div>
+                                <div class="text-slate-600 font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 shadow-inner flex items-center">
+                                    <i class="fa-regular fa-clock mr-2 text-slate-400"></i>{{ quizTimerDisplay }}
+                                </div>
                             </div>
                         </div>
 
@@ -1354,13 +1381,12 @@
                                     <p class="text-indigo-200 mb-2">{{ activeQuiz.title }}</p>
                                     <h2 class="text-5xl font-bold mb-2">{{ score }} <span
                                             class="text-2xl font-normal opacity-70">分</span></h2>
-                                    <p class="text-indigo-100">做的好，{{ studentName }}！</p>
+                                    <p class="text-indigo-100">測驗完成，{{ studentName }}！</p>
                                 </div>
                             </div>
 
-                            <div class="p-8">
-                                <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">詳細解析
-                                </h3>
+                            <div v-if="canShowExplanations" class="animate-fade-in">
+                                <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">詳細解析</h3>
                                 <div class="space-y-6">
                                     <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
                                         class="p-5 rounded-2xl border"
@@ -1397,6 +1423,20 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <div v-else class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 animate-fade-in">
+                                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <h4 class="text-xl font-bold text-slate-600 mb-2">詳細解析已隱藏</h4>
+                                <p class="text-slate-500 text-sm mb-4">
+                                    為了維護測驗公平性，詳細解析將在<br>
+                                    <span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
+                                </p>
+                                <div v-if="timeRemainingForExplanation" class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
+                                    <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
+                                    自動解鎖倒數：<span class="font-bold">{{ timeRemainingForExplanation }}</span>
                                 </div>
                             </div>
                             <div class="p-6 bg-slate-50 border-t border-slate-100 text-center">
@@ -1982,6 +2022,15 @@ service cloud.firestore {
                     const currentAnswer = ref(null);
                     const score = ref(0);
 
+                    // 1. 新增變數狀態 (State)
+                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false }); // 用來同步資料庫設定
+                    const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
+                    const submissionTimestamp = ref(null);    // 學生交卷時間
+                    const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
+                    
+                    let quizTimerInterval = null; // 計時器 Interval ID
+                    let quizStartTime = 0;        // 測驗開始時間戳記
+                    
                     // Firebase Refs
                     let db = null;
                     let auth = null;
@@ -2092,9 +2141,16 @@ service cloud.firestore {
                             // 監聽全域啟用題庫狀態
                             db.collection('config').doc('quizStatus').onSnapshot(doc => {
                                 if (doc.exists) {
-                                    activeQuizId.value = doc.data().activeQuizId;
+                                    const data = doc.data();
+                                    activeQuizId.value = data.activeQuizId;
+                                    // [新增] 同步整份設定給 quizStatusConfig
+                                    quizStatusConfig.value = {
+                                        activeQuizId: data.activeQuizId,
+                                        showExplanations: !!data.showExplanations // 轉為 boolean
+                                    };
                                 } else {
                                     activeQuizId.value = null;
+                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false };
                                 }
                             });
 
@@ -3217,7 +3273,31 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                         return indices;
                     };
-
+                    
+                    // 2. 新增計時器邏輯函數
+                    const startTimer = () => {
+                        quizStartTime = Date.now();
+                        quizTimerDisplay.value = '00:00:00';
+                        
+                        if (quizTimerInterval) clearInterval(quizTimerInterval);
+                        
+                        quizTimerInterval = setInterval(() => {
+                            const diff = Math.floor((Date.now() - quizStartTime) / 1000);
+                            const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+                            const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+                            const s = (diff % 60).toString().padStart(2, '0');
+                            quizTimerDisplay.value = `${h}:${m}:${s}`;
+                        }, 1000);
+                    };
+                    
+                    const stopTimer = () => {
+                        if (quizTimerInterval) {
+                            clearInterval(quizTimerInterval);
+                            quizTimerInterval = null;
+                        }
+                    };
+                    
+                    // 3. 修改 startQuiz 函數 (加入啟動計時)
                     const startQuiz = async () => {
                         if (!activeQuizId.value) {
                             showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
@@ -3248,6 +3328,9 @@ Output format must be a strict JSON Array without Markdown markers:
                                 // 嘗試進入全螢幕 (必須由使用者動作觸發，startQuiz 是由點擊觸發的，所以通常有效)
                                 enterFullscreen();
 
+                                // [新增] 啟動計時器
+                                startTimer();
+                                
                                 // 3. 設定狀態
                                 activeQuiz.value = { id: doc.id, ...quizData };
                                 currentQuestionIndex.value = 0;
@@ -3289,6 +3372,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         return ((currentQuestionIndex.value + 1) / activeQuiz.value.questions.length) * 100;
                     });
 
+                    // 4. 修改 submitQuiz 函數 (停止計時、記錄交卷時間)
                     const submitQuiz = async () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案", "warning"); return; }
 
@@ -3301,6 +3385,10 @@ Output format must be a strict JSON Array without Markdown markers:
                             document.exitFullscreen().catch(() => { }); // 忽略錯誤
                         }
 
+                        // [新增] 停止計時並記錄時間
+                        stopTimer();
+                        submissionTimestamp.value = Date.now();
+                        
                         let correctCount = 0;
                         activeQuiz.value.questions.forEach((q, idx) => {
                             if (q.answer == studentAnswers.value[idx]) correctCount++;
@@ -3327,6 +3415,52 @@ Output format must be a strict JSON Array without Markdown markers:
 
                         goToView('result');
                     };
+
+                    // 5. 新增：教師切換解析顯示功能
+                    const toggleExplanations = async (show) => {
+                        if (!activeQuizId.value) return;
+                        try {
+                            // 更新 quizStatus 中的 showExplanations 欄位
+                            await db.collection('config').doc('quizStatus').set({ 
+                                activeQuizId: activeQuizId.value,
+                                showExplanations: show 
+                            }, { merge: true });
+                            
+                            showAlert("設定更新", show ? "已開放學生查看詳細解析" : "已隱藏詳細解析", "success");
+                        } catch (e) {
+                            console.error(e);
+                            showAlert("錯誤", "設定失敗", "error");
+                        }
+                    };
+                    
+                    // 6. 新增：計算屬性 (Computed) 控制解析顯示
+                    // 建立一個每秒更新的時鐘，確保倒數計時會動
+                    setInterval(() => {
+                        nowTimestamp.value = Date.now();
+                    }, 1000);
+                    
+                    const canShowExplanations = computed(() => {
+                        // 如果老師手動開啟，則直接顯示
+                        if (quizStatusConfig.value.showExplanations) return true;
+                        
+                        // 如果沒有交卷時間(異常)，不顯示
+                        if (!submissionTimestamp.value) return false;
+                        
+                        // 檢查是否超過 30 分鐘 (30 * 60 * 1000 毫秒)
+                        const timePassed = (nowTimestamp.value - submissionTimestamp.value);
+                        return timePassed >= (30 * 60 * 1000);
+                    });
+                    
+                    const timeRemainingForExplanation = computed(() => {
+                        if (!submissionTimestamp.value || canShowExplanations.value) return null;
+                        
+                        const diff = (30 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
+                        if (diff <= 0) return null;
+                        
+                        const m = Math.floor(diff / 60000).toString().padStart(2, '0');
+                        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                        return `${m}:${s}`;
+                    });
 
                     // --- IDE Editor Helpers ---
                     const highlightCode = () => {
@@ -3363,7 +3497,9 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Student
                         studentName, selectedQuizId, startQuiz,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
-                        progressPercent, score, studentAnswers,
+                        progressPercent, score, studentAnswers,                        
+                        quizStatusConfig, quizTimerDisplay, toggleExplanations, 
+                        canShowExplanations, timeRemainingForExplanation,
                         // Highlighter
                         passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
                         // Logs
@@ -3379,4 +3515,5 @@ Output format must be a strict JSON Array without Markdown markers:
 </body>
 
 </html>
+
 
