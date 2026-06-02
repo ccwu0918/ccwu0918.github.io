@@ -1217,10 +1217,7 @@
                                 <i class="fa-regular fa-id-card"></i>
                             </div>
                             <h3 class="text-xl font-bold mb-2">準備測驗</h3>
-                            <p class="text-slate-400 text-sm mb-6">請輸入您的「學號及姓名」，系統將自動載入老師啟用的測驗</p>
-
-                            <input type="text" v-model="studentName" placeholder="s110312345-王小明"
-                                class="w-full p-3 border border-slate-200 rounded-xl mb-4 focus:ring-2 focus:ring-sky-500 outline-none text-center">
+                            <p class="text-slate-400 text-sm mb-6">請使用您的 Google 帳號登入，系統將自動記錄您的身份並進入測驗</p>
 
                             <div v-if="activeQuizId" class="mb-4 text-center">
                                 <span
@@ -1234,9 +1231,12 @@
                                 </span>
                             </div>
 
-                            <button @click="startQuiz" :disabled="!studentName"
-                                class="w-full py-3 bg-sky-500 text-white rounded-xl font-bold hover:bg-sky-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-200">
-                                進入作答
+                            <button @click="studentGoogleLogin" :disabled="isStudentLoading || !activeQuizId"
+                                class="w-full py-3 bg-sky-500 text-white rounded-xl font-bold hover:bg-sky-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-200 flex items-center justify-center gap-2">
+                                <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
+                                <i v-else class="fa-brands fa-google"></i>
+                                <span v-if="isStudentLoading">登入中...</span>
+                                <span v-else>Google 帳號登入並開始測驗</span>
                             </button>
                             <button @click="goToView('landing')"
                                 class="mt-4 text-slate-400 text-sm hover:text-slate-600">返回首頁</button>
@@ -2081,7 +2081,9 @@ service cloud.firestore {
                     const selectedStudentResult = ref(null);
 
                     // Student & Global State
+                    // Student Auth
                     const studentName = ref('');
+                    const isStudentLoading = ref(false);
                     const selectedQuizId = ref(''); // 保留變數但主要依賴 activeQuizId
                     const activeQuizId = ref(null); // 全域啟用中的 Quiz ID
                     const activeQuiz = ref(null);
@@ -3512,6 +3514,36 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
                     
+                    // [新增] 學生端 Google 登入邏輯
+                    const studentGoogleLogin = async () => {
+                        if (!activeQuizId.value) {
+                            showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
+                            return;
+                        }
+                        isStudentLoading.value = true;
+                        try {
+                            let currentUser = user.value;
+                            if (!currentUser || currentUser.isAnonymous) {
+                                const provider = new firebase.auth.GoogleAuthProvider();
+                                const result = await auth.signInWithPopup(provider);
+                                currentUser = result.user;
+                            }
+                            
+                            const name = currentUser.displayName || '未設定名稱';
+                            const email = currentUser.email || '';
+                            studentName.value = `${name} (${email})`;
+                            
+                            await startQuiz();
+                        } catch (error) {
+                            if (error.code !== 'auth/popup-closed-by-user') {
+                                console.error('Student login error:', error);
+                                showAlert("登入失敗", error.message, "error");
+                            }
+                        } finally {
+                            isStudentLoading.value = false;
+                        }
+                    };
+
                     // 3. 修改 startQuiz 函數 (加入啟動計時)
                     const startQuiz = async () => {
                         if (!activeQuizId.value) {
@@ -3713,7 +3745,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Analytics
                         viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV,
                         // Student
-                        studentName, selectedQuizId, startQuiz,
+                        studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                         progressPercent, score, studentAnswers,                        
                         quizStatusConfig, quizTimerDisplay, toggleExplanations, 
