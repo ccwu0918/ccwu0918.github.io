@@ -1077,9 +1077,13 @@
                                                     <td class="p-3 font-medium">{{ res.studentName }}</td>
                                                     <td class="p-3 font-bold" :class="getScoreColor(res.score)">{{
                                                         res.score }}</td>
-                                                    <td class="p-3 text-center">
-                                                        <button
-                                                            class="text-xs bg-violet-100 text-violet-600 px-2 py-1 rounded hover:bg-violet-200">
+                                                    <td class="p-3 text-center" @click.stop>
+                                                        <button @click="deleteResult(res)"
+                                                            class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded hover:bg-red-200 mr-1.5 font-bold transition">
+                                                            刪除
+                                                        </button>
+                                                        <button @click="viewStudentDetails(res)"
+                                                            class="text-xs bg-violet-100 text-violet-600 px-2.5 py-1 rounded hover:bg-violet-200 font-bold transition">
                                                             詳情
                                                         </button>
                                                     </td>
@@ -1229,6 +1233,11 @@
                                                         {{ q.options[q.answer-1] }}
                                                     </span>
                                                 </div>
+                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && quizStatusConfig.showExplanations && q.explanation"
+                                                    class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
+                                                    <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
+                                                    <span class="font-bold text-amber-800">解析：</span>{{ q.explanation }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1259,15 +1268,64 @@
                                 </span>
                             </div>
 
-                            <button @click="studentGoogleLogin" :disabled="isStudentLoading || !activeQuizId"
-                                class="w-full py-3 bg-sky-500 text-white rounded-xl font-bold hover:bg-sky-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-200 flex items-center justify-center gap-2">
-                                <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
-                                <i v-else class="fa-brands fa-google"></i>
-                                <span v-if="isStudentLoading">登入中...</span>
-                                <span v-else>Google 帳號登入並開始測驗</span>
-                            </button>
+                            <div v-if="user && !user.isAnonymous"
+                                class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left">
+                                <p class="text-xs font-bold text-sky-700">已登入身分：</p>
+                                <p class="text-sm font-bold text-slate-800 mt-1 truncate">{{ studentName }}</p>
+                            </div>
+
+                            <!-- 按鈕區 -->
+                            <div class="space-y-3">
+                                <button v-if="activeQuizId" @click="startQuiz" :disabled="isStudentLoading"
+                                    class="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-200 flex items-center justify-center gap-2">
+                                    <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
+                                    <i v-else class="fa-solid fa-play"></i>
+                                    <span v-if="isStudentLoading">載入中...</span>
+                                    <span v-else>開始測驗</span>
+                                </button>
+
+                                <button v-if="!user || user.isAnonymous" @click="studentGoogleLogin"
+                                    :disabled="isStudentLoading"
+                                    class="w-full py-3 bg-sky-500 text-white rounded-xl font-bold hover:bg-sky-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-200 flex items-center justify-center gap-2">
+                                    <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
+                                    <i v-else class="fa-brands fa-google"></i>
+                                    <span v-if="isStudentLoading">登入中...</span>
+                                    <span v-else>{{ activeQuizId ? 'Google 帳號登入並開始測驗' : 'Google 帳號登入以查詢歷史成績' }}</span>
+                                </button>
+                            </div>
+
+                            <!-- 歷史成績紀錄區塊 -->
+                            <div v-if="user && !user.isAnonymous && studentHistoryRecords.length > 0"
+                                class="mt-6 border-t border-slate-100 pt-6 text-left">
+                                <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-clock-rotate-left text-sky-500"></i>
+                                    歷史成績紀錄 (已結束 >60 分鐘)
+                                </h4>
+                                <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                    <div v-for="rec in studentHistoryRecords" :key="rec.id"
+                                        class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition">
+                                        <div class="min-w-0 flex-1 pr-2">
+                                            <p class="text-xs font-bold text-slate-700 truncate" :title="rec.quizTitle">
+                                                {{ rec.quizTitle }}</p>
+                                            <p class="text-[10px] text-slate-400 mt-0.5">交卷時間：{{
+                                                formatDate(rec.timestamp) }}</p>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <span
+                                                class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                                                {{ rec.score !== null ? rec.score + '分' : '閱卷中' }}
+                                            </span>
+                                            <button @click="viewHistoricResult(rec)"
+                                                class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition">
+                                                查看
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button @click="goToView('landing')"
-                                class="mt-4 text-slate-400 text-sm hover:text-slate-600">返回首頁</button>
+                                class="mt-4 text-slate-400 text-sm hover:text-slate-600 block mx-auto">返回首頁</button>
                         </div>
                     </div>
 
@@ -1927,7 +1985,7 @@ service cloud.firestore {
       );
     }
     match /results/{resultId} {
-      allow create, read, update: if request.auth != null;
+      allow create, read, update, delete: if request.auth != null;
     }
   }
 }</pre>
@@ -2176,6 +2234,7 @@ service cloud.firestore {
                     // Student Auth
                     const studentName = ref('');
                     const isStudentLoading = ref(false);
+                    const studentHistoryRecords = ref([]);
                     const selectedQuizId = ref(''); // 保留變數但主要依賴 activeQuizId
                     const activeQuizId = ref(null); // 全域啟用中的 Quiz ID
                     const activeQuiz = ref(null);
@@ -2313,8 +2372,16 @@ service cloud.firestore {
                                     // 檢查是否為已授權教師（Google 登入用戶）
                                     if (!u.isAnonymous) {
                                         checkTeacherAuth(u);
+                                        // 同時也為學生角色初始化 studentName
+                                        const name = u.displayName || '未設定名稱';
+                                        const email = u.email || '';
+                                        studentName.value = `${name} (${email})`;
+                                        // 載入學生的歷史紀錄
+                                        fetchStudentHistory();
                                     }
                                 } else {
+                                    studentName.value = '';
+                                    studentHistoryRecords.value = [];
                                     auth.signInAnonymously().catch((error) => {
                                         console.error("Auth Failed", error);
                                         showAlert("錯誤", "Firebase 連線失敗", "error");
@@ -2471,7 +2538,7 @@ service cloud.firestore {
       );
     }
     match /results/{resultId} {
-      allow create, read, update: if request.auth != null;
+      allow create, read, update, delete: if request.auth != null;
     }
   }
 }`;
@@ -2520,6 +2587,9 @@ service cloud.firestore {
                             migrateOldQuizzes();
                             triggerManualGrading();
                             startResultsGradingListener();
+                        }
+                        if (view === 'student-login') {
+                            fetchStudentHistory();
                         }
                         if (view === 'landing') {
                             studentName.value = '';
@@ -2779,6 +2849,21 @@ service cloud.firestore {
                         }
                     };
 
+                    // 新增：重新批改該測驗的所有學生作答記錄
+                    const regradeQuizResults = async (quizId) => {
+                        if (!db) return;
+                        try {
+                            const snapshot = await db.collection('results').where('quizId', '==', quizId).get();
+                            console.log(`開始重新計算測驗 ID: ${quizId} 的學生成績，共 ${snapshot.size} 筆記錄`);
+                            for (const doc of snapshot.docs) {
+                                await gradeResult({ id: doc.id, ...doc.data() });
+                            }
+                            console.log(`測驗 ID: ${quizId} 的學生成績已重新計算完畢`);
+                        } catch (e) {
+                            console.error("重新計算成績失敗", e);
+                        }
+                    };
+
                     // 新增：手動/立即觸發所有未批改學生的計分
                     const triggerManualGrading = async () => {
                         if (!db) return;
@@ -3002,7 +3087,44 @@ service cloud.firestore {
                         const parsedQuestions = [];
 
                         lines.forEach(line => {
-                            const parts = line.split(/[\t,]/).map(p => p.trim());
+                            let parts = [];
+                            if (line.includes('\t')) {
+                                parts = line.split('\t').map(p => p.trim());
+                            } else {
+                                // 自訂狀態機解析器：排除雙引號與括號內的逗號 (支援半形與全形括號)
+                                let current = '';
+                                let inQuotes = false;
+                                let parenDepth = 0;
+                                for (let i = 0; i < line.length; i++) {
+                                    const char = line[i];
+                                    if (char === '"') {
+                                        inQuotes = !inQuotes;
+                                        current += char;
+                                    } else if ((char === '(' || char === '（') && !inQuotes) {
+                                        parenDepth++;
+                                        current += char;
+                                    } else if ((char === ')' || char === '）') && !inQuotes) {
+                                        if (parenDepth > 0) parenDepth--;
+                                        current += char;
+                                    } else if (char === ',' && !inQuotes && parenDepth === 0) {
+                                        parts.push(current.trim());
+                                        current = '';
+                                    } else {
+                                        current += char;
+                                    }
+                                }
+                                parts.push(current.trim());
+
+                                // 清理前後可能包覆的雙引號
+                                parts = parts.map(p => {
+                                    let clean = p;
+                                    if (clean.startsWith('"') && clean.endsWith('"')) {
+                                        clean = clean.slice(1, -1).trim();
+                                    }
+                                    return clean;
+                                });
+                            }
+
                             if (parts.length >= 6) {
                                 const title = parts[0];
                                 let ansRaw = parts[1].toLowerCase();
@@ -3235,13 +3357,35 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
 
                     // 新增：編輯題庫功能
-                    const editQuiz = (quiz) => {
+                    const editQuiz = async (quiz) => {
                         editingQuizId.value = quiz.id;
                         newQuiz.title = quiz.title;
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
-                        newQuiz.questions = JSON.parse(JSON.stringify(quiz.questions)); // Deep copy to prevent mutating original before save
+
+                        // 先複製題目
+                        const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
+
+                        // 從 quiz_answers 中讀取答案與解析並合併
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    questionsCopy.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("獲取答案解析失敗", e);
+                            }
+                        }
+                        newQuiz.questions = questionsCopy;
 
                         // Clear source inputs as we are editing existing result
                         aiSourceText.value = '';
@@ -3252,13 +3396,36 @@ Output format must be a strict JSON Array without Markdown markers:
                         nextTick(() => Prism.highlightAll());
                     };
 
-                    const duplicateQuiz = (quiz) => {
+                    const duplicateQuiz = async (quiz) => {
                         editingQuizId.value = null; // duplicating creates a NEW quiz
                         newQuiz.title = quiz.title + ' (副本)';
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
-                        newQuiz.questions = JSON.parse(JSON.stringify(quiz.questions));
+
+                        // 先複製題目
+                        const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
+
+                        // 從 quiz_answers 中讀取答案與解析並合併
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    questionsCopy.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("獲取答案解析失敗", e);
+                            }
+                        }
+                        newQuiz.questions = questionsCopy;
+
                         showCreateQuiz.value = true;
                         aiSourceText.value = '';
                         aiImageBase64.value = '';
@@ -3270,23 +3437,42 @@ Output format must be a strict JSON Array without Markdown markers:
                         if (!newQuiz.title) { showAlert("欄位缺失", "請輸入測驗標題", "warning"); return; }
 
                         try {
+                            // 1. 分離出答案與解析
+                            const answersData = {
+                                answers: newQuiz.questions.map(q => ({
+                                    answer: q.hasOwnProperty('answer') ? q.answer : null,
+                                    explanation: q.explanation || ''
+                                }))
+                            };
+
+                            // 2. 清除 questions 內的答案與解析欄位
+                            const cleanQuestions = newQuiz.questions.map(q => {
+                                const { answer, explanation, ...rest } = q;
+                                return rest;
+                            });
+
                             const quizData = {
                                 title: newQuiz.title,
                                 category: newQuiz.category || '未分類',
                                 questionType: newQuiz.questionType,
                                 readingPassage: newQuiz.readingPassage,
-                                questions: newQuiz.questions,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Update timestamp on edit? Maybe better to keep original created, add updated. For simplicity, just update.
+                                questions: cleanQuestions,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 teacherId: user.value.uid
                             };
 
-                            if (editingQuizId.value) {
+                            let quizId = editingQuizId.value;
+                            if (quizId) {
                                 // Update existing
-                                await db.collection('quizzes').doc(editingQuizId.value).update(quizData);
-                                showAlert("成功", "題庫更新成功！", "success");
+                                await db.collection('quizzes').doc(quizId).update(quizData);
+                                await db.collection('quiz_answers').doc(quizId).set(answersData);
+                                showAlert("成功", "題庫更新成功！已自動在背景重新計算所有已繳卷學生的分數。", "success");
+                                regradeQuizResults(quizId);
                             } else {
                                 // Create new
-                                await db.collection('quizzes').add(quizData);
+                                const docRef = await db.collection('quizzes').add(quizData);
+                                quizId = docRef.id;
+                                await db.collection('quiz_answers').doc(quizId).set(answersData);
                                 showAlert("成功", "題庫建立成功！", "success");
                             }
 
@@ -3362,6 +3548,25 @@ Output format must be a strict JSON Array without Markdown markers:
                         selectedStudentResult.value = null; // Reset detail view
                         analyticsTab.value = 'score'; // Reset tab
 
+                        // 獲取標準答案並合併，供教師查看詳情時顯示正確答案與解析
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    selectedAnalyticsQuiz.value.questions.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("教師端獲取答案解析失敗", e);
+                            }
+                        }
+
                         // Fix: Remove orderBy to avoid index error. Sort in client side.
                         const snap = await db.collection('results')
                             .where('quizId', '==', quiz.id)
@@ -3429,6 +3634,37 @@ Output format must be a strict JSON Array without Markdown markers:
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+                    };
+
+                    const deleteResult = async (result) => {
+                        if (!db) return;
+
+                        // 1. 找出該名學生在此測驗中的所有成績記錄
+                        const studentResults = analyticsData.value.filter(r => r.studentName === result.studentName);
+
+                        let confirmDelete = true;
+                        if (studentResults.length <= 1) {
+                            confirmDelete = await showConfirm(
+                                "確認刪除唯一記錄",
+                                `確定要刪除學生「${result.studentName}」的成績記錄嗎？\n這是該學生唯一的成績記錄。`
+                            );
+                        }
+
+                        if (confirmDelete) {
+                            try {
+                                await db.collection('results').doc(result.id).delete();
+                                showAlert("成功", "成績記錄已成功刪除", "success");
+
+                                // 即時更新本地 analyticsData 列表
+                                analyticsData.value = analyticsData.value.filter(r => r.id !== result.id);
+
+                                // 重新渲染圖表
+                                nextTick(renderChart);
+                            } catch (e) {
+                                console.error("刪除成績失敗", e);
+                                showAlert("錯誤", "刪除成績記錄失敗", "error");
+                            }
+                        }
                     };
 
                     const viewStudentDetails = (result) => {
@@ -3860,11 +4096,112 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
 
                     // [新增] 學生端 Google 登入邏輯
-                    const studentGoogleLogin = async () => {
-                        if (!activeQuizId.value) {
-                            showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
-                            return;
+                    const fetchStudentHistory = async () => {
+                        if (!db || !user.value || user.value.isAnonymous) return;
+                        try {
+                            const name = user.value.displayName || '未設定名稱';
+                            const email = user.value.email || '';
+                            const sName = `${name} (${email})`;
+
+                            const snap = await db.collection('results')
+                                .where('studentName', '==', sName)
+                                .get();
+
+                            const records = [];
+                            for (const doc of snap.docs) {
+                                const data = doc.data();
+                                if (data.timestamp) {
+                                    const submitTime = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+                                    const timeDiffMinutes = (Date.now() - submitTime.getTime()) / (1000 * 60);
+
+                                    // 判斷是否超過 60 分鐘
+                                    if (timeDiffMinutes >= 60) {
+                                        let quizTitle = '未知測驗';
+                                        try {
+                                            const quizDoc = await db.collection('quizzes').doc(data.quizId).get();
+                                            if (quizDoc.exists) {
+                                                quizTitle = quizDoc.data().title;
+                                            }
+                                        } catch (e) {
+                                            console.error("載入歷史測驗標題失敗", e);
+                                        }
+
+                                        records.push({
+                                            id: doc.id,
+                                            quizId: data.quizId,
+                                            quizTitle: quizTitle,
+                                            score: data.score,
+                                            cheated: data.cheated || false,
+                                            timestamp: data.timestamp,
+                                            answers: data.answers
+                                        });
+                                    }
+                                }
+                            }
+
+                            // 降序排序 (時間由新到舊)
+                            records.sort((a, b) => {
+                                const timeA = a.timestamp.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
+                                const timeB = b.timestamp.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
+                                return timeB - timeA;
+                            });
+
+                            studentHistoryRecords.value = records;
+                        } catch (e) {
+                            console.error("載入學生歷史成績失敗", e);
                         }
+                    };
+
+                    const viewHistoricResult = async (rec) => {
+                        try {
+                            isStudentLoading.value = true;
+
+                            // 1. 載入題目資訊
+                            const quizDoc = await db.collection('quizzes').doc(rec.quizId).get();
+                            if (!quizDoc.exists) {
+                                showAlert("載入失敗", "找不到此測驗的題目資訊", "error");
+                                return;
+                            }
+
+                            const quizData = quizDoc.data();
+                            quizData.id = quizDoc.id;
+
+                            // 標準還原題目原始 index
+                            quizData.questions.forEach((q, idx) => {
+                                q._originalIndex = idx;
+                            });
+
+                            activeQuiz.value = quizData;
+                            score.value = rec.score;
+                            cheated.value = rec.cheated || false;
+                            studentAnswers.value = rec.answers;
+
+                            // 2. 嘗試載入答案解析
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    activeQuiz.value.questions.forEach((q, idx) => {
+                                        if (answersData.answers && answersData.answers[idx]) {
+                                            q.answer = answersData.answers[idx].answer;
+                                            q.explanation = answersData.answers[idx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.log("載入歷史答案解析受阻 (若未解鎖屬正常現象)", e);
+                            }
+
+                            goToView('result');
+                        } catch (e) {
+                            console.error("讀取歷史成績詳情失敗", e);
+                            showAlert("載入失敗", e.message, "error");
+                        } finally {
+                            isStudentLoading.value = false;
+                        }
+                    };
+
+                    const studentGoogleLogin = async () => {
                         isStudentLoading.value = true;
                         try {
                             let currentUser = user.value;
@@ -3876,9 +4213,16 @@ Output format must be a strict JSON Array without Markdown markers:
 
                             const name = currentUser.displayName || '未設定名稱';
                             const email = currentUser.email || '';
+                            studentName.value = `${name} (smiles${email})`.replace('smiles', ''); // workaround
                             studentName.value = `${name} (${email})`;
 
-                            await startQuiz();
+                            // 只有在有進行中測驗時才開始測驗，否則只加載歷史紀錄
+                            if (activeQuizId.value) {
+                                await startQuiz();
+                            } else {
+                                await fetchStudentHistory();
+                                showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看超過 60 分鐘前的歷史成績紀錄。", "success");
+                            }
                         } catch (error) {
                             if (error.code !== 'auth/popup-closed-by-user') {
                                 console.error('Student login error:', error);
@@ -4070,9 +4414,10 @@ Output format must be a strict JSON Array without Markdown markers:
                             if (answersDoc.exists) {
                                 const answersData = answersDoc.data();
                                 activeQuiz.value.questions.forEach((q, idx) => {
-                                    if (answersData.answers && answersData.answers[idx]) {
-                                        q.answer = answersData.answers[idx].answer;
-                                        q.explanation = answersData.answers[idx].explanation || '';
+                                    const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                    if (answersData.answers && answersData.answers[origIdx]) {
+                                        q.answer = answersData.answers[origIdx].answer;
+                                        q.explanation = answersData.answers[origIdx].explanation || '';
                                     }
                                 });
                             }
@@ -4153,11 +4498,12 @@ Output format must be a strict JSON Array without Markdown markers:
                         readingConfig, canGenerateReading, handleTextFileUpload, generateReadingComprehension, generatePassageFromTopic, generateReadingQuestions, getPirlsLevelName,
                         // Question Editor
                         showQuestionEditor, currentEditingQuestion, currentEditingQuestionIndex, addQuestion, editQuestion, saveQuestion, deleteQuestion,
-                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate,
+                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate, regradeQuizResults,
                         // Analytics
-                        viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV,
+                        viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                         // Student
                         studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
+                        studentHistoryRecords, viewHistoricResult,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                         progressPercent, score, studentAnswers, cheated, cheatReason,
                         quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
