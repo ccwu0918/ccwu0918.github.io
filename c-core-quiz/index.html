@@ -1115,6 +1115,32 @@
                                             </div>
                                         </div>
 
+                                        <!-- 選項列表 (A~D) 與正確答案解析顯示 -->
+                                        <div class="ml-8 mt-3 mb-4 space-y-2 text-sm text-slate-600">
+                                            <div v-for="(opt, oIdx) in stat.question.options" :key="oIdx"
+                                                class="flex items-center gap-2 py-2 px-3 rounded-xl border transition"
+                                                :class="(oIdx + 1) === stat.question.answer ? 'bg-green-50/50 border-green-200 text-green-800 font-medium' : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'">
+                                                <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition"
+                                                    :class="(oIdx + 1) === stat.question.answer ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-600'">
+                                                    {{ String.fromCharCode(65 + oIdx) }}
+                                                </span>
+                                                <span>{{ opt }}</span>
+                                                <span v-if="(oIdx + 1) === stat.question.answer"
+                                                    class="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-lg font-bold border border-green-200">
+                                                    正確答案
+                                                </span>
+                                            </div>
+                                            <!-- 若有解析則同步顯示 -->
+                                            <div v-if="stat.question.explanation"
+                                                class="mt-2.5 p-3 bg-amber-50/30 border border-amber-100/75 rounded-xl text-slate-600 text-xs flex gap-1.5 items-start">
+                                                <span class="text-amber-500 mt-0.5">💡</span>
+                                                <div>
+                                                    <span class="font-bold text-amber-800">解析：</span>
+                                                    {{ stat.question.explanation }}
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <!-- Progress Bar -->
                                         <div class="w-full bg-slate-100 rounded-full h-2 mb-4 overflow-hidden">
                                             <div class="h-2 rounded-full transition-all duration-1000"
@@ -1555,7 +1581,7 @@
                                     <h4 class="text-xl font-bold text-slate-600 mb-2">詳細解析已隱藏</h4>
                                     <p class="text-slate-500 text-sm mb-4">
                                         為了維護測驗公平性，詳細解析將在<br>
-                                        <span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
+                                        <span class="font-bold text-indigo-600">測驗提交 1 小時後</span> 自動開啟。
                                     </p>
                                     <div v-if="timeRemainingForExplanation"
                                         class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
@@ -1987,18 +2013,35 @@ service cloud.firestore {
     // 標準答案與解析防弊保護區
     match /quiz_answers/{quizId} {
       allow write: if request.auth != null;
-      // 學生只有在「已登入」且「老師開啟解析」時，才允許讀取答案與解析
+      // 學生只有在「已登入」且「老師開啟解析」或「交卷超過 1 小時」時，才允許讀取答案與解析
       // 教師白名單中的信箱則不受限制，隨時可讀取
       allow read: if request.auth != null && (
         get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
-         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email]))
+         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     
     // 測驗結果 (已登入學生交卷、教師閱卷、刪除成績)
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
+    }
+    
+    // 學生端自動解鎖答案所需之解鎖紀錄
+    match /quiz_unlocks/{unlockId} {
+      allow read: if request.auth != null && unlockId.startsWith(request.auth.token.email + '_');
+      allow write: if request.auth != null && 
+        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        (
+          request.resource.data.timestamp == request.time ||
+          (
+            request.resource.data.resultId != null &&
+            get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.endsWith('(' + request.auth.token.email + ')') &&
+            request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
+          )
+        );
     }
   }
 }</pre>
@@ -2547,11 +2590,26 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
-         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email]))
+         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
+    }
+    match /quiz_unlocks/{unlockId} {
+      allow read: if request.auth != null && unlockId.startsWith(request.auth.token.email + '_');
+      allow write: if request.auth != null && 
+        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        (
+          request.resource.data.timestamp == request.time ||
+          (
+            request.resource.data.resultId != null &&
+            get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.endsWith('(' + request.auth.token.email + ')') &&
+            request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
+          )
+        );
     }
   }
 }`;
@@ -4008,6 +4066,15 @@ Output format must be a strict JSON Array without Markdown markers:
                         });
 
                         try {
+                            // 提交後自動寫入 unlock 記錄，以便後續查看時能立即開啟解析
+                            if (user.value && user.value.email) {
+                                const unlockId = `${user.value.email}_${activeQuiz.value.id}`;
+                                await db.collection('quiz_unlocks').doc(unlockId).set({
+                                    quizId: activeQuiz.value.id,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+
                             await db.collection('results').add({
                                 quizId: activeQuiz.value.id,
                                 studentName: studentName.value,
@@ -4394,6 +4461,19 @@ Output format must be a strict JSON Array without Markdown markers:
                                 violationCount: switchCount.value // 紀錄違規次數
                             });
 
+                            // 寫入解鎖紀錄以供安全規則校驗時間差
+                            if (user.value && user.value.email) {
+                                const unlockId = `${user.value.email}_${activeQuiz.value.id}`;
+                                try {
+                                    await db.collection('quiz_unlocks').doc(unlockId).set({
+                                        quizId: activeQuiz.value.id,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                } catch (err) {
+                                    console.error("寫入解鎖紀錄失敗", err);
+                                }
+                            }
+
                             goToView('result');
 
                             // 實時監聽自己的交卷結果，等待教師端批改更新分數
@@ -4466,15 +4546,15 @@ Output format must be a strict JSON Array without Markdown markers:
                         // 如果沒有交卷時間(異常)，不顯示
                         if (!submissionTimestamp.value) return false;
 
-                        // 檢查是否超過 30 分鐘 (30 * 60 * 1000 毫秒)
+                        // 檢查是否超過 1 小時 (60 * 60 * 1000 毫秒)
                         const timePassed = (nowTimestamp.value - submissionTimestamp.value);
-                        return timePassed >= (30 * 60 * 1000);
+                        return timePassed >= (60 * 60 * 1000);
                     });
 
                     const timeRemainingForExplanation = computed(() => {
                         if (!submissionTimestamp.value || canShowExplanations.value) return null;
 
-                        const diff = (30 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
+                        const diff = (60 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
                         if (diff <= 0) return null;
 
                         const m = Math.floor(diff / 60000).toString().padStart(2, '0');
