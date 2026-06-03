@@ -2031,14 +2031,20 @@ service cloud.firestore {
     
     // 學生端自動解鎖答案所需之解鎖紀錄
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.startsWith(request.auth.token.email + '_');
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
       allow write: if request.auth != null && 
         unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
             request.resource.data.resultId != null &&
-            get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.endsWith('(' + request.auth.token.email + ')') &&
+            (
+              (
+                'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+              ) ||
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
+            ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
         );
@@ -2599,14 +2605,20 @@ service cloud.firestore {
       allow create, read, update, delete: if request.auth != null;
     }
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.startsWith(request.auth.token.email + '_');
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
       allow write: if request.auth != null && 
         unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
             request.resource.data.resultId != null &&
-            get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.endsWith('(' + request.auth.token.email + ')') &&
+            (
+              (
+                'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+              ) ||
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
+            ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
         );
@@ -4078,6 +4090,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             await db.collection('results').add({
                                 quizId: activeQuiz.value.id,
                                 studentName: studentName.value,
+                                studentEmail: user.value.email, // 新增學生 Email 以供安全性規則校驗
                                 score: 0,
                                 answers: originalOrderAnswers,
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4454,6 +4467,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             const docRef = await db.collection('results').add({
                                 quizId: activeQuiz.value.id,
                                 studentName: studentName.value,
+                                studentEmail: user.value.email, // 新增學生 Email 以供安全性規則校驗
                                 score: null,
                                 answers: originalOrderAnswers,
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
