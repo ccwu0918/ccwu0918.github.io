@@ -447,6 +447,16 @@
                                 </h3>
                             </div>
                             <div class="flex gap-2 mr-2 flex-wrap sm:flex-nowrap">
+                                <!-- 重複測驗按鈕 -->
+                                <button v-if="quizStatusConfig.allowRepeat" @click="toggleAllowRepeat(false)"
+                                    class="bg-white/90 text-orange-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-orange-50 transition shadow-md flex items-center whitespace-nowrap">
+                                    <i class="fa-solid fa-rotate-left mr-2"></i>允許重覆本測驗
+                                </button>
+                                <button v-else @click="toggleAllowRepeat(true)"
+                                    class="bg-slate-800/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800/40 transition shadow-md flex items-center whitespace-nowrap border border-white/30 backdrop-blur-sm">
+                                    <i class="fa-solid fa-ban mr-2"></i>禁止重覆本測驗
+                                </button>
+
                                 <!-- 自動批改按鈕 -->
                                 <button v-if="quizStatusConfig.autoGrading" @click="toggleAutoGrading(false)"
                                     class="bg-white/90 text-emerald-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-50 transition shadow-md flex items-center whitespace-nowrap">
@@ -1411,23 +1421,29 @@
                     <div v-else-if="currentView === 'result'" class="max-w-3xl mx-auto w-full pb-10">
                         <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 mb-8">
                             <div class="bg-slate-800 text-white p-8 text-center relative overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 opacity-90">
+                                <div class="absolute inset-0 opacity-90"
+                                    :class="cheated ? 'bg-gradient-to-r from-red-600 to-rose-700' : 'bg-gradient-to-r from-violet-600 to-indigo-600'">
                                 </div>
                                 <div class="relative z-10">
                                     <p class="text-indigo-200 mb-2">{{ activeQuiz.title }}</p>
                                     <h2 class="text-5xl font-bold mb-2">
-                                        <span v-if="score !== null">{{ score }} <span
+                                        <span v-if="cheated">0 <span class="text-2xl font-normal opacity-70">分
+                                                (違規)</span></span>
+                                        <span v-else-if="score !== null">{{ score }} <span
                                                 class="text-2xl font-normal opacity-70">分</span></span>
                                         <span v-else class="text-3xl flex items-center justify-center gap-2 py-2">
                                             <i class="fa-solid fa-circle-notch fa-spin"></i> 閱卷中...
                                         </span>
                                     </h2>
-                                    <p class="text-indigo-100">測驗完成，{{ studentName }}！</p>
+                                    <p class="text-indigo-100">
+                                        <span v-if="cheated">測驗因違規而結束，{{ studentName }}</span>
+                                        <span v-else>測驗完成，{{ studentName }}！</span>
+                                    </p>
                                 </div>
                             </div>
 
-                            <!-- 當分數已經批改完成時 -->
-                            <template v-if="score !== null">
+                            <!-- 當分數已經批改完成且無作弊時 -->
+                            <template v-if="score !== null && !cheated">
                                 <div v-if="canShowExplanations" class="animate-fade-in p-6">
                                     <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">
                                         詳細解析</h3>
@@ -1490,7 +1506,24 @@
                                 </div>
                             </template>
 
-                            <!-- 當分數尚未批改好時 -->
+                            <!-- 當偵測到作弊違規時 -->
+                            <div v-else-if="cheated"
+                                class="bg-red-50 p-8 rounded-2xl text-center border-2 border-dashed border-red-300 my-6 mx-6 animate-fade-in">
+                                <div
+                                    class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <h4 class="text-xl font-bold text-red-700 mb-2">偵測到嚴重違規，已被強制收卷</h4>
+                                <p class="text-red-600 text-sm mb-2">
+                                    本考卷在測驗期間偵測到違規作弊行為！<br>
+                                    <span class="font-bold">違規原因：{{ cheatReason }}</span>
+                                </p>
+                                <p class="text-slate-500 text-xs mt-4">
+                                    違規紀錄已同步上傳至伺服器，本次測驗成績以 <span class="font-bold text-red-600">0 分</span> 計算。
+                                </p>
+                            </div>
+
+                            <!-- 當分數尚未批改好時 (且無作弊) -->
                             <div v-else
                                 class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
                                 <div
@@ -2152,7 +2185,7 @@ service cloud.firestore {
                     const score = ref(0);
 
                     // 1. 新增變數狀態 (State)
-                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false, autoGrading: true }); // 用來同步資料庫設定
+                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false, autoGrading: true, allowRepeat: false }); // 用來同步資料庫設定
                     const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                     const submissionTimestamp = ref(null);    // 學生交卷時間
                     const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -2299,11 +2332,12 @@ service cloud.firestore {
                                     quizStatusConfig.value = {
                                         activeQuizId: data.activeQuizId,
                                         showExplanations: !!data.showExplanations, // 轉為 boolean
-                                        autoGrading: data.autoGrading !== false // 預設為 true
+                                        autoGrading: data.autoGrading !== false, // 預設為 true
+                                        allowRepeat: !!data.allowRepeat // 轉為 boolean
                                     };
                                 } else {
                                     activeQuizId.value = null;
-                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false, autoGrading: true };
+                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false, autoGrading: true, allowRepeat: false };
                                 }
                             });
 
@@ -2699,6 +2733,20 @@ service cloud.firestore {
                             if (enable) {
                                 await triggerManualGrading();
                             }
+                        } catch (e) {
+                            console.error(e);
+                            showAlert("錯誤", "設定失敗", "error");
+                        }
+                    };
+
+                    // 新增：允許重複作答設定切換
+                    const toggleAllowRepeat = async (enable) => {
+                        if (!activeQuizId.value) return;
+                        try {
+                            await db.collection('config').doc('quizStatus').set({
+                                allowRepeat: enable
+                            }, { merge: true });
+                            showAlert("設定更新", enable ? "已切換至「允許重覆本測驗」" : "已切換至「禁止重覆本測驗」", "success");
                         } catch (e) {
                             console.error(e);
                             showAlert("錯誤", "設定失敗", "error");
@@ -3624,6 +3672,8 @@ Output format must be a strict JSON Array without Markdown markers:
                     // 防作弊狀態
                     const isTakingQuiz = ref(false);
                     const switchCount = ref(0);
+                    const cheated = ref(false);
+                    const cheatReason = ref('');
 
                     // --- 新增：進入全螢幕函數 ---
                     const enterFullscreen = () => {
@@ -3637,49 +3687,142 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
-                    // --- 新增：全螢幕狀態監聽 ---
-                    const handleFullscreenChange = () => {
-                        // 如果正在作答，且偵測到目前沒有全螢幕元素 (代表退出了全螢幕)
+                    // --- 新增：全螢幕狀態監聽 (限制次數) ---
+                    const handleFullscreenChange = async () => {
                         if (isTakingQuiz.value && !document.fullscreenElement && !document.webkitFullscreenElement) {
                             switchCount.value++;
-                            showAlert(
-                                "警告！請勿退出全螢幕",
-                                `測驗期間請保持全螢幕模式！\n請點擊確定以返回全螢幕。\n(違規次數: ${switchCount.value})`,
-                                "error"
-                            );
-                            // 嘗試重新進入全螢幕 (通常需要使用者互動，所以放在 Alert 關閉後的邏輯會更好，這裡做盡力嘗試)
-                            setTimeout(enterFullscreen, 100);
+                            if (switchCount.value >= 3) {
+                                showAlert("作弊違規", "由於您多次退出全螢幕，系統已強制自動交卷並記為 0 分！", "error");
+                                await forceSubmitQuizByCheat("多次退出全螢幕模式");
+                            } else {
+                                showAlert(
+                                    "警告！請勿退出全螢幕",
+                                    `測驗期間請保持全螢幕模式！\n請點擊確定以返回全螢幕。\n(警告: 累積違規 ${switchCount.value} 次，達 3 次將強制以 0 分收卷！)`,
+                                    "error"
+                                );
+                                setTimeout(enterFullscreen, 100);
+                            }
                         }
                     };
 
-                    // --- 修改：視窗切換/失去焦點監聽器 ---
-                    const handleVisibilityChange = () => {
-                        // 偵測是否隱藏 (切換分頁/縮小)
+                    // --- 修改：視窗切換/失去焦點監聽器 (限制次數) ---
+                    const handleVisibilityChange = async () => {
                         if (isTakingQuiz.value && document.hidden) {
                             switchCount.value++;
-                            // 嘗試將視窗拉回焦點 (瀏覽器通常會阻擋此行為，但我們保留這行做最大努力嘗試)
                             window.focus();
 
-                            showAlert(
-                                "警告！偵測到離開測驗視窗",
-                                `測驗期間禁止切換頁面或縮小視窗！\n請立即回到測驗。\n(違規次數: ${switchCount.value})`,
-                                "error"
-                            );
+                            if (switchCount.value >= 3) {
+                                showAlert("作弊違規", "由於您多次離開測驗視窗，系統已強制自動交卷並記為 0 分！", "error");
+                                await forceSubmitQuizByCheat("多次離開測驗視窗");
+                            } else {
+                                showAlert(
+                                    "警告！偵測到離開測驗視窗",
+                                    `測驗期間禁止切換頁面或縮小視窗！\n請立即回到測驗。\n(警告: 累積離開 ${switchCount.value} 次，達 3 次將強制以 0 分收卷！)`,
+                                    "error"
+                                );
+                            }
                         }
                     };
 
                     // 額外偵測失去焦點 (例如點擊了 taskbar 或其他分割視窗)
                     const handleWindowBlur = () => {
                         if (isTakingQuiz.value && !document.hidden) {
-                            // 如果視窗還在顯示但失去了焦點
-                            // 這裡不計次，只做輕微警告，避免誤判
                             document.title = "⚠️ 請回到測驗！";
                         }
                     };
 
                     const handleWindowFocus = () => {
                         if (isTakingQuiz.value) {
-                            document.title = "演算法與資料分析"; // 恢復標題
+                            document.title = "演算法與資料分析";
+                        }
+                    };
+
+                    // --- 新增：作弊強制收卷函數 ---
+                    const forceSubmitQuizByCheat = async (reason) => {
+                        if (!isTakingQuiz.value) return;
+                        isTakingQuiz.value = false;
+
+                        stopTimer();
+                        stopDevToolsDetector();
+
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen().catch(() => { });
+                        }
+
+                        cheated.value = true;
+                        cheatReason.value = reason;
+                        score.value = 0; // 作弊直接記 0 分
+
+                        const originalOrderAnswers = new Array(activeQuiz.value.questions.length);
+                        activeQuiz.value.questions.forEach((q, currentIdx) => {
+                            originalOrderAnswers[q._originalIndex] = studentAnswers.value[currentIdx] || null;
+                        });
+
+                        try {
+                            await db.collection('results').add({
+                                quizId: activeQuiz.value.id,
+                                studentName: studentName.value,
+                                score: 0,
+                                answers: originalOrderAnswers,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
+                                violationCount: switchCount.value || 1,
+                                cheated: true,
+                                cheatReason: reason
+                            });
+
+                            goToView('result');
+                        } catch (e) {
+                            console.error("寫入作弊結果失敗", e);
+                        }
+                    };
+
+                    // --- 新增：DevTools 開發者工具監控與自動強退 ---
+                    let devtoolsDetectorInterval = null;
+                    let hasDetectedCheat = false; // 防止重複觸發
+
+                    const handleDevToolsCheat = async () => {
+                        if (hasDetectedCheat || !isTakingQuiz.value) return;
+                        hasDetectedCheat = true;
+
+                        stopDevToolsDetector();
+                        showAlert("嚴重違規！", "偵測到您嘗試開啟開發者工具 (F12)！\n系統已強制將您交卷，並以 0 分記錄此作弊違規。", "error");
+                        await forceSubmitQuizByCheat("開啟開發者工具 (DevTools)");
+                    };
+
+                    const startDevToolsDetector = () => {
+                        if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
+                        hasDetectedCheat = false;
+
+                        // 1. Image getter 檢測法
+                        const devtoolsElement = new Image();
+                        Object.defineProperty(devtoolsElement, 'id', {
+                            get: function () {
+                                handleDevToolsCheat();
+                            }
+                        });
+
+                        devtoolsDetectorInterval = setInterval(() => {
+                            if (!isTakingQuiz.value) return;
+
+                            // 印出此元素，如果 DevTools 開啟會自動觸發 getter
+                            console.log('%c', devtoolsElement);
+                            console.clear();
+
+                            // 2. debugger 時間差檢測法
+                            const start = Date.now();
+                            debugger;
+                            const end = Date.now();
+                            if (end - start > 100) {
+                                handleDevToolsCheat();
+                            }
+                        }, 1000);
+                    };
+
+                    const stopDevToolsDetector = () => {
+                        if (devtoolsDetectorInterval) {
+                            clearInterval(devtoolsDetectorInterval);
+                            devtoolsDetectorInterval = null;
                         }
                     };
 
@@ -3753,6 +3896,22 @@ Output format must be a strict JSON Array without Markdown markers:
                             return;
                         }
 
+                        // [新增] 檢查是否允許重複作答
+                        if (quizStatusConfig.value.allowRepeat === false) {
+                            try {
+                                const checkSnap = await db.collection('results')
+                                    .where('quizId', '==', activeQuizId.value)
+                                    .where('studentName', '==', studentName.value)
+                                    .get();
+                                if (checkSnap.size > 0) {
+                                    showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗系統。", "warning");
+                                    return;
+                                }
+                            } catch (e) {
+                                console.error("檢查重複測驗失敗", e);
+                            }
+                        }
+
                         try {
                             const doc = await db.collection('quizzes').doc(activeQuizId.value).get();
                             if (doc.exists) {
@@ -3773,12 +3932,17 @@ Output format must be a strict JSON Array without Markdown markers:
                                 // 2. 啟動防作弊偵測 & 進入全螢幕
                                 isTakingQuiz.value = true;
                                 switchCount.value = 0;
+                                cheated.value = false;
+                                cheatReason.value = '';
 
                                 // 嘗試進入全螢幕 (必須由使用者動作觸發，startQuiz 是由點擊觸發的，所以通常有效)
                                 enterFullscreen();
 
                                 // [新增] 啟動計時器
                                 startTimer();
+
+                                // 啟動 DevTools 開發者工具背景偵測
+                                startDevToolsDetector();
 
                                 // 3. 設定狀態
                                 activeQuiz.value = { id: doc.id, ...quizData };
@@ -3830,6 +3994,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                         // 關閉防作弊偵測 & 退出全螢幕
                         isTakingQuiz.value = false;
+                        stopDevToolsDetector(); // 停止 DevTools 偵測
                         if (document.exitFullscreen) {
                             document.exitFullscreen().catch(() => { }); // 忽略錯誤
                         }
@@ -3994,8 +4159,8 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Student
                         studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
-                        progressPercent, score, studentAnswers,
-                        quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading,
+                        progressPercent, score, studentAnswers, cheated, cheatReason,
+                        quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
                         canShowExplanations, timeRemainingForExplanation,
                         // Highlighter
                         passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
