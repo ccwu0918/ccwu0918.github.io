@@ -2758,6 +2758,21 @@ service cloud.firestore {
                         }
                     };
 
+                    // 新增：重新批改該測驗的所有學生作答記錄
+                    const regradeQuizResults = async (quizId) => {
+                        if (!db) return;
+                        try {
+                            const snapshot = await db.collection('results').where('quizId', '==', quizId).get();
+                            console.log(`開始重新計算測驗 ID: ${quizId} 的學生成績，共 ${snapshot.size} 筆記錄`);
+                            for (const doc of snapshot.docs) {
+                                await gradeResult({ id: doc.id, ...doc.data() });
+                            }
+                            console.log(`測驗 ID: ${quizId} 的學生成績已重新計算完畢`);
+                        } catch (e) {
+                            console.error("重新計算成績失敗", e);
+                        }
+                    };
+
                     // 新增：手動/立即觸發所有未批改學生的計分
                     const triggerManualGrading = async () => {
                         if (!db) return;
@@ -3214,13 +3229,35 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
 
                     // 新增：編輯題庫功能
-                    const editQuiz = (quiz) => {
+                    const editQuiz = async (quiz) => {
                         editingQuizId.value = quiz.id;
                         newQuiz.title = quiz.title;
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
-                        newQuiz.questions = JSON.parse(JSON.stringify(quiz.questions)); // Deep copy to prevent mutating original before save
+                        
+                        // 先複製題目
+                        const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
+                        
+                        // 從 quiz_answers 中讀取答案與解析並合併
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    questionsCopy.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("獲取答案解析失敗", e);
+                            }
+                        }
+                        newQuiz.questions = questionsCopy;
 
                         // Clear source inputs as we are editing existing result
                         aiSourceText.value = '';
@@ -3231,13 +3268,36 @@ Output format must be a strict JSON Array without Markdown markers:
                         nextTick(() => Prism.highlightAll());
                     };
 
-                    const duplicateQuiz = (quiz) => {
+                    const duplicateQuiz = async (quiz) => {
                         editingQuizId.value = null; // duplicating creates a NEW quiz
                         newQuiz.title = quiz.title + ' (副本)';
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
-                        newQuiz.questions = JSON.parse(JSON.stringify(quiz.questions));
+                        
+                        // 先複製題目
+                        const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
+                        
+                        // 從 quiz_answers 中讀取答案與解析並合併
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    questionsCopy.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("獲取答案解析失敗", e);
+                            }
+                        }
+                        newQuiz.questions = questionsCopy;
+                        
                         showCreateQuiz.value = true;
                         aiSourceText.value = '';
                         aiImageBase64.value = '';
@@ -3249,23 +3309,42 @@ Output format must be a strict JSON Array without Markdown markers:
                         if (!newQuiz.title) { showAlert("欄位缺失", "請輸入測驗標題", "warning"); return; }
 
                         try {
+                            // 1. 分離出答案與解析
+                            const answersData = {
+                                answers: newQuiz.questions.map(q => ({
+                                    answer: q.hasOwnProperty('answer') ? q.answer : null,
+                                    explanation: q.explanation || ''
+                                }))
+                            };
+
+                            // 2. 清除 questions 內的答案與解析欄位
+                            const cleanQuestions = newQuiz.questions.map(q => {
+                                const { answer, explanation, ...rest } = q;
+                                return rest;
+                            });
+
                             const quizData = {
                                 title: newQuiz.title,
                                 category: newQuiz.category || '未分類',
                                 questionType: newQuiz.questionType,
                                 readingPassage: newQuiz.readingPassage,
-                                questions: newQuiz.questions,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Update timestamp on edit? Maybe better to keep original created, add updated. For simplicity, just update.
+                                questions: cleanQuestions,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 teacherId: user.value.uid
                             };
 
-                            if (editingQuizId.value) {
+                            let quizId = editingQuizId.value;
+                            if (quizId) {
                                 // Update existing
-                                await db.collection('quizzes').doc(editingQuizId.value).update(quizData);
-                                showAlert("成功", "題庫更新成功！", "success");
+                                await db.collection('quizzes').doc(quizId).update(quizData);
+                                await db.collection('quiz_answers').doc(quizId).set(answersData);
+                                showAlert("成功", "題庫更新成功！已自動在背景重新計算所有已繳卷學生的分數。", "success");
+                                regradeQuizResults(quizId);
                             } else {
                                 // Create new
-                                await db.collection('quizzes').add(quizData);
+                                const docRef = await db.collection('quizzes').add(quizData);
+                                quizId = docRef.id;
+                                await db.collection('quiz_answers').doc(quizId).set(answersData);
                                 showAlert("成功", "題庫建立成功！", "success");
                             }
 
@@ -3340,6 +3419,25 @@ Output format must be a strict JSON Array without Markdown markers:
                         showAnalytics.value = true;
                         selectedStudentResult.value = null; // Reset detail view
                         analyticsTab.value = 'score'; // Reset tab
+
+                        // 獲取標準答案並合併，供教師查看詳情時顯示正確答案與解析
+                        if (db) {
+                            try {
+                                const answersDoc = await db.collection('quiz_answers').doc(quiz.id).get();
+                                if (answersDoc.exists) {
+                                    const answersData = answersDoc.data();
+                                    selectedAnalyticsQuiz.value.questions.forEach((q, idx) => {
+                                        const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                        if (answersData.answers && answersData.answers[origIdx]) {
+                                            q.answer = answersData.answers[origIdx].answer;
+                                            q.explanation = answersData.answers[origIdx].explanation || '';
+                                        }
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("教師端獲取答案解析失敗", e);
+                            }
+                        }
 
                         // Fix: Remove orderBy to avoid index error. Sort in client side.
                         const snap = await db.collection('results')
@@ -4049,9 +4147,10 @@ Output format must be a strict JSON Array without Markdown markers:
                             if (answersDoc.exists) {
                                 const answersData = answersDoc.data();
                                 activeQuiz.value.questions.forEach((q, idx) => {
-                                    if (answersData.answers && answersData.answers[idx]) {
-                                        q.answer = answersData.answers[idx].answer;
-                                        q.explanation = answersData.answers[idx].explanation || '';
+                                    const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
+                                    if (answersData.answers && answersData.answers[origIdx]) {
+                                        q.answer = answersData.answers[origIdx].answer;
+                                        q.explanation = answersData.answers[origIdx].explanation || '';
                                     }
                                 });
                             }
@@ -4132,7 +4231,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         readingConfig, canGenerateReading, handleTextFileUpload, generateReadingComprehension, generatePassageFromTopic, generateReadingQuestions, getPirlsLevelName,
                         // Question Editor
                         showQuestionEditor, currentEditingQuestion, currentEditingQuestionIndex, addQuestion, editQuestion, saveQuestion, deleteQuestion,
-                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate,
+                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate, regradeQuizResults,
                         // Analytics
                         viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV,
                         // Student
