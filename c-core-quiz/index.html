@@ -444,7 +444,18 @@
                                     {{ getActiveQuizTitle }}
                                 </h3>
                             </div>
-                            <div class="flex gap-2 mr-2">
+                            <div class="flex gap-2 mr-2 flex-wrap sm:flex-nowrap">
+                                <!-- 自動批改按鈕 -->
+                                <button v-if="quizStatusConfig.autoGrading" @click="toggleAutoGrading(false)"
+                                    class="bg-white/90 text-emerald-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-50 transition shadow-md flex items-center whitespace-nowrap">
+                                    <i class="fa-solid fa-calculator mr-2"></i>批改: 自動
+                                </button>
+                                <button v-else @click="toggleAutoGrading(true)"
+                                    class="bg-slate-800/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800/40 transition shadow-md flex items-center whitespace-nowrap border border-white/30 backdrop-blur-sm">
+                                    <i class="fa-solid fa-pause mr-2"></i>批改: 暫停
+                                </button>
+
+                                <!-- 原有解析按鈕 -->
                                 <button v-if="quizStatusConfig.showExplanations" @click="toggleExplanations(false)"
                                     class="bg-white/90 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition shadow-md flex items-center whitespace-nowrap">
                                     <i class="fa-regular fa-eye mr-2"></i>解析: 已開啟
@@ -1395,65 +1406,83 @@
                                 </div>
                                 <div class="relative z-10">
                                     <p class="text-indigo-200 mb-2">{{ activeQuiz.title }}</p>
-                                    <h2 class="text-5xl font-bold mb-2">{{ score }} <span
-                                            class="text-2xl font-normal opacity-70">分</span></h2>
+                                    <h2 class="text-5xl font-bold mb-2">
+                                        <span v-if="score !== null">{{ score }} <span class="text-2xl font-normal opacity-70">分</span></span>
+                                        <span v-else class="text-3xl flex items-center justify-center gap-2 py-2">
+                                            <i class="fa-solid fa-circle-notch fa-spin"></i> 閱卷中...
+                                        </span>
+                                    </h2>
                                     <p class="text-indigo-100">測驗完成，{{ studentName }}！</p>
                                 </div>
                             </div>
 
-                            <div v-if="canShowExplanations" class="animate-fade-in">
-                                <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">詳細解析</h3>
-                                <div class="space-y-6">
-                                    <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
-                                        class="p-5 rounded-2xl border"
-                                        :class="studentAnswers[idx] == q.answer ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'">
-                                        <div class="flex gap-3 mb-3">
-                                            <div class="mt-1">
-                                                <i v-if="studentAnswers[idx] == q.answer"
-                                                    class="fa-solid fa-circle-check text-green-500 text-xl"></i>
-                                                <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
+                            <!-- 當分數已經批改完成時 -->
+                            <template v-if="score !== null">
+                                <div v-if="canShowExplanations" class="animate-fade-in p-6">
+                                    <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">詳細解析</h3>
+                                    <div class="space-y-6">
+                                        <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
+                                            class="p-5 rounded-2xl border bg-white shadow-sm"
+                                            :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
+                                            <div class="flex gap-3 mb-3">
+                                                <div class="mt-1">
+                                                    <i v-if="studentAnswers[idx] == q.answer"
+                                                        class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+                                                    <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{ q.title }}</h4>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{ q.title
-                                                    }}</h4>
-                                            </div>
-                                        </div>
 
-                                        <div class="ml-8 space-y-2 text-sm">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-bold text-slate-500">您的答案：</span>
-                                                <span
-                                                    :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
-                                                    {{ q.options[studentAnswers[idx]-1] }}
-                                                </span>
-                                            </div>
-                                            <div v-if="studentAnswers[idx] != q.answer" class="flex items-center gap-2">
-                                                <span class="font-bold text-slate-500">正確答案：</span>
-                                                <span class="text-green-700 font-bold">
-                                                    {{ q.options[q.answer-1] }}
-                                                </span>
-                                            </div>
-                                            <div class="mt-3 p-3 bg-white/60 rounded-lg text-slate-600 text-sm">
-                                                <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
-                                                {{ q.explanation || '無解析' }}
+                                            <div class="ml-8 space-y-2 text-sm">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-slate-500">您的答案：</span>
+                                                    <span
+                                                        :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
+                                                        {{ q.options[studentAnswers[idx]-1] }}
+                                                    </span>
+                                                </div>
+                                                <div v-if="studentAnswers[idx] != q.answer" class="flex items-center gap-2">
+                                                    <span class="font-bold text-slate-500">正確答案：</span>
+                                                    <span class="text-green-700 font-bold">
+                                                        {{ q.options[q.answer-1] }}
+                                                    </span>
+                                                </div>
+                                                <div class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
+                                                    <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
+                                                    {{ q.explanation || '無解析' }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div v-else class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 animate-fade-in">
-                                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                                    <i class="fa-solid fa-lock"></i>
+                                <div v-else class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
+                                    <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </div>
+                                    <h4 class="text-xl font-bold text-slate-600 mb-2">詳細解析已隱藏</h4>
+                                    <p class="text-slate-500 text-sm mb-4">
+                                        為了維護測驗公平性，詳細解析將在<br>
+                                        <span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
+                                    </p>
+                                    <div v-if="timeRemainingForExplanation" class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
+                                        <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
+                                        自動解鎖倒數：<span class="font-bold">{{ timeRemainingForExplanation }}</span>
+                                    </div>
                                 </div>
-                                <h4 class="text-xl font-bold text-slate-600 mb-2">詳細解析已隱藏</h4>
-                                <p class="text-slate-500 text-sm mb-4">
-                                    為了維護測驗公平性，詳細解析將在<br>
-                                    <span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
+                            </template>
+
+                            <!-- 當分數尚未批改好時 -->
+                            <div v-else class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
+                                <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                </div>
+                                <h4 class="text-xl font-bold text-slate-700 mb-2">交卷成功，靜待成績公佈</h4>
+                                <p class="text-slate-500 text-sm">
+                                    您的答案已成功傳送！教師端正在進行背景自動閱卷中。<br>
+                                    <span class="font-bold text-indigo-600">批改完成後本畫面將自動顯示成績。</span>
                                 </p>
-                                <div v-if="timeRemainingForExplanation" class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
-                                    <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
-                                    自動解鎖倒數：<span class="font-bold">{{ timeRemainingForExplanation }}</span>
-                                </div>
                             </div>
                             <div class="p-6 bg-slate-50 border-t border-slate-100 text-center">
                                 <button @click="goToView('landing')"
@@ -1830,12 +1859,24 @@ service cloud.firestore {
     match /config/quizStatus {
       allow read, write: if true;
     }
+    match /config/teachers {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
     match /quizzes/{quizId} {
       allow read: if true;
-      allow create, delete: if request.auth != null;
+      allow create, update, delete: if request.auth != null;
+    }
+    match /quiz_answers/{quizId} {
+      allow write: if request.auth != null;
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
+        (exists(/databases/$(database)/documents/config/teachers) && 
+         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email]))
+      );
     }
     match /results/{resultId} {
-      allow create, read: if true;
+      allow create, read, update: if request.auth != null;
     }
   }
 }</pre>
@@ -2093,7 +2134,7 @@ service cloud.firestore {
                     const score = ref(0);
 
                     // 1. 新增變數狀態 (State)
-                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false }); // 用來同步資料庫設定
+                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false, autoGrading: true }); // 用來同步資料庫設定
                     const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                     const submissionTimestamp = ref(null);    // 學生交卷時間
                     const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -2239,11 +2280,12 @@ service cloud.firestore {
                                     // [新增] 同步整份設定給 quizStatusConfig
                                     quizStatusConfig.value = {
                                         activeQuizId: data.activeQuizId,
-                                        showExplanations: !!data.showExplanations // 轉為 boolean
+                                        showExplanations: !!data.showExplanations, // 轉為 boolean
+                                        autoGrading: data.autoGrading !== false // 預設為 true
                                     };
                                 } else {
                                     activeQuizId.value = null;
-                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false };
+                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false, autoGrading: true };
                                 }
                             });
 
@@ -2360,12 +2402,24 @@ service cloud.firestore {
     match /config/quizStatus {
       allow read, write: if true;
     }
+    match /config/teachers {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
     match /quizzes/{quizId} {
       allow read: if true;
-      allow create, delete: if request.auth != null;
+      allow create, update, delete: if request.auth != null;
+    }
+    match /quiz_answers/{quizId} {
+      allow write: if request.auth != null;
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
+        (exists(/databases/$(database)/documents/config/teachers) && 
+         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email]))
+      );
     }
     match /results/{resultId} {
-      allow create, read: if true;
+      allow create, read, update: if request.auth != null;
     }
   }
 }`;
@@ -2408,7 +2462,13 @@ service cloud.firestore {
                     // --- Navigation & Helper ---
                     const goToView = (view) => {
                         currentView.value = view;
-                        if (view === 'teacher-dashboard') fetchQuizzes();
+                        if (view === 'teacher-dashboard') {
+                            fetchQuizzes();
+                            // 教師進入儀表板時，自動遷移舊資料格式、補齊未批改成績、並開啟實時背景自動批改監聽
+                            migrateOldQuizzes();
+                            triggerManualGrading();
+                            startResultsGradingListener();
+                        }
                         if (view === 'landing') {
                             studentName.value = '';
                         }
@@ -2604,6 +2664,130 @@ service cloud.firestore {
                                 console.error(e);
                                 showAlert("錯誤", "操作失敗", "error");
                             }
+                        }
+                    };
+
+                    // 新增：自動批改設定切換
+                    const toggleAutoGrading = async (enable) => {
+                        if (!activeQuizId.value) return;
+                        try {
+                            await db.collection('config').doc('quizStatus').set({ 
+                                autoGrading: enable 
+                            }, { merge: true });
+                            
+                            showAlert("設定更新", enable ? "已啟用自動批改分數" : "已暫停自動批改分數", "success");
+                            
+                            // 若啟用自動批改，立即觸發一次手動批改補齊分數
+                            if (enable) {
+                                await triggerManualGrading();
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            showAlert("錯誤", "設定失敗", "error");
+                        }
+                    };
+
+                    // 新增：批改特定學生的考卷
+                    const gradeResult = async (result) => {
+                        try {
+                            const answersDoc = await db.collection('quiz_answers').doc(result.quizId).get();
+                            if (!answersDoc.exists) return;
+                            const answersData = answersDoc.data();
+                            const quizAnswers = answersData.answers || [];
+                            
+                            let correctCount = 0;
+                            result.answers.forEach((studentAns, idx) => {
+                                if (quizAnswers[idx] && studentAns == quizAnswers[idx].answer) {
+                                    correctCount++;
+                                }
+                            });
+                            
+                            const calculatedScore = Math.round((correctCount / quizAnswers.length) * 100);
+                            
+                            await db.collection('results').doc(result.id).update({
+                                score: calculatedScore
+                            });
+                            console.log(`已成功批改 ${result.studentName} 的作答記錄，分數：${calculatedScore}`);
+                        } catch (e) {
+                            console.error("批改結果失敗", e);
+                        }
+                    };
+
+                    // 新增：手動/立即觸發所有未批改學生的計分
+                    const triggerManualGrading = async () => {
+                        if (!db) return;
+                        try {
+                            const snapshot = await db.collection('results').where('score', '==', null).get();
+                            for (const doc of snapshot.docs) {
+                                await gradeResult({ id: doc.id, ...doc.data() });
+                            }
+                        } catch (e) {
+                            console.error("執行手動批改失敗", e);
+                        }
+                    };
+
+                    // 新增：監聽未批改學生的結果並在背景自動批改
+                    let resultsGradingListener = null;
+                    const startResultsGradingListener = () => {
+                        if (!db) return;
+                        if (resultsGradingListener) resultsGradingListener();
+                        
+                        resultsGradingListener = db.collection('results')
+                            .where('score', '==', null)
+                            .onSnapshot(async (snapshot) => {
+                                // 只有在已登入教師、且開啟自動批改時才執行背景批改
+                                if (!isTeacherUser.value || !quizStatusConfig.value.autoGrading) return;
+                                
+                                const pending = [];
+                                snapshot.forEach(doc => {
+                                    pending.push({ id: doc.id, ...doc.data() });
+                                });
+                                
+                                for (const result of pending) {
+                                    await gradeResult(result);
+                                }
+                            });
+                    };
+
+                    // 新增：將舊題庫自動遷移為題目與答案分離的安全防弊格式
+                    const migrateOldQuizzes = async () => {
+                        if (!db) return;
+                        try {
+                            const snapshot = await db.collection('quizzes').get();
+                            let migratedCount = 0;
+                            for (const doc of snapshot.docs) {
+                                const data = doc.data();
+                                const questions = data.questions || [];
+                                const hasAnswers = questions.some(q => q.hasOwnProperty('answer') || q.hasOwnProperty('explanation'));
+                                
+                                if (hasAnswers) {
+                                    const quizId = doc.id;
+                                    
+                                    // 1. 將答案與解析存入 quiz_answers
+                                    const answersData = {
+                                        answers: questions.map(q => ({
+                                            answer: q.hasOwnProperty('answer') ? q.answer : null,
+                                            explanation: q.explanation || ''
+                                        }))
+                                    };
+                                    await db.collection('quiz_answers').doc(quizId).set(answersData);
+                                    
+                                    // 2. 清除 quizzes 中 questions 的答案與解析欄位
+                                    const cleanQuestions = questions.map(q => {
+                                        const { answer, explanation, ...rest } = q;
+                                        return rest;
+                                    });
+                                    await db.collection('quizzes').doc(quizId).update({
+                                        questions: cleanQuestions
+                                    });
+                                    migratedCount++;
+                                }
+                            }
+                            if (migratedCount > 0) {
+                                console.log(`資料相容遷移：成功將 ${migratedCount} 個舊有題庫升級為防弊格式。`);
+                            }
+                        } catch (e) {
+                            console.error("資料遷移失敗", e);
                         }
                     };
 
@@ -3619,7 +3803,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         return ((currentQuestionIndex.value + 1) / activeQuiz.value.questions.length) * 100;
                     });
 
-                    // 4. 修改 submitQuiz 函數 (停止計時、記錄交卷時間)
+                    // 4. 修改 submitQuiz 函數 (停止計時、記錄交卷時間，且初始化分數為 null)
                     const submitQuiz = async () => {
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案", "warning"); return; }
 
@@ -3636,12 +3820,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         stopTimer();
                         submissionTimestamp.value = Date.now();
                         
-                        let correctCount = 0;
-                        activeQuiz.value.questions.forEach((q, idx) => {
-                            if (q.answer == studentAnswers.value[idx]) correctCount++;
-                        });
-
-                        score.value = Math.round((correctCount / activeQuiz.value.questions.length) * 100);
+                        score.value = null; // 初始化為 null，表示等待批改
 
                         // 還原答案順序
                         const originalOrderAnswers = new Array(activeQuiz.value.questions.length);
@@ -3649,18 +3828,38 @@ Output format must be a strict JSON Array without Markdown markers:
                             originalOrderAnswers[q._originalIndex] = studentAnswers.value[currentIdx];
                         });
 
-                        // 寫入資料庫 (包含 violationCount)
-                        await db.collection('results').add({
-                            quizId: activeQuiz.value.id,
-                            studentName: studentName.value,
-                            score: score.value,
-                            answers: originalOrderAnswers,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
-                            violationCount: switchCount.value // 紀錄違規次數
-                        });
+                        try {
+                            // 寫入資料庫 (score 初始化為 null)
+                            const docRef = await db.collection('results').add({
+                                quizId: activeQuiz.value.id,
+                                studentName: studentName.value,
+                                score: null,
+                                answers: originalOrderAnswers,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
+                                violationCount: switchCount.value // 紀錄違規次數
+                            });
 
-                        goToView('result');
+                            goToView('result');
+
+                            // 實時監聽自己的交卷結果，等待教師端批改更新分數
+                            const unsubscribeResult = db.collection('results').doc(docRef.id).onSnapshot(async (doc) => {
+                                if (doc.exists) {
+                                    const data = doc.data();
+                                    if (data.score !== null && data.score !== undefined) {
+                                        score.value = data.score;
+                                        
+                                        // 當分數批改出來後，若此時已開放解析，則動態載入答案
+                                        if (canShowExplanations.value) {
+                                            await fetchAnswersForStudent();
+                                        }
+                                        unsubscribeResult(); // 取得分數後即可解除監聽
+                                    }
+                                }
+                            });
+                        } catch (e) {
+                            showAlert("交卷失敗", e.message, "error");
+                        }
                     };
 
                     // 5. 新增：教師切換解析顯示功能
@@ -3679,6 +3878,35 @@ Output format must be a strict JSON Array without Markdown markers:
                             showAlert("錯誤", "設定失敗", "error");
                         }
                     };
+
+                    // 新增：學生端在允許查看解析時，動態下載答案與解析合併回 activeQuiz.value.questions
+                    const fetchAnswersForStudent = async () => {
+                        if (!activeQuiz.value || !db) return;
+                        try {
+                            const answersDoc = await db.collection('quiz_answers').doc(activeQuiz.value.id).get();
+                            if (answersDoc.exists) {
+                                const answersData = answersDoc.data();
+                                activeQuiz.value.questions.forEach((q, idx) => {
+                                    if (answersData.answers && answersData.answers[idx]) {
+                                        q.answer = answersData.answers[idx].answer;
+                                        q.explanation = answersData.answers[idx].explanation || '';
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.error("學生端獲取答案解析失敗", e);
+                        }
+                    };
+
+                    // 新增：監聽 canShowExplanations 狀態，當其解鎖時，若已算出分數，則立即拉取答案
+                    watch(canShowExplanations, async (newVal) => {
+                        if (newVal && score.value !== null && activeQuiz.value) {
+                            const firstQuestion = activeQuiz.value.questions[0];
+                            if (firstQuestion && !firstQuestion.hasOwnProperty('answer')) {
+                                await fetchAnswersForStudent();
+                            }
+                        }
+                    });
                     
                     // 6. 新增：計算屬性 (Computed) 控制解析顯示
                     // 建立一個每秒更新的時鐘，確保倒數計時會動
@@ -3748,7 +3976,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                         progressPercent, score, studentAnswers,                        
-                        quizStatusConfig, quizTimerDisplay, toggleExplanations, 
+                        quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading,
                         canShowExplanations, timeRemainingForExplanation,
                         // Highlighter
                         passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
