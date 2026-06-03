@@ -3916,16 +3916,6 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
-                    // 新增：監聽 canShowExplanations 狀態，當其解鎖時，若已算出分數，則立即拉取答案
-                    watch(canShowExplanations, async (newVal) => {
-                        if (newVal && score.value !== null && activeQuiz.value) {
-                            const firstQuestion = activeQuiz.value.questions[0];
-                            if (firstQuestion && !firstQuestion.hasOwnProperty('answer')) {
-                                await fetchAnswersForStudent();
-                            }
-                        }
-                    });
-
                     // 6. 新增：計算屬性 (Computed) 控制解析顯示
                     // 建立一個每秒更新的時鐘，確保倒數計時會動
                     setInterval(() => {
@@ -3953,6 +3943,17 @@ Output format must be a strict JSON Array without Markdown markers:
                         const m = Math.floor(diff / 60000).toString().padStart(2, '0');
                         const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
                         return `${m}:${s}`;
+                    });
+
+                    // 新增：監聽 canShowExplanations 狀態，當其解鎖時，若已算出分數，則立即拉取答案
+                    // (移至 computed 宣告之後，避免 JavaScript 暫時性死區 ReferenceError)
+                    watch(canShowExplanations, async (newVal) => {
+                        if (newVal && score.value !== null && activeQuiz.value) {
+                            const firstQuestion = activeQuiz.value.questions[0];
+                            if (firstQuestion && !firstQuestion.hasOwnProperty('answer')) {
+                                await fetchAnswersForStudent();
+                            }
+                        }
                     });
 
                     // --- IDE Editor Helpers ---
