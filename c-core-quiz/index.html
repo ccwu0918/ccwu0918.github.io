@@ -869,36 +869,56 @@
                                                 <i class="fa-solid fa-code text-violet-600 mr-1"></i>閱讀文本 (IDE 編輯模式)
                                             </label>
                                             <div class="ide-container shadow-xl">
-                                                <div class="ide-header">
-                                                    <div class="ide-dots">
-                                                        <div class="ide-dot dot-red"></div>
-                                                        <div class="ide-dot dot-yellow"></div>
-                                                        <div class="ide-dot dot-green"></div>
+                                                <div class="ide-header flex justify-between items-center">
+                                                    <div class="flex items-center">
+                                                        <div class="ide-dots mr-2">
+                                                            <div class="ide-dot dot-red"></div>
+                                                            <div class="ide-dot dot-yellow"></div>
+                                                            <div class="ide-dot dot-green"></div>
+                                                        </div>
+                                                        <span class="font-mono text-xs text-sky-400">
+                                                            {{ editReadingLang === 'en' ? 'reading_passage_en.md' : 'reading_passage_zh.md' }}
+                                                        </span>
                                                     </div>
-                                                    <span>reading_passage.txt</span>
+                                                    <!-- Tab for Language Selection inside IDE header -->
+                                                    <div class="flex bg-slate-800 rounded-lg p-0.5 text-xs border border-slate-700">
+                                                        <button type="button" @click="editReadingLang = 'zh'; highlightCode()"
+                                                            :class="editReadingLang === 'zh' ? 'bg-violet-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'"
+                                                            class="px-2.5 py-1 rounded-md transition duration-200">
+                                                            繁中
+                                                        </button>
+                                                        <button type="button" @click="editReadingLang = 'en'; highlightCode()"
+                                                            :class="editReadingLang === 'en' ? 'bg-violet-600 text-white font-bold' : 'text-slate-400 hover:text-slate-200'"
+                                                            class="px-2.5 py-1 rounded-md transition duration-200 ml-1">
+                                                            English
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <div class="ide-editor-wrapper h-80">
-                                                    <!-- 高亮顯示層 -->
-                                                    <pre
-                                                        class="ide-code ide-scroll"><code class="language-markdown">{{ newQuiz.readingPassage }}</code></pre>
-                                                    <!-- 透明輸入層 -->
-                                                    <textarea v-model="newQuiz.readingPassage" @input="highlightCode"
-                                                        @scroll="syncScroll" class="ide-textarea ide-scroll"
-                                                        placeholder="// 在此輸入閱讀測驗文本內容..." spellcheck="false"></textarea>
+                                                    <!-- Chinese Passage -->
+                                                    <template v-if="editReadingLang === 'zh'">
+                                                        <!-- 高亮顯示層 -->
+                                                        <pre
+                                                            class="ide-code ide-scroll"><code class="language-markdown">{{ newQuiz.readingPassage }}</code></pre>
+                                                        <!-- 透明輸入層 -->
+                                                        <textarea v-model="newQuiz.readingPassage" @input="highlightCode"
+                                                            @scroll="syncScroll" class="ide-textarea ide-scroll"
+                                                            placeholder="// 在此輸入閱讀測驗中文文本內容..." spellcheck="false"></textarea>
+                                                    </template>
+                                                    <!-- English Passage -->
+                                                    <template v-else-if="editReadingLang === 'en'">
+                                                        <!-- 高亮顯示層 -->
+                                                        <pre
+                                                            class="ide-code ide-scroll"><code class="language-markdown">{{ newQuiz['readingPassage-eng'] }}</code></pre>
+                                                        <!-- 透明輸入層 -->
+                                                        <textarea v-model="newQuiz['readingPassage-eng']" @input="highlightCode"
+                                                            @scroll="syncScroll" class="ide-textarea ide-scroll"
+                                                            placeholder="// Enter English reading passage content here..." spellcheck="false"></textarea>
+                                                    </template>
                                                 </div>
                                             </div>
-                                            <p class="text-xs text-slate-500 mt-1 text-right">支援 Markdown 語法高亮</p>
-
-                                            <!-- 閱讀文本輸入 (英文 - 選填) -->
-                                            <div class="mt-4">
-                                                <label class="block text-sm font-medium text-slate-700 mb-1">閱讀文本 (英文 -
-                                                    選填)</label>
-                                                <textarea v-model="newQuiz['readingPassage-eng']"
-                                                    class="w-full h-40 p-3 border border-slate-200 rounded-xl font-mono text-sm"
-                                                    placeholder="// Enter English reading passage content here..."></textarea>
-                                            </div>
+                                            <p class="text-xs text-slate-500 mt-1 text-right">支援 Markdown 語法高亮 | 已選擇：{{ editReadingLang === 'zh' ? '繁體中文' : '英文' }}</p>
                                         </div>
-
                                         <!-- PIRLS閱讀理解四層次設定 -->
                                         <div class="border-t border-blue-200 pt-4">
                                             <h5 class="font-bold text-slate-700 mb-3">PIRLS閱讀理解層次設定</h5>
@@ -1608,7 +1628,7 @@
                                             <div class="ide-dot dot-green"></div>
                                         </div>
                                         <span class="font-bold text-sky-400"><i
-                                                class="fa-solid fa-code mr-2"></i>Reading_Exam.md</span>
+                                                class="fa-solid fa-code mr-2"></i>{{ currentLang === 'en' ? 'reading_passage_en.md' : 'reading_passage_zh.md' }}</span>
                                     </div>
                                     <!-- Highlighter Toolbar inside IDE Header -->
                                     <div class="flex items-center gap-2">
@@ -1749,47 +1769,123 @@
                                     class="animate-fade-in p-6">
                                     <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">
                                         {{ currentLang === 'zh' ? '詳細解析' : 'Detailed Explanation' }}</h3>
-                                    <div class="space-y-6">
-                                        <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
-                                            class="p-5 rounded-2xl border bg-white shadow-sm"
-                                            :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
-                                            <div class="flex gap-3 mb-3">
-                                                <div class="mt-1">
-                                                    <i v-if="studentAnswers[idx] == q.answer"
-                                                        class="fa-solid fa-circle-check text-green-500 text-xl"></i>
-                                                    <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
-                                                        getQuestionTitle(q) }}</h4>
-                                                </div>
-                                            </div>
+                                    <div v-if="activeQuiz.questionType === 'reading-comprehension'"
+                                         class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                         <!-- Left Column: Reading Passage IDE -->
+                                         <div class="ide-container shadow-2xl flex flex-col h-[400px] lg:h-[680px]">
+                                             <!-- IDE Header -->
+                                             <div class="ide-header justify-between">
+                                                 <div class="flex items-center">
+                                                     <div class="ide-dots">
+                                                         <div class="ide-dot dot-red"></div>
+                                                         <div class="ide-dot dot-yellow"></div>
+                                                         <div class="ide-dot dot-green"></div>
+                                                     </div>
+                                                     <span class="font-bold text-sky-400"><i class="fa-solid fa-code mr-2"></i>{{ currentLang === 'en' ? 'reading_passage_en.md' : 'reading_passage_zh.md' }}</span>
+                                                 </div>
+                                             </div>
+                                             <div class="relative flex-grow bg-slate-900 overflow-hidden">
+                                                 <div ref="resultLineNumbers"
+                                                     class="absolute left-0 top-0 bottom-0 w-12 bg-slate-800 border-r border-slate-700 flex flex-col items-end pt-4 pr-2 text-slate-500 text-xs font-mono select-none overflow-y-hidden">
+                                                     <div v-for="n in Math.max(resultPassageLineCount, 50)" :key="n" class="leading-6">{{n}}</div>
+                                                 </div>
+                                                 <div ref="resultPassageContainer" @scroll="syncResultPassageScroll"
+                                                     class="passage-content ide-mode-content absolute left-12 right-0 top-0 bottom-0 p-4 text-slate-300 font-mono text-sm leading-6 whitespace-pre-wrap overflow-y-auto ide-scroll select-text">
+                                                     {{ getQuizReadingPassage(activeQuiz) }}
+                                                 </div>
+                                             </div>
+                                             <!-- Status Bar -->
+                                             <div class="bg-blue-600 text-white text-xs px-3 py-1 flex justify-between font-mono">
+                                                 <span>-- NORMAL --</span>
+                                                 <span>UTF-8</span>
+                                             </div>
+                                         </div>
 
-                                            <div class="ml-8 space-y-2 text-sm">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                                        '您的答案：' : 'Your Answer: ' }}</span>
-                                                    <span
-                                                        :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
-                                                        {{ getQuestionOption(q, studentAnswers[idx]-1) }}
-                                                    </span>
-                                                </div>
-                                                <div v-if="studentAnswers[idx] != q.answer"
-                                                    class="flex items-center gap-2">
-                                                    <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                                        '正確答案：' : 'Correct Answer: ' }}</span>
-                                                    <span class="text-green-700 font-bold">
-                                                        {{ getQuestionOption(q, q.answer-1) }}
-                                                    </span>
-                                                </div>
-                                                <div
-                                                    class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
-                                                    <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
-                                                    {{ getQuestionExplanation(q) }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                         <!-- Right Column: Explanations list (Scrollable) -->
+                                         <div class="space-y-6 overflow-y-auto ide-scroll h-auto lg:h-[680px] pr-2">
+                                             <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
+                                                 class="p-5 rounded-2xl border bg-white shadow-sm animate-fade-in"
+                                                 :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
+                                                 <div class="flex gap-3 mb-3">
+                                                     <div class="mt-1">
+                                                         <i v-if="studentAnswers[idx] == q.answer"
+                                                             class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+                                                         <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
+                                                     </div>
+                                                     <div>
+                                                         <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
+                                                             getQuestionTitle(q) }}</h4>
+                                                     </div>
+                                                 </div>
+
+                                                 <div class="ml-8 space-y-2 text-sm">
+                                                     <div class="flex items-center gap-2">
+                                                         <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                             '您的答案：' : 'Your Answer: ' }}</span>
+                                                         <span
+                                                             :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
+                                                             {{ getQuestionOption(q, studentAnswers[idx]-1) }}
+                                                         </span>
+                                                     </div>
+                                                     <div v-if="studentAnswers[idx] != q.answer"
+                                                         class="flex items-center gap-2">
+                                                         <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                             '正確答案：' : 'Correct Answer: ' }}</span>
+                                                         <span class="text-green-700 font-bold">
+                                                             {{ getQuestionOption(q, q.answer-1) }}
+                                                         </span>
+                                                     </div>
+                                                     <div
+                                                         class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
+                                                         <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
+                                                         {{ getQuestionExplanation(q) }}
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+
+                                     <div v-else class="space-y-6">
+                                         <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
+                                             class="p-5 rounded-2xl border bg-white shadow-sm"
+                                             :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
+                                             <div class="flex gap-3 mb-3">
+                                                 <div class="mt-1">
+                                                     <i v-if="studentAnswers[idx] == q.answer"
+                                                         class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+                                                     <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
+                                                 </div>
+                                                 <div>
+                                                     <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
+                                                         getQuestionTitle(q) }}</h4>
+                                                 </div>
+                                             </div>
+
+                                             <div class="ml-8 space-y-2 text-sm">
+                                                 <div class="flex items-center gap-2">
+                                                     <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                         '您的答案：' : 'Your Answer: ' }}</span>
+                                                     <span
+                                                         :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
+                                                         {{ getQuestionOption(q, studentAnswers[idx]-1) }}
+                                                     </span>
+                                                 </div>
+                                                 <div v-if="studentAnswers[idx] != q.answer"
+                                                     class="flex items-center gap-2">
+                                                     <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                         '正確答案：' : 'Correct Answer: ' }}</span>
+                                                     <span class="text-green-700 font-bold">
+                                                         {{ getQuestionOption(q, q.answer-1) }}
+                                                     </span>
+                                                 </div>
+                                                 <div
+                                                     class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
+                                                     <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
+                                                     {{ getQuestionExplanation(q) }}
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
                                 </div>
                                 <div v-else
                                     class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
@@ -2484,6 +2580,7 @@ service cloud.firestore {
                                                 const editingQuizId = ref(null); // Track which quiz is being edited
                                                 const createMode = ref('ai');
                                                 const aiSourceText = ref('');
+                                                const editReadingLang = ref('zh');
                                                 const aiImageBase64 = ref('');
                                                 const isPdfLoading = ref(false);
                                                 const isGenerating = ref(false);
@@ -4538,6 +4635,20 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         studentLineNumbers.value.scrollTop = event.target.scrollTop;
                                                     }
                                                 };
+
+                                                const resultLineNumbers = ref(null);
+                                                const resultPassageContainer = ref(null);
+                                                const resultPassageLineCount = computed(() => {
+                                                    if (!activeQuiz.value) return 1;
+                                                    const text = getQuizReadingPassage(activeQuiz.value);
+                                                    if (!text) return 1;
+                                                    return text.split('\n').length;
+                                                });
+                                                const syncResultPassageScroll = (event) => {
+                                                    if (resultLineNumbers.value) {
+                                                        resultLineNumbers.value.scrollTop = event.target.scrollTop;
+                                                    }
+                                                };
                                                 const highlightedPassage = computed(() => {
                                                     if (!activeQuiz.value || !(activeQuiz.value.readingPassage || activeQuiz.value['readingPassage-eng'])) return '';
 
@@ -5030,19 +5141,21 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                         // 2. 嘗試載入答案解析
                                                         try {
-                                                            const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
-                                                            if (answersDoc.exists) {
-                                                                const answersData = answersDoc.data();
-                                                                activeQuiz.value.questions.forEach((q, idx) => {
-                                                                    if (answersData.answers && answersData.answers[idx]) {
-                                                                        q.answer = answersData.answers[idx].answer;
-                                                                        q.explanation = answersData.answers[idx].explanation || '';
-                                                                    }
-                                                                });
-                                                            }
-                                                        } catch (e) {
-                                                            console.log("載入歷史答案解析受阻 (若未解鎖屬正常現象)", e);
-                                                        }
+                                                             const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
+                                                             if (answersDoc.exists) {
+                                                                 const answersData = answersDoc.data();
+                                                                 activeQuiz.value.questions.forEach((q, idx) => {
+                                                                     const origIdx = q._originalIndex !== undefined ? q._originalIndex : idx;
+                                                                     if (answersData.answers && answersData.answers[origIdx]) {
+                                                                         q.answer = answersData.answers[origIdx].answer;
+                                                                         q.explanation = answersData.answers[origIdx].explanation || '';
+                                                                         q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
+                                                                     }
+                                                                 });
+                                                             }
+                                                         } catch (e) {
+                                                             console.log("載入歷史答案解析受阻 (若未解鎖屬正常現象)", e);
+                                                         }
 
                                                         goToView('result');
                                                     } catch (e) {
@@ -5419,6 +5532,8 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     // Highlighter
                                                     passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
                                                     studentLineNumbers, passageLineCount, syncStudentScroll,
+                                                    resultLineNumbers, resultPassageContainer, resultPassageLineCount, syncResultPassageScroll,
+                                                    editReadingLang,
                                                     // Logs
                                                     updateLog,
                                                     // IDE Helper
