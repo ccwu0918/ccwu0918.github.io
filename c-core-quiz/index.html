@@ -1489,24 +1489,24 @@
                             <div class="mb-6 inline-block p-4 bg-sky-100 text-sky-500 rounded-full text-3xl">
                                 <i class="fa-regular fa-id-card"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2">準備測驗</h3>
-                            <p class="text-slate-400 text-sm mb-6">請使用您的 Google 帳號登入，系統將自動記錄您的身份並進入測驗</p>
+                            <h3 class="text-xl font-bold mb-2">{{ currentLang === 'zh' ? '準備測驗' : 'Prepare Quiz' }}</h3>
+                            <p class="text-slate-400 text-sm mb-6">{{ currentLang === 'zh' ? '請使用您的 Google 帳號登入，系統將自動記錄您的身份並進入測驗' : 'Please sign in with your Google account. The system will automatically record your identity and start the quiz.' }}</p>
 
                             <div v-if="activeQuizId" class="mb-4 text-center">
                                 <span
                                     class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full animate-pulse">
-                                    <i class="fa-solid fa-wifi mr-1"></i> 已偵測到進行中的測驗
+                                    <i class="fa-solid fa-wifi mr-1"></i> {{ currentLang === 'zh' ? '已偵測到進行中的測驗' : 'Active quiz detected' }}
                                 </span>
                             </div>
                             <div v-else class="mb-4 text-center">
                                 <span class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                                    <i class="fa-solid fa-spinner fa-spin mr-1"></i> 等待老師啟用測驗...
+                                    <i class="fa-solid fa-spinner fa-spin mr-1"></i> {{ currentLang === 'zh' ? '等待老師啟用測驗...' : 'Waiting for teacher to start quiz...' }}
                                 </span>
                             </div>
 
                             <div v-if="user && !user.isAnonymous"
                                 class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left">
-                                <p class="text-xs font-bold text-sky-700">已登入身分：</p>
+                                <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
                                 <p class="text-sm font-bold text-slate-800 mt-1 truncate">{{ studentName }}</p>
                             </div>
 
@@ -1518,8 +1518,8 @@
                                     class="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-200 flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
                                     <i v-else class="fa-solid fa-play"></i>
-                                    <span v-if="isStudentLoading">載入中...</span>
-                                    <span v-else>開始測驗</span>
+                                    <span v-if="isStudentLoading">{{ currentLang === 'zh' ? '載入中...' : 'Loading...' }}</span>
+                                    <span v-else>{{ currentLang === 'zh' ? '開始測驗' : 'Start Quiz' }}</span>
                                 </button>
 
                                 <button v-if="!user || user.isAnonymous" @click="studentGoogleLogin"
@@ -1527,8 +1527,8 @@
                                     class="w-full py-3 bg-sky-500 text-white rounded-xl font-bold hover:bg-sky-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-200 flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
                                     <i v-else class="fa-brands fa-google"></i>
-                                    <span v-if="isStudentLoading">登入中...</span>
-                                    <span v-else>{{ activeQuizId ? 'Google 帳號登入並開始測驗' : 'Google 帳號登入以查詢歷史成績' }}</span>
+                                    <span v-if="isStudentLoading">{{ currentLang === 'zh' ? '登入中...' : 'Signing in...' }}</span>
+                                    <span v-else>{{ currentLang === 'zh' ? (activeQuizId ? 'Google 帳號登入並開始測驗' : 'Google 帳號登入以查詢歷史成績') : (activeQuizId ? 'Sign in with Google & Start Quiz' : 'Sign in with Google to Check History') }}</span>
                                 </button>
                             </div>
 
@@ -1537,7 +1537,7 @@
                                 class="mt-6 border-t border-slate-100 pt-6 text-left">
                                 <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
                                     <i class="fa-solid fa-clock-rotate-left text-sky-500"></i>
-                                    歷史成績紀錄
+                                    {{ currentLang === 'zh' ? '歷史成績紀錄' : 'Quiz History' }}
                                 </h4>
                                 <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
                                     <div v-for="rec in studentHistoryRecords" :key="rec.id"
@@ -1547,17 +1547,17 @@
                                                 :title="currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] : rec.quizTitle">
                                                 {{ currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] :
                                                 rec.quizTitle }}</p>
-                                            <p class="text-[10px] text-slate-400 mt-0.5">交卷時間：{{
+                                            <p class="text-[10px] text-slate-400 mt-0.5">{{ currentLang === 'zh' ? '交卷時間：' : 'Submitted: ' }}{{
                                                 formatDate(rec.timestamp) }}</p>
                                         </div>
                                         <div class="flex items-center gap-2 flex-shrink-0">
                                             <span
                                                 class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
-                                                {{ rec.score !== null ? rec.score + '分' : '閱卷中' }}
+                                                {{ rec.score !== null ? (currentLang === 'zh' ? rec.score + '分' : rec.score + ' Pts') : (currentLang === 'zh' ? '閱卷中' : 'Grading...') }}
                                             </span>
                                             <button @click="viewHistoricResult(rec)"
                                                 class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition">
-                                                查看
+                                                {{ currentLang === 'zh' ? '查看' : 'View' }}
                                             </button>
                                         </div>
                                     </div>
@@ -1565,7 +1565,7 @@
                             </div>
 
                             <button @click="goToView('landing')"
-                                class="mt-4 text-slate-400 text-sm hover:text-slate-600 block mx-auto">返回首頁</button>
+                                class="mt-4 text-slate-400 text-sm hover:text-slate-600 block mx-auto">{{ currentLang === 'zh' ? '返回首頁' : 'Return to Homepage' }}</button>
                         </div>
                     </div>
 
@@ -1574,12 +1574,12 @@
                         :class="activeQuiz.questionType === 'reading-comprehension' ? 'max-w-7xl mx-auto w-full' : 'max-w-2xl mx-auto w-full'">
                         <!-- Header (Same for both types) -->
                         <div class="mb-6 flex justify-between items-center flex-wrap gap-2">
-                            <span class="text-slate-500 font-medium">考生：{{ studentName }}</span>
+                            <span class="text-slate-500 font-medium">{{ currentLang === 'zh' ? '考生：' : 'Candidate: ' }}{{ studentName }}</span>
 
                             <div class="flex items-center gap-3">
                                 <div
                                     class="text-sky-600 font-bold bg-sky-50 px-3 py-1 rounded-lg border border-sky-100 shadow-sm">
-                                    第 {{ currentQuestionIndex + 1 }} / {{ activeQuiz.questions.length }} 題
+                                    {{ currentLang === 'zh' ? '第 ' + (currentQuestionIndex + 1) + ' / ' + activeQuiz.questions.length + ' 題' : 'Question ' + (currentQuestionIndex + 1) + ' of ' + activeQuiz.questions.length }}
                                 </div>
                                 <div
                                     class="text-slate-600 font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 shadow-inner flex items-center">
@@ -1615,15 +1615,15 @@
                                         <button @mousedown.prevent="applyHighlight('yellow')"
                                             @touchstart.prevent="applyHighlight('yellow')"
                                             class="w-4 h-4 bg-yellow-400 rounded-full hover:scale-125 transition shadow-sm border border-slate-600"
-                                            title="黃色標記"></button>
+                                            :title="currentLang === 'zh' ? '黃色標記' : 'Yellow Marker'"></button>
                                         <button @mousedown.prevent="applyHighlight('green')"
                                             @touchstart.prevent="applyHighlight('green')"
                                             class="w-4 h-4 bg-green-400 rounded-full hover:scale-125 transition shadow-sm border border-slate-600"
-                                            title="綠色標記"></button>
+                                            :title="currentLang === 'zh' ? '綠色標記' : 'Green Marker'"></button>
                                         <button @mousedown.prevent="applyHighlight('pink')"
                                             @touchstart.prevent="applyHighlight('pink')"
                                             class="w-4 h-4 bg-pink-400 rounded-full hover:scale-125 transition shadow-sm border border-slate-600"
-                                            title="粉色標記"></button>
+                                            :title="currentLang === 'zh' ? '粉色標記' : 'Pink Marker'"></button>
                                     </div>
                                 </div>
 
@@ -1649,7 +1649,7 @@
                                 class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-2 h-full bg-sky-500"></div>
                                 <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-bold text-slate-800">題目</h3>
+                                    <h3 class="text-lg font-bold text-slate-800">{{ currentLang === 'zh' ? '題目' : 'Question' }}</h3>
                                     <span v-if="activeQuiz.questions[currentQuestionIndex].pirlsLevel"
                                         class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
                                         {{ getPirlsLevelName(activeQuiz.questions[currentQuestionIndex].pirlsLevel) }}
@@ -1886,7 +1886,7 @@
             <!-- Footer -->
             <footer
                 class="bg-white/80 backdrop-blur-md border-t border-slate-200 py-4 text-center text-sm text-slate-500">
-                {{ currentLang === 'zh' ? 'Made by 佳駿老師' : 'Made by Teacher Jia-Jun' }}
+                {{ currentLang === 'zh' ? 'Made by 佳駿老師' : 'Made by Teacher Chia-Chun Wu' }}
             </footer>
         </div>
 
