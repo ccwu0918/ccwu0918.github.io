@@ -932,13 +932,13 @@
                                         class="space-y-4 animate-fade-in">
                                         <div class="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800">
                                             <p class="font-bold mb-1">格式說明 (每行一題，用 Tab 或 逗號 分隔)：</p>
-                                            <p>題目, 答案(1-4或a-d), 選項A, 選項B, 選項C, 選項D, 解析(選填)</p>
+                                            <p>題目, 答案(1-4或a-d), 選項A, 選項B, 選項C, 選項D, 解析(選填), 英文題目(選填), 英文選項A(選填), 英文選項B(選填), 英文選項C(選填), 英文選項D(選填), 英文解析(選填)</p>
                                         </div>
                                         <textarea v-model="manualInput"
                                             class="w-full h-64 p-3 border border-slate-200 rounded-xl font-mono text-sm leading-relaxed"
                                             placeholder="範例：
-台灣最高的山是哪一座？, 1, 玉山, 雪山, 阿里山, 陽明山, 玉山是東北亞最高峰
-1+1等於多少？, b, 1, 2, 3, 4, 數學基本運算"></textarea>
+台灣最高的山是哪一座？, 1, 玉山, 雪山, 阿里山, 陽明山, 玉山是東北亞最高峰, What is the highest mountain in Taiwan?, Yushan, Xueshan, Alishan, Yangmingshan, Yushan is the highest peak in Northeast Asia
+1+1等於多少？, b, 1, 2, 3, 4, 數學基本運算, What is 1+1?, b, 1, 2, 3, 4, Basic math operation"></textarea>
                                         <button @click="parseManualInput"
                                             class="w-full py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition">
                                             解析並加入題目 (Append)
@@ -3613,6 +3613,16 @@ service cloud.firestore {
                                 let ansRaw = parts[1].toLowerCase();
                                 const options = parts.slice(2, 6);
                                 const explanation = parts[6] || '';
+                                
+                                // English fields (optional)
+                                const titleEng = parts[7] || '';
+                                const optionsEng = [
+                                    parts[8] || '',
+                                    parts[9] || '',
+                                    parts[10] || '',
+                                    parts[11] || ''
+                                ];
+                                const explanationEng = parts[12] || '';
 
                                 let answer = 1;
                                 if (['a', '1'].includes(ansRaw)) answer = 1;
@@ -3621,7 +3631,14 @@ service cloud.firestore {
                                 else if (['d', '4'].includes(ansRaw)) answer = 4;
 
                                 parsedQuestions.push({
-                                    title, options, answer, explanation, difficulty: '一般'
+                                    title,
+                                    'title-eng': titleEng,
+                                    options,
+                                    'options-eng': optionsEng,
+                                    answer,
+                                    explanation,
+                                    'explanation-eng': explanationEng,
+                                    difficulty: '一般'
                                 });
                             }
                         });
