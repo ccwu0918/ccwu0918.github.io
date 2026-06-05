@@ -533,24 +533,54 @@
 
                                 <h3 class="text-xl font-bold text-slate-800 mb-1 truncate" :title="quiz.title">{{
                                     quiz.title }}</h3>
-                                <p class="text-xs text-slate-400 mb-6">建立於: {{ formatDate(quiz.createdAt) }}</p>
+                                <p class="text-xs text-slate-400 mb-4">建立於: {{ formatDate(quiz.createdAt) }}</p>
+
+                                <!-- 試卷狀態與控制 flags -->
+                                <div class="border-t border-slate-100 pt-3 mt-auto mb-4 space-y-2">
+                                    <div class="flex flex-wrap gap-1.5 text-[11px]">
+                                        <!-- 重複測驗 -->
+                                        <button @click="toggleQuizAllowRepeat(quiz)"
+                                            class="px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 border"
+                                            :class="quiz.allowRepeat ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100/50' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'">
+                                            <i class="fa-solid"
+                                                :class="quiz.allowRepeat ? 'fa-rotate-left' : 'fa-ban'"></i>
+                                            {{ quiz.allowRepeat ? '允許重複' : '禁止重複' }}
+                                        </button>
+                                        <!-- 自動批改 -->
+                                        <button @click="toggleQuizAutoGrading(quiz)"
+                                            class="px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 border"
+                                            :class="quiz.autoGrading !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/50' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'">
+                                            <i class="fa-solid"
+                                                :class="quiz.autoGrading !== false ? 'fa-calculator' : 'fa-pause'"></i>
+                                            {{ quiz.autoGrading !== false ? '自動批改' : '暫停批改' }}
+                                        </button>
+                                        <!-- 解析顯示 -->
+                                        <button @click="toggleQuizExplanations(quiz)"
+                                            class="px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 border"
+                                            :class="quiz.showExplanations ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/50' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'">
+                                            <i class="fa-regular"
+                                                :class="quiz.showExplanations ? 'fa-eye' : 'fa-eye-slash'"></i>
+                                            {{ quiz.showExplanations ? '解析: 開啟' : '解析: 隱藏' }}
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div class="flex gap-2">
-                                    <button v-if="activeQuizId === quiz.id" disabled
-                                        class="flex-1 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-bold cursor-default border border-green-200">
-                                        <i class="fa-solid fa-rss mr-1"></i> 已啟用
+                                    <button v-if="activeQuizId === quiz.id" @click="deactivateQuiz"
+                                        class="flex-1 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-bold border border-green-200 hover:bg-green-100 transition shadow-sm flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-rss text-green-500 animate-pulse"></i> 結束測驗
                                     </button>
                                     <button v-else @click="activateQuiz(quiz.id)"
-                                        class="flex-1 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition shadow-md">
-                                        <i class="fa-solid fa-play mr-1"></i> 啟用
+                                        class="flex-1 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition shadow-md flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-play"></i> 啟用測驗
                                     </button>
                                     <button @click="duplicateQuiz(quiz)"
-                                        class="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100"
+                                        class="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition"
                                         title="複製題庫">
                                         <i class="fa-regular fa-clone"></i>
                                     </button>
                                     <button @click="viewAnalytics(quiz)"
-                                        class="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200"
+                                        class="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition"
                                         title="查看分析">
                                         <i class="fa-solid fa-chart-pie"></i>
                                     </button>
@@ -1120,7 +1150,8 @@
                                             <div v-for="(opt, oIdx) in stat.question.options" :key="oIdx"
                                                 class="flex items-center gap-2 py-2 px-3 rounded-xl border transition"
                                                 :class="(oIdx + 1) === stat.question.answer ? 'bg-green-50/50 border-green-200 text-green-800 font-medium' : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'">
-                                                <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition"
+                                                <span
+                                                    class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition"
                                                     :class="(oIdx + 1) === stat.question.answer ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-600'">
                                                     {{ String.fromCharCode(65 + oIdx) }}
                                                 </span>
@@ -1259,7 +1290,7 @@
                                                         {{ q.options[q.answer-1] }}
                                                     </span>
                                                 </div>
-                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && quizStatusConfig.showExplanations && q.explanation"
+                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && q.explanation"
                                                     class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
                                                     <span class="font-bold text-amber-800">解析：</span>{{ q.explanation }}
@@ -1302,7 +1333,9 @@
 
                             <!-- 按鈕區 -->
                             <div class="space-y-3">
-                                <button v-if="activeQuizId" @click="startQuiz" :disabled="isStudentLoading"
+                                <!-- 學生尚未登入 Google 帳號時，隱藏此按鈕以防止不正確記錄成績 -->
+                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="startQuiz"
+                                    :disabled="isStudentLoading"
                                     class="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-200 flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
                                     <i v-else class="fa-solid fa-play"></i>
@@ -1993,7 +2026,7 @@
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 允許所有人讀寫測驗狀態 (如 activeQuizId, autoGrading, showExplanations)
+    // 允許所有人讀寫測驗狀態 (如 activeQuizId)
     match /config/quizStatus {
       allow read, write: if true;
     }
@@ -2013,14 +2046,14 @@ service cloud.firestore {
     // 標準答案與解析防弊保護區
     match /quiz_answers/{quizId} {
       allow write: if request.auth != null;
-      // 學生只有在「已登入」且「老師開啟解析」或「交卷超過 1 小時」時，才允許讀取答案與解析
+      // 學生只有在「已登入」且「該試卷開啟解析」或「交卷超過 1 小時」時，才允許讀取答案與解析
       // 教師白名單中的信箱則不受限制，隨時可讀取
       allow read: if request.auth != null && (
-        get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
+        get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
          get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     
@@ -2029,11 +2062,11 @@ service cloud.firestore {
       allow create, read, update, delete: if request.auth != null;
     }
     
-    // 學生端自動解鎖答案所需之解鎖紀錄
+    // 學生端自動解鎖答案所需之解鎖紀錄 (Email 統一加載 .lower() 防大小寫敏感)
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
@@ -2041,9 +2074,9 @@ service cloud.firestore {
             (
               (
                 'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
               ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
             ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
@@ -2306,7 +2339,25 @@ service cloud.firestore {
                     const score = ref(0);
 
                     // 1. 新增變數狀態 (State)
-                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false, autoGrading: true, allowRepeat: false }); // 用來同步資料庫設定
+                    const quizStatusConfig = computed(() => {
+                        const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                        if (activeQ) {
+                            return {
+                                activeQuizId: activeQuizId.value,
+                                allowRepeat: activeQ.allowRepeat !== false,
+                                autoGrading: activeQ.autoGrading !== false,
+                                showExplanations: !!activeQ.showExplanations,
+                                active: !!activeQ.active
+                            };
+                        }
+                        return {
+                            activeQuizId: null,
+                            allowRepeat: false,
+                            autoGrading: true,
+                            showExplanations: false,
+                            active: false
+                        };
+                    });
                     const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                     const submissionTimestamp = ref(null);    // 學生交卷時間
                     const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -2457,16 +2508,8 @@ service cloud.firestore {
                                 if (doc.exists) {
                                     const data = doc.data();
                                     activeQuizId.value = data.activeQuizId;
-                                    // [新增] 同步整份設定給 quizStatusConfig
-                                    quizStatusConfig.value = {
-                                        activeQuizId: data.activeQuizId,
-                                        showExplanations: !!data.showExplanations, // 轉為 boolean
-                                        autoGrading: data.autoGrading !== false, // 預設為 true
-                                        allowRepeat: !!data.allowRepeat // 轉為 boolean
-                                    };
                                 } else {
                                     activeQuizId.value = null;
-                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false, autoGrading: true, allowRepeat: false };
                                 }
                             });
 
@@ -2594,20 +2637,20 @@ service cloud.firestore {
     match /quiz_answers/{quizId} {
       allow write: if request.auth != null;
       allow read: if request.auth != null && (
-        get(/databases/$(database)/documents/config/quizStatus).data.showExplanations == true ||
+        get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
          get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
     }
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
@@ -2615,9 +2658,9 @@ service cloud.firestore {
             (
               (
                 'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
               ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
             ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
@@ -2850,6 +2893,15 @@ service cloud.firestore {
                     // 新增：啟用題庫功能
                     const activateQuiz = async (quizId) => {
                         try {
+                            const batch = db.batch();
+                            batch.update(db.collection('quizzes').doc(quizId), { active: true });
+                            quizzes.value.forEach(q => {
+                                if (q.id !== quizId && q.active) {
+                                    batch.update(db.collection('quizzes').doc(q.id), { active: false });
+                                }
+                            });
+                            await batch.commit();
+
                             await db.collection('config').doc('quizStatus').set({ activeQuizId: quizId });
                             showAlert("啟用成功", "此題庫已設定為進行中，學生現在可以進入作答。", "success");
                         } catch (e) {
@@ -2863,6 +2915,9 @@ service cloud.firestore {
                         const confirm = await showConfirm("確認結束", "確定要結束目前的測驗嗎？學生將無法再進入作答。");
                         if (confirm) {
                             try {
+                                if (activeQuizId.value) {
+                                    await db.collection('quizzes').doc(activeQuizId.value).update({ active: false });
+                                }
                                 await db.collection('config').doc('quizStatus').set({ activeQuizId: null });
                                 showAlert("已結束", "測驗已結束。", "success");
                             } catch (e) {
@@ -2872,18 +2927,28 @@ service cloud.firestore {
                         }
                     };
 
-                    // 新增：自動批改設定切換
-                    const toggleAutoGrading = async (enable) => {
-                        if (!activeQuizId.value) return;
+                    // 新增：切換特定測驗的 flags
+                    const toggleQuizAllowRepeat = async (quiz) => {
                         try {
-                            await db.collection('config').doc('quizStatus').set({
-                                autoGrading: enable
-                            }, { merge: true });
+                            const newStatus = !quiz.allowRepeat;
+                            await db.collection('quizzes').doc(quiz.id).update({
+                                allowRepeat: newStatus
+                            });
+                            showAlert("設定更新", newStatus ? "已切換至「允許重覆本測驗」" : "已切換至「禁止重覆本測驗」", "success");
+                        } catch (e) {
+                            console.error(e);
+                            showAlert("錯誤", "設定失敗", "error");
+                        }
+                    };
 
-                            showAlert("設定更新", enable ? "已啟用自動批改分數" : "已暫停自動批改分數", "success");
-
-                            // 若啟用自動批改，立即觸發一次手動批改補齊分數
-                            if (enable) {
+                    const toggleQuizAutoGrading = async (quiz) => {
+                        try {
+                            const newStatus = quiz.autoGrading === false ? true : false;
+                            await db.collection('quizzes').doc(quiz.id).update({
+                                autoGrading: newStatus
+                            });
+                            showAlert("設定更新", newStatus ? "已啟用自動批改分數" : "已暫停自動批改分數", "success");
+                            if (newStatus && quiz.id === activeQuizId.value) {
                                 await triggerManualGrading();
                             }
                         } catch (e) {
@@ -2892,18 +2957,30 @@ service cloud.firestore {
                         }
                     };
 
-                    // 新增：允許重複作答設定切換
-                    const toggleAllowRepeat = async (enable) => {
-                        if (!activeQuizId.value) return;
+                    const toggleQuizExplanations = async (quiz) => {
                         try {
-                            await db.collection('config').doc('quizStatus').set({
-                                allowRepeat: enable
-                            }, { merge: true });
-                            showAlert("設定更新", enable ? "已切換至「允許重覆本測驗」" : "已切換至「禁止重覆本測驗」", "success");
+                            const newStatus = !quiz.showExplanations;
+                            await db.collection('quizzes').doc(quiz.id).update({
+                                showExplanations: newStatus
+                            });
+                            showAlert("設定更新", newStatus ? "已開放學生查看詳細解析" : "已隱藏詳細解析", "success");
                         } catch (e) {
                             console.error(e);
                             showAlert("錯誤", "設定失敗", "error");
                         }
+                    };
+
+                    // 相容舊的全域 toggle 介面
+                    const toggleAutoGrading = async (enable) => {
+                        if (!activeQuizId.value) return;
+                        const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                        if (activeQ) await toggleQuizAutoGrading(activeQ);
+                    };
+
+                    const toggleAllowRepeat = async (enable) => {
+                        if (!activeQuizId.value) return;
+                        const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                        if (activeQ) await toggleQuizAllowRepeat(activeQ);
                     };
 
                     // 新增：批改特定學生的考卷
@@ -2969,8 +3046,8 @@ service cloud.firestore {
                         resultsGradingListener = db.collection('results')
                             .where('score', '==', null)
                             .onSnapshot(async (snapshot) => {
-                                // 只有在已登入教師、且開啟自動批改時才執行背景批改
-                                if (!isTeacherUser.value || !quizStatusConfig.value.autoGrading) return;
+                                // 只有在已登入教師時才執行背景批改
+                                if (!isTeacherUser.value) return;
 
                                 const pending = [];
                                 snapshot.forEach(doc => {
@@ -2978,7 +3055,12 @@ service cloud.firestore {
                                 });
 
                                 for (const result of pending) {
-                                    await gradeResult(result);
+                                    // 檢索該 result 對應之試卷，判斷是否啟用自動批改 (預設為 true)
+                                    const quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                    const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
+                                    if (autoGradingEnabled) {
+                                        await gradeResult(result);
+                                    }
                                 }
                             });
                     };
@@ -3552,8 +3634,15 @@ Output format must be a strict JSON Array without Markdown markers:
                                 showAlert("成功", "題庫更新成功！已自動在背景重新計算所有已繳卷學生的分數。", "success");
                                 regradeQuizResults(quizId);
                             } else {
-                                // Create new
-                                const docRef = await db.collection('quizzes').add(quizData);
+                                // Create new - initialize settings flags
+                                const newQuizData = {
+                                    ...quizData,
+                                    active: false,
+                                    allowRepeat: false,
+                                    autoGrading: true,
+                                    showExplanations: false
+                                };
+                                const docRef = await db.collection('quizzes').add(newQuizData);
                                 quizId = docRef.id;
                                 await db.collection('quiz_answers').doc(quizId).set(answersData);
                                 showAlert("成功", "題庫建立成功！", "success");
@@ -4078,9 +4167,10 @@ Output format must be a strict JSON Array without Markdown markers:
                         });
 
                         try {
-                            // 提交後自動寫入 unlock 記錄，以便後續查看時能立即開啟解析
+                            // 提交後自動寫入 unlock 記錄，以便後續查看時能立即開啟解析 (將 Email 轉為小寫避免大小寫敏感問題)
                             if (user.value && user.value.email) {
-                                const unlockId = `${user.value.email}_${activeQuiz.value.id}`;
+                                const emailLower = user.value.email.toLowerCase();
+                                const unlockId = `${emailLower}_${activeQuiz.value.id}`;
                                 await db.collection('quiz_unlocks').doc(unlockId).set({
                                     quizId: activeQuiz.value.id,
                                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -4347,26 +4437,32 @@ Output format must be a strict JSON Array without Markdown markers:
                             return;
                         }
 
-                        // [新增] 檢查是否允許重複作答
-                        if (quizStatusConfig.value.allowRepeat === false) {
-                            try {
-                                const checkSnap = await db.collection('results')
-                                    .where('quizId', '==', activeQuizId.value)
-                                    .where('studentName', '==', studentName.value)
-                                    .get();
-                                if (checkSnap.size > 0) {
-                                    showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗系統。", "warning");
-                                    return;
-                                }
-                            } catch (e) {
-                                console.error("檢查重複測驗失敗", e);
-                            }
+                        // 檢查學生是否已登入 Google 帳號
+                        if (!user.value || user.value.isAnonymous) {
+                            showAlert("請先登入", "請先使用 Google 帳號登入以開始測驗，以維護成績記錄正確性。", "warning");
+                            return;
                         }
 
                         try {
                             const doc = await db.collection('quizzes').doc(activeQuizId.value).get();
                             if (doc.exists) {
                                 const quizData = doc.data();
+
+                                // [新增] 檢查是否允許重複作答
+                                if (quizData.allowRepeat === false) {
+                                    try {
+                                        const checkSnap = await db.collection('results')
+                                            .where('quizId', '==', activeQuizId.value)
+                                            .where('studentName', '==', studentName.value)
+                                            .get();
+                                        if (checkSnap.size > 0) {
+                                            showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗系統。", "warning");
+                                            return;
+                                        }
+                                    } catch (e) {
+                                        console.error("檢查重複測驗失敗", e);
+                                    }
+                                }
 
                                 // 1. 亂數排序邏輯
                                 const originalQuestions = quizData.questions || [];
@@ -4475,9 +4571,10 @@ Output format must be a strict JSON Array without Markdown markers:
                                 violationCount: switchCount.value // 紀錄違規次數
                             });
 
-                            // 寫入解鎖紀錄以供安全規則校驗時間差
+                            // 寫入解鎖紀錄以供安全規則校驗時間差 (將 Email 轉為小寫避免大小寫敏感問題)
                             if (user.value && user.value.email) {
-                                const unlockId = `${user.value.email}_${activeQuiz.value.id}`;
+                                const emailLower = user.value.email.toLowerCase();
+                                const unlockId = `${emailLower}_${activeQuiz.value.id}`;
                                 try {
                                     await db.collection('quiz_unlocks').doc(unlockId).set({
                                         quizId: activeQuiz.value.id,
@@ -4513,18 +4610,8 @@ Output format must be a strict JSON Array without Markdown markers:
                     // 5. 新增：教師切換解析顯示功能
                     const toggleExplanations = async (show) => {
                         if (!activeQuizId.value) return;
-                        try {
-                            // 更新 quizStatus 中的 showExplanations 欄位
-                            await db.collection('config').doc('quizStatus').set({
-                                activeQuizId: activeQuizId.value,
-                                showExplanations: show
-                            }, { merge: true });
-
-                            showAlert("設定更新", show ? "已開放學生查看詳細解析" : "已隱藏詳細解析", "success");
-                        } catch (e) {
-                            console.error(e);
-                            showAlert("錯誤", "設定失敗", "error");
-                        }
+                        const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                        if (activeQ) await toggleQuizExplanations(activeQ);
                     };
 
                     // 新增：學生端在允許查看解析時，動態下載答案與解析合併回 activeQuiz.value.questions
@@ -4554,8 +4641,8 @@ Output format must be a strict JSON Array without Markdown markers:
                     }, 1000);
 
                     const canShowExplanations = computed(() => {
-                        // 如果老師手動開啟，則直接顯示
-                        if (quizStatusConfig.value.showExplanations) return true;
+                        // 如果該試卷本身開啟了詳細解析，則直接顯示
+                        if (activeQuiz.value && activeQuiz.value.showExplanations) return true;
 
                         // 如果沒有交卷時間(異常)，不顯示
                         if (!submissionTimestamp.value) return false;
@@ -4584,6 +4671,31 @@ Output format must be a strict JSON Array without Markdown markers:
                             if (firstQuestion && !firstQuestion.hasOwnProperty('answer')) {
                                 await fetchAnswersForStudent();
                             }
+                        }
+                    });
+
+                    // 新增：監聽活動中測驗 ID，並即時訂閱同步活動測驗之 flag 設定至 activeQuiz.value
+                    let activeQuizListener = null;
+                    watch(activeQuizId, (newId) => {
+                        if (activeQuizListener) {
+                            activeQuizListener();
+                            activeQuizListener = null;
+                        }
+                        if (newId && db) {
+                            activeQuizListener = db.collection('quizzes').doc(newId).onSnapshot(doc => {
+                                if (doc.exists) {
+                                    const data = doc.data();
+                                    // 學生進行中或查看中時，即時同步更新狀態欄位
+                                    if (activeQuiz.value && activeQuiz.value.id === newId) {
+                                        activeQuiz.value.allowRepeat = data.allowRepeat;
+                                        activeQuiz.value.autoGrading = data.autoGrading;
+                                        activeQuiz.value.showExplanations = data.showExplanations;
+                                        activeQuiz.value.active = data.active;
+                                    }
+                                }
+                            }, err => {
+                                console.error("監聽活動中測驗變更失敗", err);
+                            });
                         }
                     });
 
@@ -4619,7 +4731,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         readingConfig, canGenerateReading, handleTextFileUpload, generateReadingComprehension, generatePassageFromTopic, generateReadingQuestions, getPirlsLevelName,
                         // Question Editor
                         showQuestionEditor, currentEditingQuestion, currentEditingQuestionIndex, addQuestion, editQuestion, saveQuestion, deleteQuestion,
-                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate, regradeQuizResults,
+                        handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate, regradeQuizResults, toggleQuizAllowRepeat, toggleQuizAutoGrading, toggleQuizExplanations,
                         // Analytics
                         viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                         // Student
