@@ -309,9 +309,15 @@
                             Q</div>
                         <h1
                             class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-violet-600">
-                            資訊與網路安全概論</h1>
+                            {{ t('appName') }}</h1>
                     </div>
                     <div class="flex items-center gap-3">
+                        <!-- Language Switcher Button -->
+                        <button @click="toggleLanguage"
+                            class="text-xs px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition text-slate-600 font-bold border border-slate-200/50">
+                            <i class="fa-solid fa-language text-sm"></i>
+                            {{ currentLang === 'zh' ? 'English' : '繁體中文' }}
+                        </button>
                         <button v-if="!isStudentView" @click="toggleSettings"
                             class="p-2 text-slate-500 hover:text-violet-600 transition" title="系統設定">
                             <i class="fa-solid fa-gear text-lg"></i>
@@ -337,8 +343,8 @@
                     <div v-if="currentView === 'landing'"
                         class="h-full flex flex-col items-center justify-center py-10">
                         <div class="text-center mb-12">
-                            <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">歡迎來到 資訊與網路安全概論</h2>
-                            <p class="text-lg text-slate-500">老師輕鬆出題，學生快樂學習</p>
+                            <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">{{ t('welcomeTitle') }}</h2>
+                            <p class="text-lg text-slate-500">{{ t('welcomeDesc') }}</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-8 w-full"
@@ -354,8 +360,8 @@
                                         class="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:bg-sky-600 group-hover:text-white transition">
                                         <i class="fa-solid fa-graduation-cap"></i>
                                     </div>
-                                    <h3 class="text-2xl font-bold text-slate-800 mb-2">我是學生</h3>
-                                    <p class="text-slate-500">輸入姓名，立即加入老師的測驗</p>
+                                    <h3 class="text-2xl font-bold text-slate-800 mb-2">{{ t('studentPortal') }}</h3>
+                                    <p class="text-slate-500">{{ t('studentPortalDesc') }}</p>
                                 </div>
                             </div>
 
@@ -370,8 +376,8 @@
                                         class="w-16 h-16 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:bg-pink-600 group-hover:text-white transition">
                                         <i class="fa-solid fa-chalkboard-user"></i>
                                     </div>
-                                    <h3 class="text-2xl font-bold text-slate-800 mb-2">我是老師</h3>
-                                    <p class="text-slate-500">AI 輔助出題，啟用測驗與分析</p>
+                                    <h3 class="text-2xl font-bold text-slate-800 mb-2">{{ t('teacherPortal') }}</h3>
+                                    <p class="text-slate-500">{{ t('teacherPortalDesc') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -476,140 +482,12 @@
                                     class="bg-slate-800/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800/40 transition shadow-md flex items-center whitespace-nowrap border border-white/30 backdrop-blur-sm">
                                     <i class="fa-regular fa-eye-slash mr-2"></i>解析: 已隱藏
                                 </button>
-
-                                <!-- 線上學生清單展開按鈕 -->
-                                <button @click="showOnlineStudents = !showOnlineStudents"
-                                    class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-md flex items-center whitespace-nowrap backdrop-blur-sm">
-                                    <i class="fa-solid fa-users mr-2"></i>學生清單 ({{ activeSessions.length }}人)
-                                </button>
                             </div>
                             <button @click="deactivateQuiz"
                                 class="relative z-10 bg-white text-green-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-green-50 transition shadow-md flex items-center whitespace-nowrap">
                                 <i class="fa-solid fa-stop mr-2"></i> 結束測驗
                             </button>
                         </div>
-
-                        <!-- 線上學生實時監控面板 -->
-                        <transition name="fade">
-                            <div v-if="activeQuizId && showOnlineStudents"
-                                class="mt-4 bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-xl p-5 animate-slide-down">
-                                <!-- Header -->
-                                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                                    <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
-                                        <i class="fa-solid fa-user-clock text-emerald-500"></i>
-                                        已登入學生清單列表 (當前測驗)
-                                    </h4>
-                                    <div class="flex items-center gap-3">
-                                        <span
-                                            class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">
-                                            目前登入: {{ activeSessions.length }} 人
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Table -->
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left border-collapse text-sm">
-                                        <thead>
-                                            <tr class="text-slate-400 border-b border-slate-100 font-bold">
-                                                <th class="py-3 px-4">學生姓名 / E-mail</th>
-                                                <th class="py-3 px-4">登入時間</th>
-                                                <th class="py-3 px-4">開始時間 / 已作答時間</th>
-                                                <th class="py-3 px-4">目前狀態</th>
-                                                <th class="py-3 px-4">防弊違規狀態</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-50">
-                                            <tr v-for="sess in activeSessions" :key="sess.email"
-                                                class="hover:bg-slate-50/50 transition">
-                                                <!-- Student Info -->
-                                                <td class="py-3.5 px-4 flex items-center gap-2">
-                                                    <div
-                                                        class="w-8 h-8 rounded-full bg-sky-100 text-sky-600 font-bold flex items-center justify-center text-xs">
-                                                        {{ sess.name.substring(0, 1) }}
-                                                    </div>
-                                                    <div class="min-w-0">
-                                                        <p class="font-bold text-slate-700 truncate">{{ sess.name }}</p>
-                                                        <p class="text-xs text-slate-400 font-mono truncate">{{
-                                                            sess.email }}</p>
-                                                    </div>
-                                                </td>
-                                                <!-- Login Time -->
-                                                <td class="py-3.5 px-4 text-slate-500 font-mono text-xs">
-                                                    {{ sess.loginTime ? formatDate(sess.loginTime) : '--' }}
-                                                </td>
-                                                <!-- Start Time & Time Spent -->
-                                                <td class="py-3.5 px-4 text-slate-500 text-xs">
-                                                    <div v-if="sess.startTime">
-                                                        <p class="font-mono">{{ formatDate(sess.startTime) }}</p>
-                                                        <p class="text-[10px] text-emerald-600 font-bold mt-0.5">
-                                                            已作答: {{ calculateDuration(sess.startTime, sess.endTime) }}
-                                                        </p>
-                                                    </div>
-                                                    <div v-else class="text-slate-400">--</div>
-                                                </td>
-                                                <!-- Current Status -->
-                                                <td class="py-3.5 px-4">
-                                                    <div class="flex items-center gap-1.5">
-                                                        <span v-if="sess.status === 'login'"
-                                                            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                                                            準備中
-                                                        </span>
-                                                        <span v-else-if="sess.status === 'testing'"
-                                                            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-50 text-sky-600 border border-sky-200 animate-pulse">
-                                                            作答中
-                                                        </span>
-                                                        <span v-else-if="sess.status === 'submitted'"
-                                                            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                                                            已交卷
-                                                        </span>
-                                                        <span v-else-if="sess.status === 'cheated'"
-                                                            class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-600 border border-rose-200">
-                                                            作弊強制交卷
-                                                        </span>
-
-                                                        <!-- Online status indicator -->
-                                                        <span
-                                                            v-if="sess.status !== 'submitted' && sess.status !== 'cheated'">
-                                                            <span v-if="isSessionOnline(sess)"
-                                                                class="text-[9px] text-green-500 font-bold flex items-center gap-0.5">
-                                                                <span
-                                                                    class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                                                連線中
-                                                            </span>
-                                                            <span v-else
-                                                                class="text-[9px] text-slate-400 font-bold flex items-center gap-0.5">
-                                                                <span
-                                                                    class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                                                                已斷線
-                                                            </span>
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <!-- Violations -->
-                                                <td class="py-3.5 px-4">
-                                                    <span v-if="sess.status === 'cheated'"
-                                                        class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-rose-500 text-white">
-                                                        已裁罰: {{ sess.cheatReason || '違規' }}
-                                                    </span>
-                                                    <span v-else-if="sess.violationCount > 0"
-                                                        class="px-2.5 py-1 text-[10px] font-bold rounded-lg"
-                                                        :class="sess.violationCount >= 2 ? 'bg-amber-500 text-white' : 'bg-yellow-400 text-slate-800'">
-                                                        切換視窗 {{ sess.violationCount }} 次
-                                                    </span>
-                                                    <span v-else class="text-slate-400 text-xs">無違規記錄</span>
-                                                </td>
-                                            </tr>
-                                            <tr v-if="activeSessions.length === 0">
-                                                <td colspan="5" class="py-8 text-center text-slate-400">
-                                                    目前尚無學生登入此測驗
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </transition>
 
                         <!-- 分類篩選器 -->
                         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -659,8 +537,9 @@
                                     </div>
                                 </div>
 
-                                <h3 class="text-xl font-bold text-slate-800 mb-1 truncate" :title="quiz.title">{{
-                                    quiz.title }}</h3>
+                                <h3 class="text-xl font-bold text-slate-800 mb-1 truncate" :title="getQuizTitle(quiz)">
+                                    {{
+                                    getQuizTitle(quiz) }}</h3>
                                 <p class="text-xs text-slate-400 mb-4">建立於: {{ formatDate(quiz.createdAt) }}</p>
 
                                 <!-- 試卷狀態與控制 flags -->
@@ -739,11 +618,21 @@
                                 <div class="p-6 space-y-6">
                                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題</label>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題
+                                                (中文)</label>
                                             <input v-model="newQuiz.title" type="text"
                                                 class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500"
                                                 placeholder="例如：國文第三課隨堂考">
                                         </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題 (英文 -
+                                                選填)</label>
+                                            <input v-model="newQuiz['title-eng']" type="text"
+                                                class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500"
+                                                placeholder="e.g. Lesson 3 Quiz">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-slate-700 mb-1">分類</label>
                                             <input v-model="newQuiz.category" list="category-list" type="text"
@@ -871,6 +760,15 @@
                                                 </div>
                                             </div>
                                             <p class="text-xs text-slate-500 mt-1 text-right">支援 Markdown 語法高亮</p>
+
+                                            <!-- 閱讀文本輸入 (英文 - 選填) -->
+                                            <div class="mt-4">
+                                                <label class="block text-sm font-medium text-slate-700 mb-1">閱讀文本 (英文 -
+                                                    選填)</label>
+                                                <textarea v-model="newQuiz['readingPassage-eng']"
+                                                    class="w-full h-40 p-3 border border-slate-200 rounded-xl font-mono text-sm"
+                                                    placeholder="// Enter English reading passage content here..."></textarea>
+                                            </div>
                                         </div>
 
                                         <!-- PIRLS閱讀理解四層次設定 -->
@@ -1063,7 +961,7 @@
                                                 class="p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-violet-200 transition">
                                                 <div class="flex justify-between items-start">
                                                     <span class="font-bold text-slate-800 flex-1">{{ idx + 1 }}. {{
-                                                        q.title }}</span>
+                                                        getQuestionTitle(q) }}</span>
                                                     <div class="flex gap-2 ml-4">
                                                         <button @click="editQuestion(idx)"
                                                             class="text-slate-400 hover:text-blue-500 p-1" title="修改"><i
@@ -1087,12 +985,12 @@
                                                 <div class="grid grid-cols-2 gap-2 mt-2 text-sm text-slate-600 pl-4">
                                                     <div v-for="(opt, i) in q.options" :key="i"
                                                         :class="{'text-green-600 font-bold': (i + 1) == q.answer}">
-                                                        {{ String.fromCharCode(65+i) }}. {{ opt }}
+                                                        {{ String.fromCharCode(65+i) }}. {{ getQuestionOption(q, i) }}
                                                     </div>
                                                 </div>
-                                                <p v-if="q.explanation"
+                                                <p v-if="q.explanation || q['explanation-eng']"
                                                     class="mt-2 text-xs text-slate-400 border-t border-slate-200 pt-1">
-                                                    💡 {{ q.explanation }}</p>
+                                                    💡 {{ getQuestionExplanation(q) }}</p>
                                             </div>
                                             <div v-if="newQuiz.questions.length === 0"
                                                 class="text-center text-slate-400 py-8">
@@ -1123,22 +1021,36 @@
 
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">題目敘述</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">題目敘述 (中文)</label>
                                         <textarea v-model="currentEditingQuestion.title"
-                                            class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-500 h-20"></textarea>
+                                            class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-500 h-16"></textarea>
                                     </div>
 
-                                    <div class="grid grid-cols-1 gap-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">題目敘述 (英文 -
+                                            選填)</label>
+                                        <textarea v-model="currentEditingQuestion['title-eng']"
+                                            class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-500 h-16"></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-3">
                                         <div v-for="(opt, i) in currentEditingQuestion.options" :key="i"
-                                            class="flex items-center gap-2">
-                                            <span class="w-6 text-center text-sm font-bold text-slate-500">{{
-                                                String.fromCharCode(65+i) }}</span>
-                                            <input v-model="currentEditingQuestion.options[i]" type="text"
-                                                class="flex-1 p-2 border border-slate-200 rounded-lg text-sm"
-                                                placeholder="選項內容">
-                                            <input type="radio" :name="'correct-ans'" :value="i+1"
-                                                v-model="currentEditingQuestion.answer"
-                                                class="accent-green-500 w-4 h-4 cursor-pointer" title="設為正確答案">
+                                            class="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-14 text-sm font-bold text-slate-500">{{
+                                                    String.fromCharCode(65+i) }} (中)</span>
+                                                <input v-model="currentEditingQuestion.options[i]" type="text"
+                                                    class="flex-1 p-2 border border-slate-200 rounded-lg text-sm"
+                                                    placeholder="選項內容 (中文)">
+                                                <input type="radio" :name="'correct-ans'" :value="i+1"
+                                                    v-model="currentEditingQuestion.answer"
+                                                    class="accent-green-500 w-4 h-4 cursor-pointer" title="設為正確答案">
+                                            </div>
+                                            <div class="flex items-center gap-2 pl-14">
+                                                <input v-model="currentEditingQuestion['options-eng'][i]" type="text"
+                                                    class="flex-1 p-2 border border-slate-200 rounded-lg text-sm bg-slate-50/50"
+                                                    placeholder="Option content (English - optional)">
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1155,8 +1067,16 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (選填)</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (中文 -
+                                            選填)</label>
                                         <textarea v-model="currentEditingQuestion.explanation"
+                                            class="w-full p-2 border border-slate-200 rounded-lg h-16 text-sm"></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (英文 -
+                                            選填)</label>
+                                        <textarea v-model="currentEditingQuestion['explanation-eng']"
                                             class="w-full p-2 border border-slate-200 rounded-lg h-16 text-sm"></textarea>
                                     </div>
                                 </div>
@@ -1178,7 +1098,8 @@
                                 <div
                                     class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                     <div>
-                                        <h3 class="text-2xl font-bold">{{ selectedAnalyticsQuiz.title }} - 分析報告</h3>
+                                        <h3 class="text-2xl font-bold">{{ getQuizTitle(selectedAnalyticsQuiz) }} - {{
+                                            currentLang === 'zh' ? '分析報告' : 'Analysis Report' }}</h3>
                                         <p class="text-slate-500">共 {{ analyticsData.length }} 位學生作答</p>
                                     </div>
                                     <div class="flex gap-2">
@@ -1264,7 +1185,7 @@
                                                 <span
                                                     class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs mr-2">Q{{
                                                     stat.index + 1 }}</span>
-                                                {{ stat.question.title }}
+                                                {{ getQuestionTitle(stat.question) }}
                                             </h4>
                                             <div class="text-right flex-shrink-0">
                                                 <span class="text-xs text-slate-500 block mb-1">答對率</span>
@@ -1283,19 +1204,19 @@
                                                     :class="(oIdx + 1) === stat.question.answer ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-600'">
                                                     {{ String.fromCharCode(65 + oIdx) }}
                                                 </span>
-                                                <span>{{ opt }}</span>
+                                                <span>{{ getQuestionOption(stat.question, oIdx) }}</span>
                                                 <span v-if="(oIdx + 1) === stat.question.answer"
                                                     class="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-lg font-bold border border-green-200">
                                                     正確答案
                                                 </span>
                                             </div>
                                             <!-- 若有解析則同步顯示 -->
-                                            <div v-if="stat.question.explanation"
+                                            <div v-if="stat.question.explanation || stat.question['explanation-eng']"
                                                 class="mt-2.5 p-3 bg-amber-50/30 border border-amber-100/75 rounded-xl text-slate-600 text-xs flex gap-1.5 items-start">
                                                 <span class="text-amber-500 mt-0.5">💡</span>
                                                 <div>
                                                     <span class="font-bold text-amber-800">解析：</span>
-                                                    {{ stat.question.explanation }}
+                                                    {{ getQuestionExplanation(stat.question) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1399,7 +1320,7 @@
                                                 </div>
                                                 <div class="flex-grow">
                                                     <h5 class="font-bold text-slate-800 text-base">{{ idx + 1 }}. {{
-                                                        q.title }}</h5>
+                                                        getQuestionTitle(q) }}</h5>
                                                 </div>
                                             </div>
 
@@ -1408,20 +1329,22 @@
                                                     <span class="text-slate-500 font-medium">學生回答：</span>
                                                     <span
                                                         :class="selectedStudentResult.answers[idx] == q.answer ? 'text-green-600 font-bold' : 'text-red-600 font-bold line-through'">
-                                                        {{ q.options[selectedStudentResult.answers[idx]-1] || '未作答' }}
+                                                        {{ getQuestionOption(q, selectedStudentResult.answers[idx]-1) ||
+                                                        (currentLang === 'en' ? 'Unanswered' : '未作答') }}
                                                     </span>
                                                 </div>
                                                 <div v-if="selectedStudentResult.answers[idx] != q.answer"
                                                     class="flex items-center gap-2">
                                                     <span class="text-slate-500 font-medium">正確答案：</span>
                                                     <span class="text-green-600 font-bold">
-                                                        {{ q.options[q.answer-1] }}
+                                                        {{ getQuestionOption(q, q.answer-1) }}
                                                     </span>
                                                 </div>
-                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && q.explanation"
+                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q['explanation-eng'])"
                                                     class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
-                                                    <span class="font-bold text-amber-800">解析：</span>{{ q.explanation }}
+                                                    <span class="font-bold text-amber-800">解析：</span>{{
+                                                    getQuestionExplanation(q) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1486,14 +1409,16 @@
                                 class="mt-6 border-t border-slate-100 pt-6 text-left">
                                 <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
                                     <i class="fa-solid fa-clock-rotate-left text-sky-500"></i>
-                                    歷史成績紀錄
+                                    歷史成績紀錄 (已結束 >60 分鐘)
                                 </h4>
                                 <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
                                     <div v-for="rec in studentHistoryRecords" :key="rec.id"
                                         class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition">
                                         <div class="min-w-0 flex-1 pr-2">
-                                            <p class="text-xs font-bold text-slate-700 truncate" :title="rec.quizTitle">
-                                                {{ rec.quizTitle }}</p>
+                                            <p class="text-xs font-bold text-slate-700 truncate"
+                                                :title="currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] : rec.quizTitle">
+                                                {{ currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] :
+                                                rec.quizTitle }}</p>
                                             <p class="text-[10px] text-slate-400 mt-0.5">交卷時間：{{
                                                 formatDate(rec.timestamp) }}</p>
                                         </div>
@@ -1604,7 +1529,7 @@
                                 </div>
 
                                 <h4 class="text-xl font-bold text-slate-800 mb-6 leading-relaxed">
-                                    {{ activeQuiz.questions[currentQuestionIndex].title }}
+                                    {{ getQuestionTitle(activeQuiz.questions[currentQuestionIndex]) }}
                                 </h4>
 
                                 <div class="space-y-3">
@@ -1617,7 +1542,7 @@
                                             :class="{'border-white text-white': currentAnswer === (idx + 1), 'border-slate-300 text-slate-400 group-hover:border-sky-400 group-hover:text-sky-400': currentAnswer !== (idx + 1)}">
                                             {{ String.fromCharCode(65+idx) }}
                                         </span>
-                                        {{ opt }}
+                                        {{ getQuestionOption(activeQuiz.questions[currentQuestionIndex], idx) }}
                                     </button>
                                 </div>
                             </div>
@@ -1628,7 +1553,7 @@
                             class="bg-white p-6 sm:p-10 rounded-3xl shadow-lg border border-slate-100 mb-8 relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-2 h-full bg-sky-500"></div>
                             <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-8 leading-relaxed">
-                                {{ activeQuiz.questions[currentQuestionIndex].title }}
+                                {{ getQuestionTitle(activeQuiz.questions[currentQuestionIndex]) }}
                             </h3>
 
                             <div class="space-y-3">
@@ -1641,7 +1566,7 @@
                                         :class="{'border-white text-white': currentAnswer === (idx + 1), 'border-slate-300 text-slate-400 group-hover:border-sky-400 group-hover:text-sky-400': currentAnswer !== (idx + 1)}">
                                         {{ String.fromCharCode(65+idx) }}
                                     </span>
-                                    {{ opt }}
+                                    {{ getQuestionOption(activeQuiz.questions[currentQuestionIndex], idx) }}
                                 </button>
                             </div>
                         </div>
@@ -1670,7 +1595,7 @@
                                     :class="cheated ? 'bg-gradient-to-r from-red-600 to-rose-700' : 'bg-gradient-to-r from-violet-600 to-indigo-600'">
                                 </div>
                                 <div class="relative z-10">
-                                    <p class="text-indigo-200 mb-2">{{ activeQuiz.title }}</p>
+                                    <p class="text-indigo-200 mb-2">{{ getQuizTitle(activeQuiz) }}</p>
                                     <h2 class="text-5xl font-bold mb-2">
                                         <span v-if="cheated">0 <span class="text-2xl font-normal opacity-70">分
                                                 (違規)</span></span>
@@ -1705,7 +1630,7 @@
                                                 </div>
                                                 <div>
                                                     <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
-                                                        q.title }}</h4>
+                                                        getQuestionTitle(q) }}</h4>
                                                 </div>
                                             </div>
 
@@ -1714,20 +1639,20 @@
                                                     <span class="font-bold text-slate-500">您的答案：</span>
                                                     <span
                                                         :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
-                                                        {{ q.options[studentAnswers[idx]-1] }}
+                                                        {{ getQuestionOption(q, studentAnswers[idx]-1) }}
                                                     </span>
                                                 </div>
                                                 <div v-if="studentAnswers[idx] != q.answer"
                                                     class="flex items-center gap-2">
                                                     <span class="font-bold text-slate-500">正確答案：</span>
                                                     <span class="text-green-700 font-bold">
-                                                        {{ q.options[q.answer-1] }}
+                                                        {{ getQuestionOption(q, q.answer-1) }}
                                                     </span>
                                                 </div>
                                                 <div
                                                     class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
-                                                    {{ q.explanation || '無解析' }}
+                                                    {{ getQuestionExplanation(q) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -2177,11 +2102,11 @@ service cloud.firestore {
       // 學生只有在「已登入」且「該試卷開啟解析」或「交卷超過 1 小時」時，才允許讀取答案與解析
       // 教師白名單中的信箱則不受限制，隨時可讀取
       allow read: if request.auth != null && (
-        ('showExplanations' in get(/databases/$(database)/documents/quizzes/$(quizId)).data && get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true) ||
+        get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
          get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     
@@ -2190,16 +2115,11 @@ service cloud.firestore {
       allow create, read, update, delete: if request.auth != null;
     }
     
-    // 線上學生狀態監控讀寫權限
-    match /student_sessions/{sessionId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // 學生端自動解鎖答案所需之解鎖紀錄
+    // 學生端自動解鎖答案所需之解鎖紀錄 (Email 統一加載 .lower() 防大小寫敏感)
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
@@ -2207,9 +2127,9 @@ service cloud.firestore {
             (
               (
                 'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
               ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\\\(' + request.auth.token.email + '\\\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
             ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
@@ -2398,7 +2318,7 @@ service cloud.firestore {
                     const showTutorialModal = ref(false);
                     const shareUrl = ref('');
                     const studentShareUrl = ref('');
-                    const isStudentView = ref(true);
+                    const isStudentView = ref(false);
 
                     // QR Code Modal
                     const showQrModal = ref(false);
@@ -2424,10 +2344,12 @@ service cloud.firestore {
                     const aiConfig = reactive({ easy: 2, medium: 2, hard: 1 });
                     const newQuiz = reactive({
                         title: '',
+                        'title-eng': '',
                         category: '',
                         questions: [],
                         questionType: 'multiple-choice',
-                        readingPassage: '' // For reading comprehension
+                        readingPassage: '', // For reading comprehension
+                        'readingPassage-eng': ''
                     });
 
                     // Reading comprehension configuration
@@ -2445,8 +2367,271 @@ service cloud.firestore {
 
                     // Question Editor
                     const showQuestionEditor = ref(false);
-                    const currentEditingQuestion = reactive({ title: '', options: ['', '', '', ''], answer: 1, difficulty: '一般', explanation: '' });
+                    const currentEditingQuestion = reactive({
+                        title: '',
+                        'title-eng': '',
+                        options: ['', '', '', ''],
+                        'options-eng': ['', '', '', ''],
+                        answer: 1,
+                        difficulty: '一般',
+                        explanation: '',
+                        'explanation-eng': ''
+                    });
                     const currentEditingQuestionIndex = ref(-1);
+
+                    // i18n
+                    const i18n = {
+                        zh: {
+                            appName: '資訊與網路安全概論',
+                            studentPortal: '我是學生',
+                            studentPortalDesc: '輸入姓名，立即加入老師的測驗',
+                            teacherPortal: '我是老師',
+                            teacherPortalDesc: 'AI 輔助出題，啟用測驗與分析',
+                            sysSettings: '系統設定',
+                            teacherLoginTitle: '教師專用入口',
+                            teacherLoginDesc: '使用 Google 帳號登入，系統將自動驗證教師身份',
+                            loginButton: '使用 Google 帳號登入',
+                            logoutButton: '登出',
+                            loading: '載入中...',
+                            waitingQuiz: '等待老師啟用測驗...',
+                            historyTitle: '歷史成績紀錄',
+                            quizResult: '測驗結果',
+                            scoreLabel: '得分',
+                            welcomeTitle: '歡迎來到 資訊與網路安全概論',
+                            welcomeDesc: '老師輕鬆出題，學生快樂學習',
+                            connected: '已連線',
+                            notConnected: '未連線 (點此設定)',
+
+                            // Student View
+                            studentLoginTitle: '學生登入測驗',
+                            enterNamePlaceholder: '請輸入您的姓名',
+                            enterClassPlaceholder: '請輸入您的班級 (選填)',
+                            studentEnterButton: '進入測驗系統',
+                            currentStatus: '目前狀態',
+                            studentChecking: '正在檢查是否有進行中測驗...',
+                            noQuizActive: '目前沒有正在進行中的測驗，請稍候再試或登入查看歷史成績。',
+                            activeQuizAlert: '偵測到進行中的測驗',
+                            startQuizButton: '開始測驗',
+                            yourName: '您的姓名',
+                            quizTimeLimit: '測驗時間限制',
+                            minutes: '分鐘',
+                            seconds: '秒',
+                            noLimit: '無限制',
+                            historyTip: '點選下方紀錄以查看詳細答題狀況與解析',
+                            statusGrading: '閱卷中...',
+                            statusFinished: '已完成',
+                            statusCheated: '作弊強制交卷',
+
+                            // Teacher View
+                            quizList: '試卷列表',
+                            createQuiz: '建立新試卷',
+                            exportAnalytics: '匯出分析',
+                            allowRepeatLabel: '允許重複測驗',
+                            autoGradingLabel: '自動批改分數',
+                            showExplanationsLabel: '顯示詳細解析',
+                            activeStatus: '狀態',
+                            deactivateBtn: '結束測驗',
+                            activateBtn: '啟用測驗',
+                            deleteConfirm: '確定要刪除嗎？',
+                            duplicateBtn: '複製',
+                            editBtn: '編輯',
+                            analyticsBtn: '分析報告',
+                            backToDashboard: '返回儀表板',
+
+                            // Creator View
+                            creatorTitle: '建立與編輯試卷',
+                            quizTitleLabel: '試卷標題',
+                            categoryLabel: '分類',
+                            passageLabel: '閱讀理解文章 (非必填)',
+                            questionsLabel: '題目列表',
+                            addQuestionBtn: '新增單題',
+                            batchGenerateBtn: '批次產生題目',
+                            saveQuizBtn: '儲存題庫',
+                            cancelBtn: '取消',
+                            questionTitlePlaceholder: '題目敘述',
+                            questionTitleEngPlaceholder: 'Question title (English - optional)',
+                            optionPlaceholder: '選項內容',
+                            optionEngPlaceholder: 'Option content (English - optional)',
+                            explanationPlaceholder: '解析內容',
+                            explanationEngPlaceholder: 'Explanation content (English - optional)',
+                            correctAnswerLabel: '正確答案',
+                            difficultyLabel: '難易度',
+                            difficultyEasy: '簡單',
+                            difficultyNormal: '一般',
+                            difficultyHard: '困難',
+
+                            // Alert/Confirm/Messages
+                            alertTitle: '提示',
+                            successTitle: '成功',
+                            warningTitle: '警告',
+                            errorTitle: '錯誤',
+                            confirmTitle: '確認',
+                            cheatWarning: '警告：檢測到您切換分頁或離開瀏覽器！',
+                            cheatFinalWarning: '您已違規多次，系統已強制提交試卷！',
+                            autoGradedMsg: '交卷成功！分數已自動批改。',
+                            waitingGradingMsg: '交卷成功！等待老師開放批改分數。',
+                            repeatForbidden: '您已完成過此測驗！目前設定為「禁止重複測驗」。',
+                            nameRequired: '請輸入姓名！',
+
+                            // Result View
+                            detailedExplanation: '詳細解析',
+                            hideExplanationTip: '詳細解析將在測驗提交 1 小時後自動開啟。',
+                            hideExplanationTipWaiting: '剩餘等待時間',
+                            yourAnswer: '您的回答',
+                            correctAnswer: '正確答案',
+                            explanationTitle: '解析',
+                            gradedTitle: '成績單',
+                            cheatedResultTitle: '本測驗因偵測到作弊行為已被強制終止，不計分且不顯示解析。',
+                            noExplanation: '無解析',
+                            scoreDetail: '得分詳情'
+                        },
+                        en: {
+                            appName: 'Information & Network Security',
+                            studentPortal: 'Student Portal',
+                            studentPortalDesc: 'Enter your name and join the quiz',
+                            teacherPortal: 'Teacher Portal',
+                            teacherPortalDesc: 'AI-assisted quiz creation & analytics',
+                            sysSettings: 'Settings',
+                            teacherLoginTitle: 'Teacher Portal',
+                            teacherLoginDesc: 'Sign in with your Google account',
+                            loginButton: 'Sign in with Google',
+                            logoutButton: 'Logout',
+                            loading: 'Loading...',
+                            waitingQuiz: 'Waiting for quiz to start...',
+                            historyTitle: 'Quiz History',
+                            quizResult: 'Quiz Results',
+                            scoreLabel: 'Score',
+                            welcomeTitle: 'Welcome to Information & Network Security',
+                            welcomeDesc: 'Easy quiz creation, fun learning experience',
+                            connected: 'Connected',
+                            notConnected: 'Disconnected (Click to setup)',
+
+                            // Student View
+                            studentLoginTitle: 'Student Quiz Login',
+                            enterNamePlaceholder: 'Please enter your name',
+                            enterClassPlaceholder: 'Please enter your class (Optional)',
+                            studentEnterButton: 'Enter Quiz System',
+                            currentStatus: 'Current Status',
+                            studentChecking: 'Checking for active quiz...',
+                            noQuizActive: 'No active quiz at the moment. Please wait or log in to check your history.',
+                            activeQuizAlert: 'Active quiz detected',
+                            startQuizButton: 'Start Quiz',
+                            yourName: 'Your Name',
+                            quizTimeLimit: 'Quiz Time Limit',
+                            minutes: 'mins',
+                            seconds: 'secs',
+                            noLimit: 'No Limit',
+                            historyTip: 'Click on a record below to view details and explanations',
+                            statusGrading: 'Grading...',
+                            statusFinished: 'Finished',
+                            statusCheated: 'Force Submitted (Cheat)',
+
+                            // Teacher View
+                            quizList: 'Quiz List',
+                            createQuiz: 'Create New Quiz',
+                            exportAnalytics: 'Export CSV',
+                            allowRepeatLabel: 'Allow Repeat',
+                            autoGradingLabel: 'Auto Grading',
+                            showExplanationsLabel: 'Show Explanations',
+                            activeStatus: 'Status',
+                            deactivateBtn: 'End Quiz',
+                            activateBtn: 'Start Quiz',
+                            deleteConfirm: 'Are you sure you want to delete this?',
+                            duplicateBtn: 'Duplicate',
+                            editBtn: 'Edit',
+                            analyticsBtn: 'Analytics',
+                            backToDashboard: 'Back to Dashboard',
+
+                            // Creator View
+                            creatorTitle: 'Create & Edit Quiz',
+                            quizTitleLabel: 'Quiz Title',
+                            categoryLabel: 'Category',
+                            passageLabel: 'Reading Passage (Optional)',
+                            questionsLabel: 'Question List',
+                            addQuestionBtn: 'Add Question',
+                            batchGenerateBtn: 'Batch Generate Questions',
+                            saveQuizBtn: 'Save Quiz',
+                            cancelBtn: 'Cancel',
+                            questionTitlePlaceholder: 'Question description',
+                            questionTitleEngPlaceholder: 'Question description (English - optional)',
+                            optionPlaceholder: 'Option content',
+                            optionEngPlaceholder: 'Option content (English - optional)',
+                            explanationPlaceholder: 'Explanation content',
+                            explanationEngPlaceholder: 'Explanation content (English - optional)',
+                            correctAnswerLabel: 'Correct Answer',
+                            difficultyLabel: 'Difficulty',
+                            difficultyEasy: 'Easy',
+                            difficultyNormal: 'Normal',
+                            difficultyHard: 'Hard',
+
+                            // Alert/Confirm/Messages
+                            alertTitle: 'Notification',
+                            successTitle: 'Success',
+                            warningTitle: 'Warning',
+                            errorTitle: 'Error',
+                            confirmTitle: 'Confirm',
+                            cheatWarning: 'Warning: Tab switching or browser focus loss detected!',
+                            cheatFinalWarning: 'You have violated the anti-cheating rules too many times. Your quiz has been force-submitted!',
+                            autoGradedMsg: 'Submitted successfully! Score is auto-graded.',
+                            waitingGradingMsg: 'Submitted successfully! Waiting for grading.',
+                            repeatForbidden: 'You have already completed this quiz! Repeat attempts are disabled.',
+                            nameRequired: 'Please enter your name!',
+
+                            // Result View
+                            detailedExplanation: 'Detailed Explanation',
+                            hideExplanationTip: 'Detailed explanations will be automatically unlocked 1 hour after submission.',
+                            hideExplanationTipWaiting: 'Remaining wait time',
+                            yourAnswer: 'Your Answer',
+                            correctAnswer: 'Correct Answer',
+                            explanationTitle: 'Explanation',
+                            gradedTitle: 'Report Card',
+                            cheatedResultTitle: 'This quiz was terminated due to cheating. No score or explanations are available.',
+                            noExplanation: 'No explanation',
+                            scoreDetail: 'Score Details'
+                        }
+                    };
+                    const currentLang = ref(localStorage.getItem('preferred_lang') || 'zh');
+                    const toggleLanguage = () => {
+                        currentLang.value = currentLang.value === 'zh' ? 'en' : 'zh';
+                        localStorage.setItem('preferred_lang', currentLang.value);
+                    };
+                    const t = (key) => {
+                        return i18n[currentLang.value]?.[key] || i18n['zh']?.[key] || key;
+                    };
+
+                    const getQuestionTitle = (q) => {
+                        if (!q) return '';
+                        return (currentLang.value === 'en' && q['title-eng']) ? q['title-eng'] : q.title;
+                    };
+
+                    const getQuestionOption = (q, idx) => {
+                        if (!q) return '';
+                        if (currentLang.value === 'en' && q['options-eng'] && q['options-eng'][idx]) {
+                            return q['options-eng'][idx];
+                        }
+                        return q.options[idx] || '';
+                    };
+
+                    const getQuestionExplanation = (q) => {
+                        if (!q) return '';
+                        const explanationStr = (currentLang.value === 'en' && q['explanation-eng']) ? q['explanation-eng'] : q.explanation;
+                        return explanationStr || (currentLang.value === 'en' ? 'No explanation' : '無解析');
+                    };
+
+                    const getQuestionExplanationRaw = (q) => {
+                        if (!q) return '';
+                        return (currentLang.value === 'en' && q['explanation-eng']) ? q['explanation-eng'] : q.explanation;
+                    };
+
+                    const getQuizTitle = (quiz) => {
+                        if (!quiz) return '';
+                        return (currentLang.value === 'en' && quiz['title-eng']) ? quiz['title-eng'] : quiz.title;
+                    };
+
+                    const getQuizReadingPassage = (quiz) => {
+                        if (!quiz) return '';
+                        return (currentLang.value === 'en' && quiz['readingPassage-eng']) ? quiz['readingPassage-eng'] : quiz.readingPassage;
+                    };
 
                     // Category Filter
                     const selectedCategory = ref('All');
@@ -2459,10 +2644,6 @@ service cloud.firestore {
                     const selectedStudentResult = ref(null);
 
                     // Student & Global State
-                    // Teacher view online students status state
-                    const showOnlineStudents = ref(false);
-                    const activeSessions = ref([]);
-
                     // Student Auth
                     const studentName = ref('');
                     const isStudentLoading = ref(false);
@@ -2528,24 +2709,10 @@ service cloud.firestore {
 
                     onMounted(async () => {
                         const urlParams = new URLSearchParams(window.location.search);
-                        if (urlParams.has('mode') && urlParams.get('mode') === 'teacher') {
-                            isStudentView.value = false;
-                        } else {
+                        if (urlParams.has('mode') && urlParams.get('mode') === 'student') {
                             isStudentView.value = true;
                         }
                         await initApp();
-
-                        // Clean 'mode' parameter from the address bar if present
-                        if (window.history && window.history.replaceState) {
-                            const params = new URLSearchParams(window.location.search);
-                            if (params.has('mode')) {
-                                params.delete('mode');
-                                const queryStr = params.toString();
-                                const cleanUrl = window.location.pathname + (queryStr ? '?' + queryStr : '');
-                                window.history.replaceState({}, document.title, cleanUrl);
-                            }
-                        }
-
                         // If in student view and app is ready, go directly to student login
                         if (isStudentView.value && isConfigured.value) {
                             goToView('student-login');
@@ -2604,8 +2771,8 @@ service cloud.firestore {
                                 const decoded = atob(encryptedConfig);
                                 const configObj = JSON.parse(decoded);
                                 localStorage.setItem('firebase_config', JSON.stringify(configObj));
-                                // Clean URL completely
-                                const cleanUrl = window.location.pathname;
+                                // Clean URL, but preserve student mode
+                                const cleanUrl = window.location.pathname + (urlParams.has('mode') ? '?mode=student' : '');
                                 window.history.replaceState({}, document.title, cleanUrl);
                             } catch (e) { console.error("Config decode failed", e); }
                         }
@@ -2638,7 +2805,7 @@ service cloud.firestore {
                                         checkTeacherAuth(u);
                                         // 同時也為學生角色初始化 studentName
                                         const name = u.displayName || '未設定名稱';
-                                        const email = (u.email || '').toLowerCase();
+                                        const email = u.email || '';
                                         studentName.value = `${name} (${email})`;
                                         // 載入學生的歷史紀錄
                                         fetchStudentHistory();
@@ -2788,35 +2955,32 @@ service cloud.firestore {
     match /quiz_answers/{quizId} {
       allow write: if request.auth != null;
       allow read: if request.auth != null && (
-        ('showExplanations' in get(/databases/\$(database)/documents/quizzes/\$(quizId)).data && get(/databases/\$(database)/documents/quizzes/\$(quizId)).data.showExplanations == true) ||
-        (exists(/databases/\$(database)/documents/config/teachers) && 
-         get(/databases/\$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/\$(database)/documents/quiz_unlocks/\$(request.auth.token.email + '_' + quizId)) &&
-         request.time >= get(/databases/\$(database)/documents/quiz_unlocks/\$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
+        (exists(/databases/$(database)/documents/config/teachers) && 
+         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
     }
-    match /student_sessions/{sessionId} {
-      allow read, write: if request.auth != null;
-    }
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
             request.resource.data.resultId != null &&
             (
               (
-                'studentEmail' in get(/databases/\$(database)/documents/results/\$(request.resource.data.resultId)).data &&
-                get(/databases/\$(database)/documents/results/\$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
+                'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
               ) ||
-              get(/databases/\$(database)/documents/results/\$(request.resource.data.resultId)).data.studentName.matches('.*\\\\(' + request.auth.token.email + '\\\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
             ) &&
-            request.resource.data.timestamp == get(/databases/\$(database)/documents/results/\$(request.resource.data.resultId)).data.timestamp
+            request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
         );
     }
@@ -2867,16 +3031,12 @@ service cloud.firestore {
                             migrateOldQuizzes();
                             triggerManualGrading();
                             startResultsGradingListener();
-                            startActiveSessionsListener();
                         }
                         if (view === 'student-login') {
                             fetchStudentHistory();
-                            updateStudentSession('login');
-                            startStudentHeartbeat();
                         }
                         if (view === 'landing') {
                             studentName.value = '';
-                            stopStudentHeartbeat();
                         }
                         // Re-highlight when view changes
                         nextTick(() => Prism.highlightAll());
@@ -2899,7 +3059,6 @@ service cloud.firestore {
                                     teacherEmailDisplay.value = googleUser.email;
                                     isAdminTeacher.value = (googleUser.email === data.adminEmail);
                                     fetchTeacherList();
-                                    startActiveSessionsListener();
                                 }
                             }
                         } catch (e) {
@@ -2932,7 +3091,6 @@ service cloud.firestore {
                                 teacherEmailDisplay.value = teacherEmail;
                                 isAdminTeacher.value = true;
                                 fetchTeacherList();
-                                startActiveSessionsListener();
                                 showAlert("歡迎！", `您 (${teacherEmail}) 已成為本系統的管理教師。\n您可以在「系統設定」中新增其他教師帳號。`, "success");
                                 goToView('teacher-dashboard');
                             } else {
@@ -2942,7 +3100,6 @@ service cloud.firestore {
                                     teacherEmailDisplay.value = teacherEmail;
                                     isAdminTeacher.value = (teacherEmail === data.adminEmail);
                                     fetchTeacherList();
-                                    startActiveSessionsListener();
                                     goToView('teacher-dashboard');
                                 } else {
                                     // 未授權 → 登出 Google，恢復匿名登入
@@ -3012,7 +3169,6 @@ service cloud.firestore {
                         const confirmed = await showConfirm("登出確認", "確定要登出教師帳號嗎？");
                         if (!confirmed) return;
                         try {
-                            stopActiveSessionsListener();
                             isTeacherUser.value = false;
                             isAdminTeacher.value = false;
                             teacherEmailDisplay.value = '';
@@ -3049,7 +3205,7 @@ service cloud.firestore {
                     // Computed property to get the active quiz title
                     const getActiveQuizTitle = computed(() => {
                         const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
-                        return activeQ ? activeQ.title : '未知測驗';
+                        return activeQ ? getQuizTitle(activeQ) : '未知測驗';
                     });
 
                     // 新增：啟用題庫功能
@@ -3169,64 +3325,6 @@ service cloud.firestore {
                         } catch (e) {
                             console.error("批改結果失敗", e);
                         }
-                    };
-
-                    // [新增] 線上學生實時監聽與活躍判斷
-                    let activeSessionsListener = null;
-                    const startActiveSessionsListener = () => {
-                        if (!db || !isTeacherUser.value) return;
-                        if (activeSessionsListener) {
-                            activeSessionsListener();
-                            activeSessionsListener = null;
-                        }
-                        if (!activeQuizId.value) {
-                            activeSessions.value = [];
-                            return;
-                        }
-
-                        activeSessionsListener = db.collection('student_sessions')
-                            .where('quizId', '==', activeQuizId.value)
-                            .onSnapshot((snapshot) => {
-                                const sessions = [];
-                                snapshot.forEach(doc => {
-                                    sessions.push(doc.data());
-                                });
-                                sessions.sort((a, b) => {
-                                    const timeA = a.loginTime ? (a.loginTime.toDate ? a.loginTime.toDate().getTime() : new Date(a.loginTime).getTime()) : 0;
-                                    const timeB = b.loginTime ? (b.loginTime.toDate ? b.loginTime.toDate().getTime() : new Date(b.loginTime).getTime()) : 0;
-                                    return timeB - timeA; // Descending order
-                                });
-                                activeSessions.value = sessions;
-                            }, (err) => {
-                                console.error("監聽學生線上狀態失敗:", err);
-                            });
-                    };
-
-                    const stopActiveSessionsListener = () => {
-                        if (activeSessionsListener) {
-                            activeSessionsListener();
-                            activeSessionsListener = null;
-                        }
-                        activeSessions.value = [];
-                    };
-
-                    const isSessionOnline = (sess) => {
-                        if (sess.status === 'submitted' || sess.status === 'cheated') return true;
-                        if (!sess.lastActive) return false;
-                        const lastActiveTime = sess.lastActive.toDate ? sess.lastActive.toDate().getTime() : new Date(sess.lastActive).getTime();
-                        const timeDiff = nowTimestamp.value - lastActiveTime;
-                        return timeDiff < 45000; // Active if pinged in the last 45 seconds (student pings every 15s)
-                    };
-
-                    const calculateDuration = (start, end) => {
-                        if (!start) return '--';
-                        const startTime = start.toDate ? start.toDate().getTime() : new Date(start).getTime();
-                        const endTime = end ? (end.toDate ? end.toDate().getTime() : new Date(end).getTime()) : nowTimestamp.value;
-                        const diffSec = Math.floor((endTime - startTime) / 1000);
-                        if (diffSec < 0) return '0秒';
-                        const m = Math.floor(diffSec / 60);
-                        const s = diffSec % 60;
-                        return `${m}分${s}秒`;
                     };
 
                     // 新增：重新批改該測驗的所有學生作答記錄
@@ -3540,10 +3638,12 @@ service cloud.firestore {
                     const openCreateModal = () => {
                         editingQuizId.value = null; // Reset editing state
                         newQuiz.title = '';
+                        newQuiz['title-eng'] = '';
                         newQuiz.category = '';
                         newQuiz.questions = [];
                         newQuiz.questionType = 'multiple-choice';
                         newQuiz.readingPassage = '';
+                        newQuiz['readingPassage-eng'] = '';
                         aiSourceText.value = '';
                         aiImageBase64.value = '';
                         manualInput.value = '';
@@ -3745,9 +3845,11 @@ Output format must be a strict JSON Array without Markdown markers:
                     const editQuiz = async (quiz) => {
                         editingQuizId.value = quiz.id;
                         newQuiz.title = quiz.title;
+                        newQuiz['title-eng'] = quiz['title-eng'] || '';
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
+                        newQuiz['readingPassage-eng'] = quiz['readingPassage-eng'] || '';
 
                         // 先複製題目
                         const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
@@ -3763,6 +3865,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                         if (answersData.answers && answersData.answers[origIdx]) {
                                             q.answer = answersData.answers[origIdx].answer;
                                             q.explanation = answersData.answers[origIdx].explanation || '';
+                                            q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                         }
                                     });
                                 }
@@ -3784,9 +3887,11 @@ Output format must be a strict JSON Array without Markdown markers:
                     const duplicateQuiz = async (quiz) => {
                         editingQuizId.value = null; // duplicating creates a NEW quiz
                         newQuiz.title = quiz.title + ' (副本)';
+                        newQuiz['title-eng'] = quiz['title-eng'] ? (quiz['title-eng'] + ' (Copy)') : '';
                         newQuiz.category = quiz.category;
                         newQuiz.questionType = quiz.questionType || 'multiple-choice';
                         newQuiz.readingPassage = quiz.readingPassage || '';
+                        newQuiz['readingPassage-eng'] = quiz['readingPassage-eng'] || '';
 
                         // 先複製題目
                         const questionsCopy = JSON.parse(JSON.stringify(quiz.questions));
@@ -3802,6 +3907,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                         if (answersData.answers && answersData.answers[origIdx]) {
                                             q.answer = answersData.answers[origIdx].answer;
                                             q.explanation = answersData.answers[origIdx].explanation || '';
+                                            q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                         }
                                     });
                                 }
@@ -3826,21 +3932,24 @@ Output format must be a strict JSON Array without Markdown markers:
                             const answersData = {
                                 answers: newQuiz.questions.map(q => ({
                                     answer: q.hasOwnProperty('answer') ? q.answer : null,
-                                    explanation: q.explanation || ''
+                                    explanation: q.explanation || '',
+                                    'explanation-eng': q['explanation-eng'] || ''
                                 }))
                             };
 
                             // 2. 清除 questions 內的答案與解析欄位
                             const cleanQuestions = newQuiz.questions.map(q => {
-                                const { answer, explanation, ...rest } = q;
+                                const { answer, explanation, 'explanation-eng': expEng, ...rest } = q;
                                 return rest;
                             });
 
                             const quizData = {
                                 title: newQuiz.title,
+                                'title-eng': newQuiz['title-eng'] || '',
                                 category: newQuiz.category || '未分類',
                                 questionType: newQuiz.questionType,
-                                readingPassage: newQuiz.readingPassage,
+                                readingPassage: newQuiz.readingPassage || '',
+                                'readingPassage-eng': newQuiz['readingPassage-eng'] || '',
                                 questions: cleanQuestions,
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 teacherId: user.value.uid
@@ -3871,8 +3980,11 @@ Output format must be a strict JSON Array without Markdown markers:
                             showCreateQuiz.value = false;
                             // Reset form
                             newQuiz.title = '';
+                            newQuiz['title-eng'] = '';
                             newQuiz.category = '';
                             newQuiz.questions = [];
+                            newQuiz.readingPassage = '';
+                            newQuiz['readingPassage-eng'] = '';
                         } catch (e) {
                             showAlert("儲存失敗", e.message, "error");
                         }
@@ -3884,10 +3996,13 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Reset to default blank question
                         Object.assign(currentEditingQuestion, {
                             title: '',
+                            'title-eng': '',
                             options: ['', '', '', ''],
+                            'options-eng': ['', '', '', ''],
                             answer: 1,
                             difficulty: '一般',
-                            explanation: ''
+                            explanation: '',
+                            'explanation-eng': ''
                         });
                         showQuestionEditor.value = true;
                     };
@@ -3895,7 +4010,11 @@ Output format must be a strict JSON Array without Markdown markers:
                     const editQuestion = (index) => {
                         currentEditingQuestionIndex.value = index;
                         // Copy question data to editor
-                        Object.assign(currentEditingQuestion, JSON.parse(JSON.stringify(newQuiz.questions[index])));
+                        const q = JSON.parse(JSON.stringify(newQuiz.questions[index]));
+                        if (!q['options-eng']) q['options-eng'] = ['', '', '', ''];
+                        if (!q['title-eng']) q['title-eng'] = '';
+                        if (!q['explanation-eng']) q['explanation-eng'] = '';
+                        Object.assign(currentEditingQuestion, q);
                         showQuestionEditor.value = true;
                     };
 
@@ -3951,6 +4070,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                         if (answersData.answers && answersData.answers[origIdx]) {
                                             q.answer = answersData.answers[origIdx].answer;
                                             q.explanation = answersData.answers[origIdx].explanation || '';
+                                            q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                         }
                                     });
                                 }
@@ -3986,7 +4106,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         let csvContent = "\uFEFF"; // BOM for Excel Chinese support
 
                         // Title & Summary
-                        csvContent += `測驗名稱,${quiz.title}\n`;
+                        csvContent += `${currentLang.value === 'zh' ? '測驗名稱' : 'Quiz Title'},${getQuizTitle(quiz)}\n`;
                         csvContent += `總人數,${totalStudents},平均分數,${avgScore}\n\n`;
 
                         // Headers
@@ -4022,7 +4142,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         const link = document.createElement("a");
                         const url = URL.createObjectURL(blob);
                         link.setAttribute("href", url);
-                        link.setAttribute("download", `${quiz.title}_成績報表.csv`);
+                        link.setAttribute("download", `${getQuizTitle(quiz)}_${currentLang.value === 'zh' ? '成績報表' : 'Score_Report'}.csv`);
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -4107,10 +4227,10 @@ Output format must be a strict JSON Array without Markdown markers:
                     });
 
                     const teacherHighlightedPassage = computed(() => {
-                        if (!selectedAnalyticsQuiz.value || !selectedAnalyticsQuiz.value.readingPassage) {
+                        if (!selectedAnalyticsQuiz.value || !(selectedAnalyticsQuiz.value.readingPassage || selectedAnalyticsQuiz.value['readingPassage-eng'])) {
                             return '';
                         }
-                        const text = selectedAnalyticsQuiz.value.readingPassage;
+                        const text = getQuizReadingPassage(selectedAnalyticsQuiz.value);
 
                         if (!selectedStudentResult.value || !selectedStudentResult.value.highlights || selectedStudentResult.value.highlights.length === 0) {
                             return escapeHtml(text);
@@ -4175,9 +4295,9 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     // --- New Highlighter Functions ---
                     const highlightedPassage = computed(() => {
-                        if (!activeQuiz.value || !activeQuiz.value.readingPassage) return '';
+                        if (!activeQuiz.value || !(activeQuiz.value.readingPassage || activeQuiz.value['readingPassage-eng'])) return '';
 
-                        const text = activeQuiz.value.readingPassage;
+                        const text = getQuizReadingPassage(activeQuiz.value);
                         // Sort highlights by start index to process them in order
                         const sortedHighlights = [...highlights.value].sort((a, b) => a.start - b.start);
 
@@ -4319,7 +4439,6 @@ Output format must be a strict JSON Array without Markdown markers:
                     const handleFullscreenChange = async () => {
                         if (isTakingQuiz.value && !document.fullscreenElement && !document.webkitFullscreenElement) {
                             switchCount.value++;
-                            updateStudentSession('testing', { violationCount: switchCount.value });
                             if (switchCount.value >= 3) {
                                 showAlert("作弊違規", "由於您多次退出全螢幕，系統已強制自動交卷並記為 0 分！", "error");
                                 await forceSubmitQuizByCheat("多次退出全螢幕模式");
@@ -4338,7 +4457,6 @@ Output format must be a strict JSON Array without Markdown markers:
                     const handleVisibilityChange = async () => {
                         if (isTakingQuiz.value && document.hidden) {
                             switchCount.value++;
-                            updateStudentSession('testing', { violationCount: switchCount.value });
                             window.focus();
 
                             if (switchCount.value >= 3) {
@@ -4389,8 +4507,6 @@ Output format must be a strict JSON Array without Markdown markers:
                         });
 
                         try {
-                            stopStudentHeartbeat();
-                            updateStudentSession('cheated', { cheatReason: reason, violationCount: switchCount.value });
                             // 提交後自動寫入 unlock 記錄，以便後續查看時能立即開啟解析 (將 Email 轉為小寫避免大小寫敏感問題)
                             if (user.value && user.value.email) {
                                 const emailLower = user.value.email.toLowerCase();
@@ -4404,7 +4520,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             await db.collection('results').add({
                                 quizId: activeQuiz.value.id,
                                 studentName: studentName.value,
-                                studentEmail: (user.value.email || '').toLowerCase(), // 新增學生 Email 以供安全性規則校驗
+                                studentEmail: user.value.email, // 新增學生 Email 以供安全性規則校驗
                                 score: 0,
                                 answers: originalOrderAnswers,
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4502,81 +4618,12 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
-                    // [新增] 學生狀態實時更新與心跳機制
-                    let studentHeartbeatInterval = null;
-                    const startStudentHeartbeat = () => {
-                        stopStudentHeartbeat();
-                        studentHeartbeatInterval = setInterval(() => {
-                            if (isTakingQuiz.value) {
-                                updateStudentSession('testing');
-                            } else if (currentView.value === 'student-login') {
-                                updateStudentSession('login');
-                            }
-                        }, 15000); // 15s heartbeat
-                    };
-
-                    const stopStudentHeartbeat = () => {
-                        if (studentHeartbeatInterval) {
-                            clearInterval(studentHeartbeatInterval);
-                            studentHeartbeatInterval = null;
-                        }
-                    };
-
-                    const updateStudentSession = async (status, extraData = {}) => {
-                        if (!db || !user.value || user.value.isAnonymous || isTeacherUser.value) return;
-                        const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
-                        if (!quizId) return;
-
-                        const emailLower = user.value.email.toLowerCase();
-                        const sessionId = `${emailLower}_${quizId}`;
-                        const docRef = db.collection('student_sessions').doc(sessionId);
-
-                        const nowServer = firebase.firestore.FieldValue.serverTimestamp();
-
-                        let existingData = {};
-                        try {
-                            const snap = await docRef.get();
-                            if (snap.exists) {
-                                existingData = snap.data();
-                            }
-                        } catch (err) {
-                            console.error("讀取現有 Session 失敗", err);
-                        }
-
-                        const data = {
-                            email: user.value.email,
-                            name: user.value.displayName || '未設定名稱',
-                            quizId: quizId,
-                            status: status, // 'login', 'testing', 'submitted', 'cheated'
-                            lastActive: nowServer,
-                            violationCount: extraData.violationCount !== undefined ? extraData.violationCount : (existingData.violationCount || 0),
-                            ...extraData
-                        };
-
-                        if (status === 'login') {
-                            data.loginTime = existingData.loginTime || nowServer;
-                        } else if (status === 'testing') {
-                            data.loginTime = existingData.loginTime || nowServer;
-                            data.startTime = existingData.startTime || nowServer;
-                        } else if (status === 'submitted' || status === 'cheated') {
-                            data.loginTime = existingData.loginTime || nowServer;
-                            data.startTime = existingData.startTime || nowServer;
-                            data.endTime = nowServer;
-                        }
-
-                        try {
-                            await docRef.set(data, { merge: true });
-                        } catch (e) {
-                            console.error("更新學生線上狀態失敗", e);
-                        }
-                    };
-
                     // [新增] 學生端 Google 登入邏輯
                     const fetchStudentHistory = async () => {
                         if (!db || !user.value || user.value.isAnonymous) return;
                         try {
                             const name = user.value.displayName || '未設定名稱';
-                            const email = (user.value.email || '').toLowerCase();
+                            const email = user.value.email || '';
                             const sName = `${name} (${email})`;
                             studentName.value = sName; // 修正：在讀取歷史紀錄時，確保同步設定 studentName 變數以供 UI 渲染顯示已登入身分
 
@@ -4588,25 +4635,35 @@ Output format must be a strict JSON Array without Markdown markers:
                             for (const doc of snap.docs) {
                                 const data = doc.data();
                                 if (data.timestamp) {
-                                    let quizTitle = '未知測驗';
-                                    try {
-                                        const quizDoc = await db.collection('quizzes').doc(data.quizId).get();
-                                        if (quizDoc.exists) {
-                                            quizTitle = quizDoc.data().title;
-                                        }
-                                    } catch (e) {
-                                        console.error("載入歷史測驗標題失敗", e);
-                                    }
+                                    const submitTime = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+                                    const timeDiffMinutes = (Date.now() - submitTime.getTime()) / (1000 * 60);
 
-                                    records.push({
-                                        id: doc.id,
-                                        quizId: data.quizId,
-                                        quizTitle: quizTitle,
-                                        score: data.score,
-                                        cheated: data.cheated || false,
-                                        timestamp: data.timestamp,
-                                        answers: data.answers
-                                    });
+                                    // 判斷是否超過 60 分鐘
+                                    if (timeDiffMinutes >= 60) {
+                                        let quizTitle = '未知測驗';
+                                        let quizTitleEng = '';
+                                        try {
+                                            const quizDoc = await db.collection('quizzes').doc(data.quizId).get();
+                                            if (quizDoc.exists) {
+                                                const quizData = quizDoc.data();
+                                                quizTitle = quizData.title;
+                                                quizTitleEng = quizData['title-eng'] || '';
+                                            }
+                                        } catch (e) {
+                                            console.error("載入歷史測驗標題失敗", e);
+                                        }
+
+                                        records.push({
+                                            id: doc.id,
+                                            quizId: data.quizId,
+                                            quizTitle: quizTitle,
+                                            'quizTitle-eng': quizTitleEng,
+                                            score: data.score,
+                                            cheated: data.cheated || false,
+                                            timestamp: data.timestamp,
+                                            answers: data.answers
+                                        });
+                                    }
                                 }
                             }
 
@@ -4670,6 +4727,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                         if (answersData.answers && answersData.answers[origIdx]) {
                                             q.answer = answersData.answers[origIdx].answer;
                                             q.explanation = answersData.answers[origIdx].explanation || '';
+                                            q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                         }
                                     });
                                 }
@@ -4697,7 +4755,8 @@ Output format must be a strict JSON Array without Markdown markers:
                             }
 
                             const name = currentUser.displayName || '未設定名稱';
-                            const email = (currentUser.email || '').toLowerCase();
+                            const email = currentUser.email || '';
+                            studentName.value = `${name} (smiles${email})`.replace('smiles', ''); // workaround
                             studentName.value = `${name} (${email})`;
 
                             // 只有在有進行中測驗時才開始測驗，否則只加載歷史紀錄
@@ -4705,9 +4764,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                 await startQuiz();
                             } else {
                                 await fetchStudentHistory();
-                                updateStudentSession('login');
-                                startStudentHeartbeat();
-                                showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看歷史成績紀錄。", "success");
+                                showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看超過 60 分鐘前的歷史成績紀錄。", "success");
                             }
                         } catch (error) {
                             if (error.code !== 'auth/popup-closed-by-user') {
@@ -4787,8 +4844,6 @@ Output format must be a strict JSON Array without Markdown markers:
                                 currentAnswer.value = null;
                                 highlights.value = [];
                                 nextHighlightId.value = 0;
-                                updateStudentSession('testing');
-                                startStudentHeartbeat();
                                 goToView('quiz');
                             } else {
                                 showAlert("錯誤", "找不到該測驗，可能已被刪除。", "error");
@@ -4850,13 +4905,11 @@ Output format must be a strict JSON Array without Markdown markers:
                         });
 
                         try {
-                            stopStudentHeartbeat();
-                            updateStudentSession('submitted');
                             // 寫入資料庫 (score 初始化為 null)
                             const docRef = await db.collection('results').add({
                                 quizId: activeQuiz.value.id,
                                 studentName: studentName.value,
-                                studentEmail: (user.value.email || '').toLowerCase(), // 新增學生 Email 以供安全性規則校驗
+                                studentEmail: user.value.email, // 新增學生 Email 以供安全性規則校驗
                                 score: null,
                                 answers: originalOrderAnswers,
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4919,6 +4972,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                     if (answersData.answers && answersData.answers[origIdx]) {
                                         q.answer = answersData.answers[origIdx].answer;
                                         q.explanation = answersData.answers[origIdx].explanation || '';
+                                        q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                     }
                                 });
                             }
@@ -4967,6 +5021,11 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     });
 
+                    // 新增：監聽語系變更以更新網頁分頁標題
+                    watch(currentLang, (newLang) => {
+                        document.title = t('appName');
+                    }, { immediate: true });
+
                     // 新增：監聽活動中測驗 ID，並即時訂閱同步活動測驗之 flag 設定至 activeQuiz.value
                     let activeQuizListener = null;
                     watch(activeQuizId, (newId) => {
@@ -4975,7 +5034,6 @@ Output format must be a strict JSON Array without Markdown markers:
                             activeQuizListener = null;
                         }
                         if (newId && db) {
-                            startActiveSessionsListener();
                             activeQuizListener = db.collection('quizzes').doc(newId).onSnapshot(doc => {
                                 if (doc.exists) {
                                     const data = doc.data();
@@ -5017,7 +5075,6 @@ Output format must be a strict JSON Array without Markdown markers:
                         modalState, showAlert, showConfirm, handleConfirm, handleCancel,
                         // Teacher
                         isTeacherUser, isTeacherLoading, teacherEmailDisplay, isAdminTeacher,
-                        showOnlineStudents, activeSessions, isSessionOnline, calculateDuration,
                         authorizedTeachers, newTeacherEmail,
                         verifyTeacher, teacherLogout, addTeacher, removeTeacher,
                         quizzes, showCreateQuiz, createMode, openCreateModal, duplicateQuiz, editQuiz, editingQuizId,
@@ -5027,6 +5084,8 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Question Editor
                         showQuestionEditor, currentEditingQuestion, currentEditingQuestionIndex, addQuestion, editQuestion, saveQuestion, deleteQuestion,
                         handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate, regradeQuizResults, toggleQuizAllowRepeat, toggleQuizAutoGrading, toggleQuizExplanations,
+                        currentLang, toggleLanguage, t, getQuestionTitle, getQuestionOption, getQuestionExplanation, getQuestionExplanationRaw,
+                        getQuizTitle, getQuizReadingPassage,
                         // Analytics
                         viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                         // Student

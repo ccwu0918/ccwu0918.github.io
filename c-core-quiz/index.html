@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資訊與網路安全概論</title>
+    <title>C語言程式設計</title>
     <!-- Google Fonts: Noto Sans TC & Fira Code (IDE Font) -->
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap"
@@ -537,7 +537,8 @@
                                     </div>
                                 </div>
 
-                                <h3 class="text-xl font-bold text-slate-800 mb-1 truncate" :title="getQuizTitle(quiz)">{{
+                                <h3 class="text-xl font-bold text-slate-800 mb-1 truncate" :title="getQuizTitle(quiz)">
+                                    {{
                                     getQuizTitle(quiz) }}</h3>
                                 <p class="text-xs text-slate-400 mb-4">建立於: {{ formatDate(quiz.createdAt) }}</p>
 
@@ -617,13 +618,15 @@
                                 <div class="p-6 space-y-6">
                                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題 (中文)</label>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題
+                                                (中文)</label>
                                             <input v-model="newQuiz.title" type="text"
                                                 class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500"
                                                 placeholder="例如：國文第三課隨堂考">
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題 (英文 - 選填)</label>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">測驗標題 (英文 -
+                                                選填)</label>
                                             <input v-model="newQuiz['title-eng']" type="text"
                                                 class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500"
                                                 placeholder="e.g. Lesson 3 Quiz">
@@ -760,7 +763,8 @@
 
                                             <!-- 閱讀文本輸入 (英文 - 選填) -->
                                             <div class="mt-4">
-                                                <label class="block text-sm font-medium text-slate-700 mb-1">閱讀文本 (英文 - 選填)</label>
+                                                <label class="block text-sm font-medium text-slate-700 mb-1">閱讀文本 (英文 -
+                                                    選填)</label>
                                                 <textarea v-model="newQuiz['readingPassage-eng']"
                                                     class="w-full h-40 p-3 border border-slate-200 rounded-xl font-mono text-sm"
                                                     placeholder="// Enter English reading passage content here..."></textarea>
@@ -1023,7 +1027,8 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">題目敘述 (英文 - 選填)</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">題目敘述 (英文 -
+                                            選填)</label>
                                         <textarea v-model="currentEditingQuestion['title-eng']"
                                             class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-violet-500 h-16"></textarea>
                                     </div>
@@ -1062,13 +1067,15 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (中文 - 選填)</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (中文 -
+                                            選填)</label>
                                         <textarea v-model="currentEditingQuestion.explanation"
                                             class="w-full p-2 border border-slate-200 rounded-lg h-16 text-sm"></textarea>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (英文 - 選填)</label>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">解析 (英文 -
+                                            選填)</label>
                                         <textarea v-model="currentEditingQuestion['explanation-eng']"
                                             class="w-full p-2 border border-slate-200 rounded-lg h-16 text-sm"></textarea>
                                     </div>
@@ -1091,7 +1098,8 @@
                                 <div
                                     class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                     <div>
-                                        <h3 class="text-2xl font-bold">{{ getQuizTitle(selectedAnalyticsQuiz) }} - {{ currentLang === 'zh' ? '分析報告' : 'Analysis Report' }}</h3>
+                                        <h3 class="text-2xl font-bold">{{ getQuizTitle(selectedAnalyticsQuiz) }} - {{
+                                            currentLang === 'zh' ? '分析報告' : 'Analysis Report' }}</h3>
                                         <p class="text-slate-500">共 {{ analyticsData.length }} 位學生作答</p>
                                     </div>
                                     <div class="flex gap-2">
@@ -1321,7 +1329,8 @@
                                                     <span class="text-slate-500 font-medium">學生回答：</span>
                                                     <span
                                                         :class="selectedStudentResult.answers[idx] == q.answer ? 'text-green-600 font-bold' : 'text-red-600 font-bold line-through'">
-                                                        {{ getQuestionOption(q, selectedStudentResult.answers[idx]-1) || (currentLang === 'en' ? 'Unanswered' : '未作答') }}
+                                                        {{ getQuestionOption(q, selectedStudentResult.answers[idx]-1) ||
+                                                        (currentLang === 'en' ? 'Unanswered' : '未作答') }}
                                                     </span>
                                                 </div>
                                                 <div v-if="selectedStudentResult.answers[idx] != q.answer"
@@ -1334,7 +1343,8 @@
                                                 <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q['explanation-eng'])"
                                                     class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
-                                                    <span class="font-bold text-amber-800">解析：</span>{{ getQuestionExplanation(q) }}
+                                                    <span class="font-bold text-amber-800">解析：</span>{{
+                                                    getQuestionExplanation(q) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1405,8 +1415,10 @@
                                     <div v-for="rec in studentHistoryRecords" :key="rec.id"
                                         class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center hover:bg-slate-100/50 transition">
                                         <div class="min-w-0 flex-1 pr-2">
-                                            <p class="text-xs font-bold text-slate-700 truncate" :title="currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] : rec.quizTitle">
-                                                {{ currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] : rec.quizTitle }}</p>
+                                            <p class="text-xs font-bold text-slate-700 truncate"
+                                                :title="currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] : rec.quizTitle">
+                                                {{ currentLang === 'en' && rec['quizTitle-eng'] ? rec['quizTitle-eng'] :
+                                                rec.quizTitle }}</p>
                                             <p class="text-[10px] text-slate-400 mt-0.5">交卷時間：{{
                                                 formatDate(rec.timestamp) }}</p>
                                         </div>
@@ -2370,7 +2382,7 @@ service cloud.firestore {
                     // i18n
                     const i18n = {
                         zh: {
-                            appName: '資訊與網路安全概論',
+                            appName: 'C語言程式設計',
                             studentPortal: '我是學生',
                             studentPortalDesc: '輸入姓名，立即加入老師的測驗',
                             teacherPortal: '我是老師',
@@ -2385,11 +2397,11 @@ service cloud.firestore {
                             historyTitle: '歷史成績紀錄',
                             quizResult: '測驗結果',
                             scoreLabel: '得分',
-                            welcomeTitle: '歡迎來到 資訊與網路安全概論',
+                            welcomeTitle: '歡迎來到 C語言程式設計',
                             welcomeDesc: '老師輕鬆出題，學生快樂學習',
                             connected: '已連線',
                             notConnected: '未連線 (點此設定)',
-                            
+
                             // Student View
                             studentLoginTitle: '學生登入測驗',
                             enterNamePlaceholder: '請輸入您的姓名',
@@ -2409,7 +2421,7 @@ service cloud.firestore {
                             statusGrading: '閱卷中...',
                             statusFinished: '已完成',
                             statusCheated: '作弊強制交卷',
-                            
+
                             // Teacher View
                             quizList: '試卷列表',
                             createQuiz: '建立新試卷',
@@ -2425,7 +2437,7 @@ service cloud.firestore {
                             editBtn: '編輯',
                             analyticsBtn: '分析報告',
                             backToDashboard: '返回儀表板',
-                            
+
                             // Creator View
                             creatorTitle: '建立與編輯試卷',
                             quizTitleLabel: '試卷標題',
@@ -2447,7 +2459,7 @@ service cloud.firestore {
                             difficultyEasy: '簡單',
                             difficultyNormal: '一般',
                             difficultyHard: '困難',
-                            
+
                             // Alert/Confirm/Messages
                             alertTitle: '提示',
                             successTitle: '成功',
@@ -2460,7 +2472,7 @@ service cloud.firestore {
                             waitingGradingMsg: '交卷成功！等待老師開放批改分數。',
                             repeatForbidden: '您已完成過此測驗！目前設定為「禁止重複測驗」。',
                             nameRequired: '請輸入姓名！',
-                            
+
                             // Result View
                             detailedExplanation: '詳細解析',
                             hideExplanationTip: '詳細解析將在測驗提交 1 小時後自動開啟。',
@@ -2474,7 +2486,7 @@ service cloud.firestore {
                             scoreDetail: '得分詳情'
                         },
                         en: {
-                            appName: 'Information & Network Security',
+                            appName: 'C Programming Design',
                             studentPortal: 'Student Portal',
                             studentPortalDesc: 'Enter your name and join the quiz',
                             teacherPortal: 'Teacher Portal',
@@ -2489,11 +2501,11 @@ service cloud.firestore {
                             historyTitle: 'Quiz History',
                             quizResult: 'Quiz Results',
                             scoreLabel: 'Score',
-                            welcomeTitle: 'Welcome to Information & Network Security',
+                            welcomeTitle: 'Welcome to C Programming Design',
                             welcomeDesc: 'Easy quiz creation, fun learning experience',
                             connected: 'Connected',
                             notConnected: 'Disconnected (Click to setup)',
-                            
+
                             // Student View
                             studentLoginTitle: 'Student Quiz Login',
                             enterNamePlaceholder: 'Please enter your name',
@@ -2513,7 +2525,7 @@ service cloud.firestore {
                             statusGrading: 'Grading...',
                             statusFinished: 'Finished',
                             statusCheated: 'Force Submitted (Cheat)',
-                            
+
                             // Teacher View
                             quizList: 'Quiz List',
                             createQuiz: 'Create New Quiz',
@@ -2529,7 +2541,7 @@ service cloud.firestore {
                             editBtn: 'Edit',
                             analyticsBtn: 'Analytics',
                             backToDashboard: 'Back to Dashboard',
-                            
+
                             // Creator View
                             creatorTitle: 'Create & Edit Quiz',
                             quizTitleLabel: 'Quiz Title',
@@ -2551,7 +2563,7 @@ service cloud.firestore {
                             difficultyEasy: 'Easy',
                             difficultyNormal: 'Normal',
                             difficultyHard: 'Hard',
-                            
+
                             // Alert/Confirm/Messages
                             alertTitle: 'Notification',
                             successTitle: 'Success',
@@ -2564,7 +2576,7 @@ service cloud.firestore {
                             waitingGradingMsg: 'Submitted successfully! Waiting for grading.',
                             repeatForbidden: 'You have already completed this quiz! Repeat attempts are disabled.',
                             nameRequired: 'Please enter your name!',
-                            
+
                             // Result View
                             detailedExplanation: 'Detailed Explanation',
                             hideExplanationTip: 'Detailed explanations will be automatically unlocked 1 hour after submission.',
@@ -4469,7 +4481,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     const handleWindowFocus = () => {
                         if (isTakingQuiz.value) {
-                            document.title = "資訊與網路安全概論";
+                            document.title = "C語言程式設計";
                         }
                     };
 
