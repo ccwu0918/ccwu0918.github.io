@@ -1596,7 +1596,10 @@
                                                 rec.score + ' Pts') : (currentLang === 'zh' ? '閱卷中' : 'Grading...') }}
                                             </span>
                                             <button @click="viewHistoricResult(rec)"
-                                                class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition">
+                                                :disabled="loadingHistoryId !== null"
+                                                class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition flex items-center gap-1">
+                                                <i v-if="loadingHistoryId === rec.id"
+                                                    class="fa-solid fa-spinner fa-spin"></i>
                                                 {{ currentLang === 'zh' ? '查看' : 'View' }}
                                             </button>
                                         </div>
@@ -1888,538 +1891,516 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div v-else class="space-y-6">
+                                            <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
+                                                class="p-5 rounded-2xl border bg-white shadow-sm"
+                                                :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
+                                                <div class="flex gap-3 mb-3">
+                                                    <div class="mt-1">
+                                                        <i v-if="studentAnswers[idx] == q.answer"
+                                                            class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+                                                        <i v-else
+                                                            class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
+                                                            getQuestionTitle(q) }}</h4>
+                                                    </div>
+                                                </div>
 
-                                        <div class="ml-8 space-y-2 text-sm">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                                    '您的答案：' : 'Your Answer: ' }}</span>
-                                                <span
-                                                    :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
-                                                    {{ getQuestionOption(q, studentAnswers[idx]-1) }}
-                                                </span>
-                                            </div>
-                                            <div v-if="studentAnswers[idx] != q.answer" class="flex items-center gap-2">
-                                                <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                                    '正確答案：' : 'Correct Answer: ' }}</span>
-                                                <span class="text-green-700 font-bold">
-                                                    {{ getQuestionOption(q, q.answer-1) }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
-                                                <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
-                                                {{ getQuestionExplanation(q) }}
+                                                <div class="ml-8 space-y-2 text-sm">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                            '您的答案：' : 'Your Answer: ' }}</span>
+                                                        <span
+                                                            :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
+                                                            {{ getQuestionOption(q, studentAnswers[idx]-1) }}
+                                                        </span>
+                                                    </div>
+                                                    <div v-if="studentAnswers[idx] != q.answer"
+                                                        class="flex items-center gap-2">
+                                                        <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
+                                                            '正確答案：' : 'Correct Answer: ' }}</span>
+                                                        <span class="text-green-700 font-bold">
+                                                            {{ getQuestionOption(q, q.answer-1) }}
+                                                        </span>
+                                                    </div>
+                                                    <div
+                                                        class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
+                                                        <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
+                                                        {{ getQuestionExplanation(q) }}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
+                                    </template>
                                 </div>
-                        </div>
-                    </div>
-
-                    <div v-else class="space-y-6">
-                        <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
-                            class="p-5 rounded-2xl border bg-white shadow-sm"
-                            :class="studentAnswers[idx] == q.answer ? 'bg-green-50/30 border-green-200' : 'bg-red-50/30 border-red-200'">
-                            <div class="flex gap-3 mb-3">
-                                <div class="mt-1">
-                                    <i v-if="studentAnswers[idx] == q.answer"
-                                        class="fa-solid fa-circle-check text-green-500 text-xl"></i>
-                                    <i v-else class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-lg">{{ idx + 1 }}. {{
-                                        getQuestionTitle(q) }}</h4>
-                                </div>
-                            </div>
-
-                            <div class="ml-8 space-y-2 text-sm">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                        '您的答案：' : 'Your Answer: ' }}</span>
-                                    <span
-                                        :class="studentAnswers[idx] == q.answer ? 'text-green-700 font-bold' : 'text-red-700 font-bold line-through'">
-                                        {{ getQuestionOption(q, studentAnswers[idx]-1) }}
-                                    </span>
-                                </div>
-                                <div v-if="studentAnswers[idx] != q.answer" class="flex items-center gap-2">
-                                    <span class="font-bold text-slate-500">{{ currentLang === 'zh' ?
-                                        '正確答案：' : 'Correct Answer: ' }}</span>
-                                    <span class="text-green-700 font-bold">
-                                        {{ getQuestionOption(q, q.answer-1) }}
-                                    </span>
-                                </div>
-                                <div
-                                    class="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm">
-                                    <i class="fa-regular fa-lightbulb mr-1 text-yellow-500"></i>
-                                    {{ getQuestionExplanation(q) }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    </template>
-        </div>
-        <div v-else
-            class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
-            <div
-                class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h4 class="text-xl font-bold text-slate-600 mb-2">{{ currentLang === 'zh' ?
-                '詳細解析已隱藏' : 'Detailed Explanation Hidden' }}</h4>
-            <p class="text-slate-500 text-sm mb-4">
-                <template v-if="currentLang === 'zh'">
-                    為了維護測驗公平性，詳細解析將在<br>
-                    <span class="font-bold text-indigo-600">測驗提交 1 小時後</span> 自動開啟。
-                </template>
-                <template v-else>
-                    To maintain the fairness of the quiz, detailed explanations will be
-                    automatically available<br>
-                    <span class="font-bold text-indigo-600">1 hour after submission</span>.
-                </template>
-            </p>
-            <div v-if="timeRemainingForExplanation"
-                class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
-                <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
-                {{ currentLang === 'zh' ? '自動解鎖倒數：' : 'Auto-unlock countdown: ' }}<span class="font-bold">{{
-                    timeRemainingForExplanation }}</span>
-            </div>
-        </div>
-        </template>
-
-        <!-- 當偵測到作弊違規時 -->
-        <div v-else-if="cheated"
-            class="bg-red-50 p-8 rounded-2xl text-center border-2 border-dashed border-red-300 my-6 mx-6 animate-fade-in">
-            <div
-                class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h4 class="text-xl font-bold text-red-700 mb-2">{{ currentLang === 'zh' ?
-                '偵測到嚴重違規，已被強制收卷' : 'Serious violation detected, forced submission' }}</h4>
-            <p class="text-red-600 text-sm mb-2">
-                <template v-if="currentLang === 'zh'">
-                    本考卷在測驗期間偵測到違規作弊行為！<br>
-                    <span class="font-bold">違規原因：{{ cheatReason }}</span>
-                </template>
-                <template v-else>
-                    Cheating behavior was detected during this quiz!<br>
-                    <span class="font-bold">Reason: {{ cheatReason }}</span>
-                </template>
-            </p>
-            <p class="text-slate-500 text-xs mt-4">
-                <template v-if="currentLang === 'zh'">
-                    違規紀錄已同步上傳至伺服器，本次測驗成績以 <span class="font-bold text-red-600">0 分</span> 計算。
-                </template>
-                <template v-else>
-                    The violation has been logged to the server, and the score for this quiz is
-                    calculated as <span class="font-bold text-red-600">0 Pts</span>.
-                </template>
-            </p>
-        </div>
-
-        <!-- 當分數尚未批改好時 (且無作弊) -->
-        <div v-else
-            class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
-            <div
-                class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
-                <i class="fa-solid fa-hourglass-half"></i>
-            </div>
-            <h4 class="text-xl font-bold text-slate-700 mb-2">{{ currentLang === 'zh' ?
-                '交卷成功，靜待成績公佈' : 'Submitted successfully, waiting for results' }}</h4>
-            <p class="text-slate-500 text-sm">
-                <template v-if="currentLang === 'zh'">
-                    您的答案已成功傳送！教師端正在進行背景自動閱卷中。<br>
-                    <span class="font-bold text-indigo-600">批改完成後本畫面將自動顯示成績。</span>
-                </template>
-                <template v-else>
-                    Your answers have been submitted! The server is grading them in the
-                    background.<br>
-                    <span class="font-bold text-indigo-600">The results will be displayed
-                        automatically once grading is complete.</span>
-                </template>
-            </p>
-        </div>
-        <div class="p-6 bg-slate-50 border-t border-slate-100 text-center">
-            <button @click="goToView('landing')"
-                class="px-8 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition">
-                {{ currentLang === 'zh' ? '返回首頁' : 'Return to Homepage' }}
-            </button>
-        </div>
-    </div>
-    </div>
-
-    </transition>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200 py-4 text-center text-sm text-slate-500">
-        {{ currentLang === 'zh' ? 'Made by 佳駿老師' : 'Made by Teacher Chia-Chun Wu' }}
-    </footer>
-    </div>
-
-    <!-- Settings Modal -->
-    <div v-if="showSettingsModal && (!isConfigured || isTeacherUser)"
-        class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <!-- Header -->
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                <h3 class="text-xl font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-gear text-slate-400"></i> 系統設定
-                </h3>
-                <button @click="showSettingsModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-            </div>
-
-            <div class="p-6 space-y-8">
-                <!-- 區塊 1: 資料庫連線設定 -->
-                <div>
-                    <h4
-                        class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-violet-500 pl-2">
-                        資料庫連接</h4>
-
-                    <!-- 若未設定或處於編輯模式，顯示輸入框 -->
-                    <div v-if="!isConfigured || showConfigEdit" class="space-y-4">
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 relative">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-bold text-slate-800 flex items-center"><i
-                                        class="fa-solid fa-circle-info mr-2 text-violet-500"></i> 設定方式說明</h4>
-                                <button @click="showTutorialModal = true"
-                                    class="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700 transition shadow-md shadow-violet-200 flex items-center">
-                                    <i class="fa-solid fa-book-open mr-1.5"></i>查看圖文教學
-                                </button>
-                            </div>
-                            <div class="space-y-3">
-                                <div>
-                                    <p class="font-bold text-slate-700 mb-1">方式一：本機暫存 (適合測試)</p>
-                                    <p class="text-xs">將 Config 貼在下方，設定僅存在此瀏覽器。若清除快取需重新輸入。</p>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-700 mb-1">方式二：永久寫入 (適合發布)</p>
-                                    <p class="text-xs">直接編輯 <code>index.html</code> 原始碼，將內容填入
-                                        <code>manualConfig</code> 變數。學生開啟網頁即可直接使用，無需任何設定。
+                                <div v-else
+                                    class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
+                                    <div
+                                        class="w-16 h-16 bg-slate-200 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </div>
+                                    <h4 class="text-xl font-bold text-slate-600 mb-2">{{ currentLang === 'zh' ?
+                                        '詳細解析已隱藏' : 'Detailed Explanation Hidden' }}</h4>
+                                    <p class="text-slate-500 text-sm mb-4">
+                                        <template v-if="currentLang === 'zh'">
+                                            為了維護測驗公平性，詳細解析將在<br>
+                                            <span class="font-bold text-indigo-600">測驗提交 1 小時後</span> 自動開啟。
+                                        </template>
+                                        <template v-else>
+                                            To maintain the fairness of the quiz, detailed explanations will be
+                                            automatically available<br>
+                                            <span class="font-bold text-indigo-600">1 hour after submission</span>.
+                                        </template>
                                     </p>
+                                    <div v-if="timeRemainingForExplanation"
+                                        class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
+                                        <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
+                                        {{ currentLang === 'zh' ? '自動解鎖倒數：' : 'Auto-unlock countdown: ' }}<span
+                                            class="font-bold">{{ timeRemainingForExplanation }}</span>
+                                    </div>
                                 </div>
+                            </template>
+
+                            <!-- 當偵測到作弊違規時 -->
+                            <div v-else-if="cheated"
+                                class="bg-red-50 p-8 rounded-2xl text-center border-2 border-dashed border-red-300 my-6 mx-6 animate-fade-in">
+                                <div
+                                    class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-pulse">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <h4 class="text-xl font-bold text-red-700 mb-2">{{ currentLang === 'zh' ?
+                                    '偵測到嚴重違規，已被強制收卷' : 'Serious violation detected, forced submission' }}</h4>
+                                <p class="text-red-600 text-sm mb-2">
+                                    <template v-if="currentLang === 'zh'">
+                                        本考卷在測驗期間偵測到違規作弊行為！<br>
+                                        <span class="font-bold">違規原因：{{ cheatReason }}</span>
+                                    </template>
+                                    <template v-else>
+                                        Cheating behavior was detected during this quiz!<br>
+                                        <span class="font-bold">Reason: {{ cheatReason }}</span>
+                                    </template>
+                                </p>
+                                <p class="text-slate-500 text-xs mt-4">
+                                    <template v-if="currentLang === 'zh'">
+                                        違規紀錄已同步上傳至伺服器，本次測驗成績以 <span class="font-bold text-red-600">0 分</span> 計算。
+                                    </template>
+                                    <template v-else>
+                                        The violation has been logged to the server, and the score for this quiz is
+                                        calculated as <span class="font-bold text-red-600">0 Pts</span>.
+                                    </template>
+                                </p>
                             </div>
-                        </div>
-                        <textarea v-model="configInput"
-                            placeholder='const firebaseConfig = {&#10;  apiKey: "AIza...",&#10;  authDomain: "...",&#10;  ...&#10;};'
-                            class="w-full h-32 p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 font-mono text-sm bg-slate-50"></textarea>
 
-                        <button @click="parseAndSaveConfig"
-                            class="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold shadow-lg shadow-violet-200 transition">
-                            儲存並連線
-                        </button>
-                        <button v-if="isConfigured" @click="showConfigEdit = false"
-                            class="w-full py-2 text-slate-400 text-sm hover:text-slate-600">取消編輯</button>
-                    </div>
-
-                    <!-- 若已設定，顯示狀態 -->
-                    <div v-else
-                        class="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                        <div class="flex items-center text-green-700 font-bold">
-                            <i class="fa-solid fa-check-circle text-xl mr-2"></i>
-                            已連接 Firebase 資料庫
-                        </div>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <button @click="clearFirebaseConfig"
-                                class="flex-1 sm:flex-none px-4 py-2 text-sm bg-white border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition font-medium">
-                                清除連線 (Clear)
-                            </button>
-                            <button @click="showConfigEdit = true"
-                                class="flex-1 sm:flex-none px-4 py-2 text-sm bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-violet-600 hover:border-violet-200 transition font-medium">
-                                重新設定
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 區塊 1.5: AI API 設定 -->
-                <div>
-                    <h4
-                        class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-blue-500 pl-2">
-                        AI API 設定</h4>
-                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
-                        <div class="text-xs text-slate-500 bg-blue-100 p-3 rounded-lg space-y-2">
-                            <p class="font-bold text-slate-600">如何取得及設定 API Key:</p>
-                            <p><i class="fa-solid fa-lightbulb mr-1 text-yellow-500"></i> 您可以透過 Google AI Studio
-                                取得免費的 Gemini API Key。</p>
-                            <p><i class="fa-solid fa-link mr-1"></i> <a href="https://aistudio.google.com/app/apikey"
-                                    target="_blank" class="text-blue-600 hover:underline font-bold">點此前往 Google AI
-                                    Studio 申請 API
-                                    Key</a></p>
-                            <p><i class="fa-solid fa-gear mr-1"></i> 申請後，將 API Key 貼到下方的輸入框即可自動儲存。</p>
-                        </div>
-                        <div class="relative">
-                            <input type="text" v-model="customApiKey" placeholder="在此貼上您的 Gemini API Key"
-                                class="w-full p-2 text-sm border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-16">
-                            <transition name="fade">
-                                <span v-if="isApiKeySaved"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 font-bold flex items-center pointer-events-none">
-                                    <i class="fa-solid fa-check mr-1.5"></i>已儲存
-                                </span>
-                            </transition>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 區塊 1.7: 教師帳號管理 (僅管理教師可見) -->
-                <div v-if="isAdminTeacher">
-                    <h4
-                        class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-pink-500 pl-2">
-                        教師帳號管理</h4>
-                    <div class="bg-pink-50 p-4 rounded-xl border border-pink-100 space-y-4">
-                        <p class="text-xs text-slate-500">
-                            <i class="fa-solid fa-shield-halved mr-1 text-pink-500"></i>
-                            只有管理教師可以新增或移除其他教師帳號。以下列出的 Google 帳號可登入教師後台。
-                        </p>
-
-                        <!-- 已授權教師列表 -->
-                        <div class="space-y-2">
-                            <div v-for="email in authorizedTeachers" :key="email"
-                                class="flex items-center justify-between bg-white p-3 rounded-lg border border-pink-100">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-brands fa-google text-slate-400 text-sm"></i>
-                                    <span class="text-sm font-medium text-slate-700">{{ email }}</span>
-                                    <span v-if="email === teacherEmailDisplay"
-                                        class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">您</span>
+                            <!-- 當分數尚未批改好時 (且無作弊) -->
+                            <div v-else
+                                class="bg-slate-50 p-8 rounded-2xl text-center border-2 border-dashed border-slate-200 my-6 mx-6 animate-fade-in">
+                                <div
+                                    class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+                                    <i class="fa-solid fa-hourglass-half"></i>
                                 </div>
-                                <button v-if="email !== teacherEmailDisplay" @click="removeTeacher(email)"
-                                    class="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition"
-                                    title="移除此教師">
-                                    <i class="fa-solid fa-trash-can mr-1"></i>移除
+                                <h4 class="text-xl font-bold text-slate-700 mb-2">{{ currentLang === 'zh' ?
+                                    '交卷成功，靜待成績公佈' : 'Submitted successfully, waiting for results' }}</h4>
+                                <p class="text-slate-500 text-sm">
+                                    <template v-if="currentLang === 'zh'">
+                                        您的答案已成功傳送！教師端正在進行背景自動閱卷中。<br>
+                                        <span class="font-bold text-indigo-600">批改完成後本畫面將自動顯示成績。</span>
+                                    </template>
+                                    <template v-else>
+                                        Your answers have been submitted! The server is grading them in the
+                                        background.<br>
+                                        <span class="font-bold text-indigo-600">The results will be displayed
+                                            automatically once grading is complete.</span>
+                                    </template>
+                                </p>
+                            </div>
+                            <div class="p-6 bg-slate-50 border-t border-slate-100 text-center">
+                                <button @click="goToView('landing')"
+                                    class="px-8 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition">
+                                    {{ currentLang === 'zh' ? '返回首頁' : 'Return to Homepage' }}
                                 </button>
                             </div>
-                            <div v-if="authorizedTeachers.length === 0" class="text-center text-slate-400 text-sm py-4">
-                                尚無教師帳號
-                            </div>
-                        </div>
-
-                        <!-- 新增教師 -->
-                        <div class="flex gap-2">
-                            <input type="email" v-model="newTeacherEmail" placeholder="輸入教師的 Gmail 地址"
-                                class="flex-1 p-2 text-sm border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                @keyup.enter="addTeacher">
-                            <button @click="addTeacher" :disabled="!newTeacherEmail.trim()"
-                                class="px-4 py-2 bg-pink-500 text-white rounded-lg text-sm font-bold hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap">
-                                <i class="fa-solid fa-user-plus mr-1"></i>新增
-                            </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- 區塊 2: 分享 (僅在已設定時顯示) -->
-                <div v-if="isConfigured">
-                    <h4
-                        class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-sky-500 pl-2">
-                        分享應用程式</h4>
-                    <div class="space-y-4">
-                        <!-- 教師用 -->
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <p class="font-bold text-slate-700 mb-2">教師用分享 (完整功能)</p>
-                            <div class="flex flex-col sm:flex-row gap-6 items-center">
-                                <div class="bg-white p-2 rounded-lg border shadow-sm cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-sky-500 transition"
-                                    @click="openQrModal('teacher')">
-                                    <div id="qrcode"></div>
-                                </div>
-                                <div class="flex-1 w-full">
-                                    <p class="text-xs text-slate-500 mb-2">此連結包含設定檔，供其他教師或您自己在其他裝置上使用。</p>
-                                    <div class="flex gap-2">
-                                        <input type="text" :value="shareUrl" readonly
-                                            class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
-                                        <button @click="copyShareUrl('teacher')"
-                                            class="px-3 py-2 bg-slate-200 rounded hover:bg-slate-300 text-slate-600 text-xs font-bold whitespace-nowrap">複製</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 學生用 -->
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                            <p class="font-bold text-blue-800 mb-2">學生專用分享 (簡化介面)</p>
-                            <div class="flex flex-col sm:flex-row gap-6 items-center">
-                                <div class="bg-white p-2 rounded-lg border shadow-sm cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-blue-500 transition"
-                                    @click="openQrModal('student')">
-                                    <div id="studentQrcode"></div>
-                                </div>
-                                <div class="flex-1 w-full">
-                                    <p class="text-xs text-slate-500 mb-2">學生將只能看到學生登入畫面，無法進入教師後台或更改設定。</p>
-                                    <div class="flex gap-2">
-                                        <input type="text" :value="studentShareUrl" readonly
-                                            class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
-                                        <button @click="copyShareUrl('student')"
-                                            class="px-3 py-2 bg-blue-200 rounded hover:bg-blue-300 text-blue-800 text-xs font-bold whitespace-nowrap">複製</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </transition>
+            </main>
 
-                <!-- 區塊 2.5: 更新日誌 -->
-                <div class="mb-6">
-                    <details>
-                        <summary
-                            class="text-sm font-bold text-slate-500 uppercase tracking-wider cursor-pointer border-l-4 border-violet-300 pl-2 select-none hover:text-violet-600 transition">
-                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> 更新日誌
-                        </summary>
-                        <div class="mt-3 space-y-2 max-h-48 overflow-y-auto pr-2">
-                            <div v-for="log in updateLog" :key="log.date + log.desc"
-                                class="text-xs p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                <span class="font-bold text-slate-700">{{ log.date }}</span>: {{ log.desc }}
-                            </div>
-                        </div>
-                    </details>
-                </div>
+            <!-- Footer -->
+            <footer
+                class="bg-white/80 backdrop-blur-md border-t border-slate-200 py-4 text-center text-sm text-slate-500">
+                {{ currentLang === 'zh' ? 'Made by 佳駿老師' : 'Made by Teacher Chia-Chun Wu' }}
+            </footer>
+        </div>
 
-                <!-- 區塊 3: 重置 -->
-                <div>
-                    <h4
-                        class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-red-500 pl-2">
-                        危險區域</h4>
-                    <button @click="resetConfig"
-                        class="w-full py-3 border border-red-200 text-red-600 rounded-xl text-sm hover:bg-red-50 font-bold transition">
-                        <i class="fa-solid fa-trash-can mr-2"></i>清除所有設定並登出 (Reset All)
+        <!-- Settings Modal -->
+        <div v-if="showSettingsModal && (!isConfigured || isTeacherUser)"
+            class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+                <!-- Header -->
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-gear text-slate-400"></i> 系統設定
+                    </h3>
+                    <button @click="showSettingsModal = false" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
 
-
-    <!-- Tutorial Modal (詳細教學圖層) -->
-    <div v-if="showTutorialModal"
-        class="fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur flex items-center justify-center p-4">
-        <div
-            class="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl relative animate-fade-in-up">
-            <!-- Header -->
-            <div class="p-6 border-b flex justify-between items-center bg-slate-50 rounded-t-2xl">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-brands fa-google-fire"></i>
-                    </div>
+                <div class="p-6 space-y-8">
+                    <!-- 區塊 1: 資料庫連線設定 -->
                     <div>
-                        <h3 class="text-xl font-bold text-slate-800">Firebase 設定詳細教學
-                        </h3>
-                        <p class="text-xs text-slate-500">請依照步驟完成專案建置</p>
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-violet-500 pl-2">
+                            資料庫連接</h4>
+
+                        <!-- 若未設定或處於編輯模式，顯示輸入框 -->
+                        <div v-if="!isConfigured || showConfigEdit" class="space-y-4">
+                            <div
+                                class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 relative">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-slate-800 flex items-center"><i
+                                            class="fa-solid fa-circle-info mr-2 text-violet-500"></i> 設定方式說明</h4>
+                                    <button @click="showTutorialModal = true"
+                                        class="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700 transition shadow-md shadow-violet-200 flex items-center">
+                                        <i class="fa-solid fa-book-open mr-1.5"></i>查看圖文教學
+                                    </button>
+                                </div>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="font-bold text-slate-700 mb-1">方式一：本機暫存 (適合測試)</p>
+                                        <p class="text-xs">將 Config 貼在下方，設定僅存在此瀏覽器。若清除快取需重新輸入。</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-700 mb-1">方式二：永久寫入 (適合發布)</p>
+                                        <p class="text-xs">直接編輯 <code>index.html</code> 原始碼，將內容填入
+                                            <code>manualConfig</code> 變數。學生開啟網頁即可直接使用，無需任何設定。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <textarea v-model="configInput"
+                                placeholder='const firebaseConfig = {&#10;  apiKey: "AIza...",&#10;  authDomain: "...",&#10;  ...&#10;};'
+                                class="w-full h-32 p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 font-mono text-sm bg-slate-50"></textarea>
+
+                            <button @click="parseAndSaveConfig"
+                                class="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold shadow-lg shadow-violet-200 transition">
+                                儲存並連線
+                            </button>
+                            <button v-if="isConfigured" @click="showConfigEdit = false"
+                                class="w-full py-2 text-slate-400 text-sm hover:text-slate-600">取消編輯</button>
+                        </div>
+
+                        <!-- 若已設定，顯示狀態 -->
+                        <div v-else
+                            class="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                            <div class="flex items-center text-green-700 font-bold">
+                                <i class="fa-solid fa-check-circle text-xl mr-2"></i>
+                                已連接 Firebase 資料庫
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button @click="clearFirebaseConfig"
+                                    class="flex-1 sm:flex-none px-4 py-2 text-sm bg-white border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition font-medium">
+                                    清除連線 (Clear)
+                                </button>
+                                <button @click="showConfigEdit = true"
+                                    class="flex-1 sm:flex-none px-4 py-2 text-sm bg-white border border-slate-200 text-slate-600 rounded-lg hover:text-violet-600 hover:border-violet-200 transition font-medium">
+                                    重新設定
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 區塊 1.5: AI API 設定 -->
+                    <div>
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-blue-500 pl-2">
+                            AI API 設定</h4>
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                            <div class="text-xs text-slate-500 bg-blue-100 p-3 rounded-lg space-y-2">
+                                <p class="font-bold text-slate-600">如何取得及設定 API Key:</p>
+                                <p><i class="fa-solid fa-lightbulb mr-1 text-yellow-500"></i> 您可以透過 Google AI Studio
+                                    取得免費的 Gemini API Key。</p>
+                                <p><i class="fa-solid fa-link mr-1"></i> <a
+                                        href="https://aistudio.google.com/app/apikey" target="_blank"
+                                        class="text-blue-600 hover:underline font-bold">點此前往 Google AI Studio 申請 API
+                                        Key</a></p>
+                                <p><i class="fa-solid fa-gear mr-1"></i> 申請後，將 API Key 貼到下方的輸入框即可自動儲存。</p>
+                            </div>
+                            <div class="relative">
+                                <input type="text" v-model="customApiKey" placeholder="在此貼上您的 Gemini API Key"
+                                    class="w-full p-2 text-sm border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-16">
+                                <transition name="fade">
+                                    <span v-if="isApiKeySaved"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 font-bold flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-check mr-1.5"></i>已儲存
+                                    </span>
+                                </transition>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 區塊 1.7: 教師帳號管理 (僅管理教師可見) -->
+                    <div v-if="isAdminTeacher">
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-pink-500 pl-2">
+                            教師帳號管理</h4>
+                        <div class="bg-pink-50 p-4 rounded-xl border border-pink-100 space-y-4">
+                            <p class="text-xs text-slate-500">
+                                <i class="fa-solid fa-shield-halved mr-1 text-pink-500"></i>
+                                只有管理教師可以新增或移除其他教師帳號。以下列出的 Google 帳號可登入教師後台。
+                            </p>
+
+                            <!-- 已授權教師列表 -->
+                            <div class="space-y-2">
+                                <div v-for="email in authorizedTeachers" :key="email"
+                                    class="flex items-center justify-between bg-white p-3 rounded-lg border border-pink-100">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-brands fa-google text-slate-400 text-sm"></i>
+                                        <span class="text-sm font-medium text-slate-700">{{ email }}</span>
+                                        <span v-if="email === teacherEmailDisplay"
+                                            class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">您</span>
+                                    </div>
+                                    <button v-if="email !== teacherEmailDisplay" @click="removeTeacher(email)"
+                                        class="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition"
+                                        title="移除此教師">
+                                        <i class="fa-solid fa-trash-can mr-1"></i>移除
+                                    </button>
+                                </div>
+                                <div v-if="authorizedTeachers.length === 0"
+                                    class="text-center text-slate-400 text-sm py-4">
+                                    尚無教師帳號
+                                </div>
+                            </div>
+
+                            <!-- 新增教師 -->
+                            <div class="flex gap-2">
+                                <input type="email" v-model="newTeacherEmail" placeholder="輸入教師的 Gmail 地址"
+                                    class="flex-1 p-2 text-sm border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    @keyup.enter="addTeacher">
+                                <button @click="addTeacher" :disabled="!newTeacherEmail.trim()"
+                                    class="px-4 py-2 bg-pink-500 text-white rounded-lg text-sm font-bold hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap">
+                                    <i class="fa-solid fa-user-plus mr-1"></i>新增
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 區塊 2: 分享 (僅在已設定時顯示) -->
+                    <div v-if="isConfigured">
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-sky-500 pl-2">
+                            分享應用程式</h4>
+                        <div class="space-y-4">
+                            <!-- 教師用 -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <p class="font-bold text-slate-700 mb-2">教師用分享 (完整功能)</p>
+                                <div class="flex flex-col sm:flex-row gap-6 items-center">
+                                    <div class="bg-white p-2 rounded-lg border shadow-sm cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-sky-500 transition"
+                                        @click="openQrModal('teacher')">
+                                        <div id="qrcode"></div>
+                                    </div>
+                                    <div class="flex-1 w-full">
+                                        <p class="text-xs text-slate-500 mb-2">此連結包含設定檔，供其他教師或您自己在其他裝置上使用。</p>
+                                        <div class="flex gap-2">
+                                            <input type="text" :value="shareUrl" readonly
+                                                class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
+                                            <button @click="copyShareUrl('teacher')"
+                                                class="px-3 py-2 bg-slate-200 rounded hover:bg-slate-300 text-slate-600 text-xs font-bold whitespace-nowrap">複製</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 學生用 -->
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <p class="font-bold text-blue-800 mb-2">學生專用分享 (簡化介面)</p>
+                                <div class="flex flex-col sm:flex-row gap-6 items-center">
+                                    <div class="bg-white p-2 rounded-lg border shadow-sm cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-blue-500 transition"
+                                        @click="openQrModal('student')">
+                                        <div id="studentQrcode"></div>
+                                    </div>
+                                    <div class="flex-1 w-full">
+                                        <p class="text-xs text-slate-500 mb-2">學生將只能看到學生登入畫面，無法進入教師後台或更改設定。</p>
+                                        <div class="flex gap-2">
+                                            <input type="text" :value="studentShareUrl" readonly
+                                                class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
+                                            <button @click="copyShareUrl('student')"
+                                                class="px-3 py-2 bg-blue-200 rounded hover:bg-blue-300 text-blue-800 text-xs font-bold whitespace-nowrap">複製</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 區塊 2.5: 更新日誌 -->
+                    <div class="mb-6">
+                        <details>
+                            <summary
+                                class="text-sm font-bold text-slate-500 uppercase tracking-wider cursor-pointer border-l-4 border-violet-300 pl-2 select-none hover:text-violet-600 transition">
+                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> 更新日誌
+                            </summary>
+                            <div class="mt-3 space-y-2 max-h-48 overflow-y-auto pr-2">
+                                <div v-for="log in updateLog" :key="log.date + log.desc"
+                                    class="text-xs p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                    <span class="font-bold text-slate-700">{{ log.date }}</span>: {{ log.desc }}
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- 區塊 3: 重置 -->
+                    <div>
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-red-500 pl-2">
+                            危險區域</h4>
+                        <button @click="resetConfig"
+                            class="w-full py-3 border border-red-200 text-red-600 rounded-xl text-sm hover:bg-red-50 font-bold transition">
+                            <i class="fa-solid fa-trash-can mr-2"></i>清除所有設定並登出 (Reset All)
+                        </button>
                     </div>
                 </div>
-                <button @click="showTutorialModal = false"
-                    class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
             </div>
-
-            <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
-                <!-- Step 1 -->
-                <section class="flex gap-4">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                        1</div>
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">建立專案</h4>
-                        <p class="text-slate-600 mb-2 text-sm">前往 <a href="https://console.firebase.google.com"
-                                target="_blank" class="text-blue-500 underline font-medium">Firebase
-                                Console</a>，點擊「新增專案 (Create a project)」，輸入專案名稱並完成建立。
-                        </p>
-                    </div>
-                </section>
-
-                <!-- Step 2 -->
-                <section class="flex gap-4">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                        2</div>
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">新增 Web
-                            應用程式 & 取得 Config</h4>
-                        <p class="text-slate-600 mb-2 text-sm">進入專案後，點擊首頁上方的 Web 圖示
-                            ( <code>&lt;/&gt;</code> )。</p>
-                        <ul
-                            class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <li>輸入 App 暱稱 (例如: Quiz App)。</li>
-                            <li>點擊「註冊應用程式 (Register app)」。</li>
-                            <li><strong class="text-violet-600">關鍵步驟：</strong>複製出現的
-                                <code>const firebaseConfig = { ... }</code> 程式碼區塊。
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Step 2.5 (New) -->
-                <section class="flex gap-4 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
-                        <i class="fa-solid fa-code"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">進階：如何寫死設定
-                            (Hardcode)</h4>
-                        <p class="text-slate-600 mb-2 text-sm">若您希望學生打開網頁即可直接使用，無需掃描
-                            QR Code 或輸入設定，請執行此步驟：</p>
-                        <ol class="list-decimal list-inside text-slate-600 text-sm space-y-2">
-                            <li>使用文字編輯器 (如 Notepad, VS Code) 開啟
-                                <code>index.html</code> 檔案。
-                            </li>
-                            <li>搜尋關鍵字 <code>const manualConfig = {</code>。</li>
-                            <li>將剛剛複製的 <code>apiKey</code> 等內容，貼入該物件的大括號中。</li>
-                            <li>儲存檔案，將此 HTML 檔案傳送給學生或部署到網站即可。</li>
-                        </ol>
-                    </div>
-                </section>
-
-                <!-- Step 3 -->
-                <section class="flex gap-4">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                        3</div>
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">開啟
-                            Authentication (驗證)</h4>
-                        <p class="text-slate-600 mb-2 text-sm">在左側選單點擊「建置
-                            (Build)」>「Authentication」。</p>
-                        <ul
-                            class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <li>點擊「開始使用 (Get started)」。</li>
-                            <li>切換到「Sign-in method」頁籤。</li>
-                            <li>選擇「匿名 (Anonymous)」，將開關 <strong class="text-green-600">啟用</strong> 並儲存。</li>
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Step 4 -->
-                <section class="flex gap-4">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                        4</div>
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">建立
-                            Firestore 資料庫</h4>
-                        <p class="text-slate-600 mb-2 text-sm">在左側選單點擊「建置
-                            (Build)」>「Firestore Database」。</p>
-                        <ul
-                            class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <li>點擊「建立資料庫 (Create database)」。</li>
-                            <li>選擇「以測試模式啟動 (Start in test mode)」(方便快速測試)。</li>
-                            <li>選擇位置 (Location)，通常選預設即可，等待建立完成。</li>
-                        </ul>
-                    </div>
-                </section>
+        </div>
 
 
-
-                <!-- Step 5 -->
-                <section class="flex gap-4">
-                    <div
-                        class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                        5</div>
-                    <div class="w-full">
-                        <h4 class="text-lg font-bold text-slate-800 mb-2">設定安全性規則 (建議)
-                        </h4>
-                        <p class="text-slate-600 mb-2 text-sm">在 Firestore 頁面上方切換到「規則
-                            (Rules)」頁籤，貼上以下規則以確保權限正確：</p>
+        <!-- Tutorial Modal (詳細教學圖層) -->
+        <div v-if="showTutorialModal"
+            class="fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur flex items-center justify-center p-4">
+            <div
+                class="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl relative animate-fade-in-up">
+                <!-- Header -->
+                <div class="p-6 border-b flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
                         <div
-                            class="bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto relative group mt-2 border border-slate-700 shadow-inner">
-                            <pre>rules_version = '2';
+                            class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-xl">
+                            <i class="fa-brands fa-google-fire"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">Firebase 設定詳細教學
+                            </h3>
+                            <p class="text-xs text-slate-500">請依照步驟完成專案建置</p>
+                        </div>
+                    </div>
+                    <button @click="showTutorialModal = false"
+                        class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
+                    <!-- Step 1 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            1</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">建立專案</h4>
+                            <p class="text-slate-600 mb-2 text-sm">前往 <a href="https://console.firebase.google.com"
+                                    target="_blank" class="text-blue-500 underline font-medium">Firebase
+                                    Console</a>，點擊「新增專案 (Create a project)」，輸入專案名稱並完成建立。
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Step 2 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            2</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">新增 Web
+                                應用程式 & 取得 Config</h4>
+                            <p class="text-slate-600 mb-2 text-sm">進入專案後，點擊首頁上方的 Web 圖示
+                                ( <code>&lt;/&gt;</code> )。</p>
+                            <ul
+                                class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <li>輸入 App 暱稱 (例如: Quiz App)。</li>
+                                <li>點擊「註冊應用程式 (Register app)」。</li>
+                                <li><strong class="text-violet-600">關鍵步驟：</strong>複製出現的
+                                    <code>const firebaseConfig = { ... }</code> 程式碼區塊。
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Step 2.5 (New) -->
+                    <section class="flex gap-4 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">進階：如何寫死設定
+                                (Hardcode)</h4>
+                            <p class="text-slate-600 mb-2 text-sm">若您希望學生打開網頁即可直接使用，無需掃描
+                                QR Code 或輸入設定，請執行此步驟：</p>
+                            <ol class="list-decimal list-inside text-slate-600 text-sm space-y-2">
+                                <li>使用文字編輯器 (如 Notepad, VS Code) 開啟
+                                    <code>index.html</code> 檔案。
+                                </li>
+                                <li>搜尋關鍵字 <code>const manualConfig = {</code>。</li>
+                                <li>將剛剛複製的 <code>apiKey</code> 等內容，貼入該物件的大括號中。</li>
+                                <li>儲存檔案，將此 HTML 檔案傳送給學生或部署到網站即可。</li>
+                            </ol>
+                        </div>
+                    </section>
+
+                    <!-- Step 3 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            3</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">開啟
+                                Authentication (驗證)</h4>
+                            <p class="text-slate-600 mb-2 text-sm">在左側選單點擊「建置
+                                (Build)」>「Authentication」。</p>
+                            <ul
+                                class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <li>點擊「開始使用 (Get started)」。</li>
+                                <li>切換到「Sign-in method」頁籤。</li>
+                                <li>選擇「匿名 (Anonymous)」，將開關 <strong class="text-green-600">啟用</strong> 並儲存。</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Step 4 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            4</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">建立
+                                Firestore 資料庫</h4>
+                            <p class="text-slate-600 mb-2 text-sm">在左側選單點擊「建置
+                                (Build)」>「Firestore Database」。</p>
+                            <ul
+                                class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <li>點擊「建立資料庫 (Create database)」。</li>
+                                <li>選擇「以測試模式啟動 (Start in test mode)」(方便快速測試)。</li>
+                                <li>選擇位置 (Location)，通常選預設即可，等待建立完成。</li>
+                            </ul>
+                        </div>
+                    </section>
+
+
+
+                    <!-- Step 5 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            5</div>
+                        <div class="w-full">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">設定安全性規則 (建議)
+                            </h4>
+                            <p class="text-slate-600 mb-2 text-sm">在 Firestore 頁面上方切換到「規則
+                                (Rules)」頁籤，貼上以下規則以確保權限正確：</p>
+                            <div
+                                class="bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto relative group mt-2 border border-slate-700 shadow-inner">
+                                <pre>rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -2489,113 +2470,113 @@ service cloud.firestore {
     }
   }
 }</pre>
-                            <button @click="copyRules"
-                                class="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-xs transition">複製</button>
+                                <button @click="copyRules"
+                                    class="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-xs transition">複製</button>
+                            </div>
                         </div>
-                    </div>
-                </section>
-            </div>
+                    </section>
+                </div>
 
-            <!-- Footer -->
-            <div class="p-4 border-t bg-slate-50 text-center rounded-b-2xl">
-                <button @click="showTutorialModal = false"
-                    class="px-8 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition shadow-lg shadow-violet-200">
-                    我了解了，開始設定
-                </button>
+                <!-- Footer -->
+                <div class="p-4 border-t bg-slate-50 text-center rounded-b-2xl">
+                    <button @click="showTutorialModal = false"
+                        class="px-8 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition shadow-lg shadow-violet-200">
+                        我了解了，開始設定
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
 
-    <!-- 全域訊息 Modal (取代 alert/confirm) -->
-    <transition name="modal">
-        <div v-if="modalState.show"
-            class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all">
-                <div class="p-6 text-center">
-                    <div class="mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full" :class="{
+        <!-- 全域訊息 Modal (取代 alert/confirm) -->
+        <transition name="modal">
+            <div v-if="modalState.show"
+                class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all">
+                    <div class="p-6 text-center">
+                        <div class="mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full" :class="{
                             'bg-green-100 text-green-500': modalState.type === 'success',
                             'bg-red-100 text-red-500': modalState.type === 'error',
                             'bg-yellow-100 text-yellow-500': modalState.type === 'warning',
                             'bg-blue-100 text-blue-500': modalState.type === 'info' || modalState.type === 'confirm'
                         }">
-                        <i class="fa-solid text-3xl" :class="{
+                            <i class="fa-solid text-3xl" :class="{
                                'fa-check': modalState.type === 'success',
                                'fa-xmark': modalState.type === 'error',
                                'fa-exclamation': modalState.type === 'warning',
                                'fa-info': modalState.type === 'info',
                                'fa-question': modalState.type === 'confirm'
                            }"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">{{
+                            modalState.title }}</h3>
+                        <p class="text-slate-500 text-sm">{{ modalState.message }}</p>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-2">{{
-                        modalState.title }}</h3>
-                    <p class="text-slate-500 text-sm">{{ modalState.message }}</p>
-                </div>
-                <div class="bg-slate-50 px-6 py-4 flex gap-3 justify-center">
-                    <template v-if="modalState.type === 'confirm'">
-                        <button @click="handleCancel"
-                            class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">取消</button>
-                        <button @click="handleConfirm"
-                            class="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">確認</button>
-                    </template>
-                    <template v-else>
-                        <button @click="handleConfirm"
-                            class="w-full py-2.5 text-white font-bold rounded-xl transition shadow-lg" :class="{
+                    <div class="bg-slate-50 px-6 py-4 flex gap-3 justify-center">
+                        <template v-if="modalState.type === 'confirm'">
+                            <button @click="handleCancel"
+                                class="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition">取消</button>
+                            <button @click="handleConfirm"
+                                class="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">確認</button>
+                        </template>
+                        <template v-else>
+                            <button @click="handleConfirm"
+                                class="w-full py-2.5 text-white font-bold rounded-xl transition shadow-lg" :class="{
                                 'bg-green-500 hover:bg-green-600 shadow-green-200': modalState.type === 'success',
                                 'bg-red-500 hover:bg-red-600 shadow-red-200': modalState.type === 'error',
                                 'bg-yellow-500 hover:bg-yellow-600 shadow-yellow-200 text-white': modalState.type === 'warning',
                                 'bg-blue-500 hover:bg-blue-600 shadow-blue-200': modalState.type === 'info'
                              }">
-                            確定
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
-    </transition>
-
-    <!-- AI 生成中 Loading Overlay -->
-    <transition name="fade">
-        <div v-if="isGenerating"
-            class="fixed inset-0 z-[99] bg-gradient-to-br from-violet-900/80 to-indigo-900/80 backdrop-blur-sm flex items-center justify-center">
-            <div
-                class="bg-white/95 rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center transform transition-all">
-                <div class="mb-6">
-                    <div
-                        class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full mb-4 animate-pulse">
-                        <i class="fa-solid fa-robot text-white text-3xl"></i>
-                    </div>
-                    <div class="flex justify-center gap-2 mb-4">
-                        <div class="w-3 h-3 bg-violet-500 rounded-full animate-bounce" style="animation-delay: 0ms">
-                        </div>
-                        <div class="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 150ms">
-                        </div>
-                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 300ms">
-                        </div>
+                                確定
+                            </button>
+                        </template>
                     </div>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-2">AI 生成中</h3>
-                <p class="text-slate-600 text-sm">正在使用 AI 為您生成內容，請稍候...</p>
-                <div class="mt-4 text-xs text-slate-400">
-                    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>
-                    這可能需要幾秒鐘時間
+            </div>
+        </transition>
+
+        <!-- AI 生成中 Loading Overlay -->
+        <transition name="fade">
+            <div v-if="isGenerating"
+                class="fixed inset-0 z-[99] bg-gradient-to-br from-violet-900/80 to-indigo-900/80 backdrop-blur-sm flex items-center justify-center">
+                <div
+                    class="bg-white/95 rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center transform transition-all">
+                    <div class="mb-6">
+                        <div
+                            class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full mb-4 animate-pulse">
+                            <i class="fa-solid fa-robot text-white text-3xl"></i>
+                        </div>
+                        <div class="flex justify-center gap-2 mb-4">
+                            <div class="w-3 h-3 bg-violet-500 rounded-full animate-bounce" style="animation-delay: 0ms">
+                            </div>
+                            <div class="w-3 h-3 bg-indigo-500 rounded-full animate-bounce"
+                                style="animation-delay: 150ms"></div>
+                            <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+                                style="animation-delay: 300ms"></div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">AI 生成中</h3>
+                    <p class="text-slate-600 text-sm">正在使用 AI 為您生成內容，請稍候...</p>
+                    <div class="mt-4 text-xs text-slate-400">
+                        <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>
+                        這可能需要幾秒鐘時間
+                    </div>
                 </div>
             </div>
-        </div>
-    </transition>
+        </transition>
 
-    <!-- Large QR Code Modal -->
-    <transition name="fade">
-        <div v-if="showQrModal" @click="closeQrModal"
-            class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer">
-            <div @click.stop
-                class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 cursor-default">
-                <h3 class="text-xl font-bold text-slate-800">{{ qrModalTitle }}</h3>
-                <div id="modal-qrcode-large"></div>
-                <p class="text-sm text-slate-500">點擊畫面任意處關閉</p>
+        <!-- Large QR Code Modal -->
+        <transition name="fade">
+            <div v-if="showQrModal" @click="closeQrModal"
+                class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer">
+                <div @click.stop
+                    class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 cursor-default">
+                    <h3 class="text-xl font-bold text-slate-800">{{ qrModalTitle }}</h3>
+                    <div id="modal-qrcode-large"></div>
+                    <p class="text-sm text-slate-500">點擊畫面任意處關閉</p>
+                </div>
             </div>
-        </div>
-    </transition>
+        </transition>
 
     </div>
     </div>
@@ -3014,6 +2995,7 @@ service cloud.firestore {
                     // Student Auth
                     const studentName = ref('');
                     const isStudentLoading = ref(false);
+                    const loadingHistoryId = ref(null);
                     const studentHistoryRecords = ref([]);
                     const selectedQuizId = ref(''); // 保留變數但主要依賴 activeQuizId
                     const activeQuizId = ref(null); // 全域啟用中的 Quiz ID
@@ -5241,7 +5223,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     const viewHistoricResult = async (rec) => {
                         try {
-                            isStudentLoading.value = true;
+                            loadingHistoryId.value = rec.id;
 
                             // 1. 載入題目資訊
                             const quizDoc = await db.collection('quizzes').doc(rec.quizId).get();
@@ -5276,22 +5258,9 @@ Output format must be a strict JSON Array without Markdown markers:
                             }
                             submissionTimestamp.value = submitTimeMs;
 
-                            // 2. 嘗試載入答案解析
-                            try {
-                                const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
-                                if (answersDoc.exists) {
-                                    const answersData = answersDoc.data();
-                                    activeQuiz.value.questions.forEach((q, idx) => {
-                                        const origIdx = q._originalIndex !== undefined ? q._originalIndex : idx;
-                                        if (answersData.answers && answersData.answers[origIdx]) {
-                                            q.answer = answersData.answers[origIdx].answer;
-                                            q.explanation = answersData.answers[origIdx].explanation || '';
-                                            q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
-                                        }
-                                    });
-                                }
-                            } catch (e) {
-                                console.log("載入歷史答案解析受阻 (若未解鎖屬正常現象)", e);
+                            // 2. 嘗試載入答案解析 (使用具有重試與響應更新機制的全域函數)
+                            if (canShowExplanations.value) {
+                                fetchAnswersForStudent();
                             }
 
                             goToView('result');
@@ -5299,7 +5268,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             console.error("讀取歷史成績詳情失敗", e);
                             showAlert("載入失敗", e.message, "error");
                         } finally {
-                            isStudentLoading.value = false;
+                            loadingHistoryId.value = null;
                         }
                     };
 
@@ -5549,13 +5518,17 @@ Output format must be a strict JSON Array without Markdown markers:
                             const answersDoc = await db.collection('quiz_answers').doc(activeQuiz.value.id).get();
                             if (answersDoc.exists) {
                                 const answersData = answersDoc.data();
-                                activeQuiz.value.questions.forEach((q, idx) => {
+                                activeQuiz.value.questions = activeQuiz.value.questions.map((q, idx) => {
                                     const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
                                     if (answersData.answers && answersData.answers[origIdx]) {
-                                        q.answer = answersData.answers[origIdx].answer;
-                                        q.explanation = answersData.answers[origIdx].explanation || '';
-                                        q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
+                                        return {
+                                            ...q,
+                                            answer: answersData.answers[origIdx].answer,
+                                            explanation: answersData.answers[origIdx].explanation || '',
+                                            'explanation-eng': answersData.answers[origIdx]['explanation-eng'] || ''
+                                        };
                                     }
+                                    return q;
                                 });
                                 console.log('學生端答案解析已成功載入');
                             } else if (retryCount < 5) {
@@ -5599,10 +5572,10 @@ Output format must be a strict JSON Array without Markdown markers:
                         return `${m}:${s}`;
                     });
 
-                    // 新增：監聽 canShowExplanations 狀態，當其解鎖時，若已算出分數，則立即拉取答案
+                    // 新增：監聽 canShowExplanations 狀態與分數變更，當符合條件時，立即拉取答案
                     // (移至 computed 宣告之後，避免 JavaScript 暫時性死區 ReferenceError)
-                    watch(canShowExplanations, async (newVal) => {
-                        if (newVal && score.value !== null && activeQuiz.value) {
+                    watch([canShowExplanations, score], async ([canShow, newScore]) => {
+                        if (canShow && newScore !== null && activeQuiz.value) {
                             const firstQuestion = activeQuiz.value.questions[0];
                             if (firstQuestion && (firstQuestion.answer === undefined || firstQuestion.answer === null)) {
                                 await fetchAnswersForStudent();
@@ -5631,6 +5604,18 @@ Output format must be a strict JSON Array without Markdown markers:
                             });
                         }
                     });
+
+                    // 新增：監聽教師身分以即時同步背景自動批改監聽器
+                    watch(isTeacherUser, (isTeacher) => {
+                        if (isTeacher && db) {
+                            startResultsGradingListener();
+                        } else {
+                            if (resultsGradingListener) {
+                                resultsGradingListener();
+                                resultsGradingListener = null;
+                            }
+                        }
+                    }, { immediate: true });
 
                     // 新增：監聽活動中測驗 ID，並即時訂閱同步活動測驗之 flag 設定至 activeQuiz.value
                     let activeQuizListener = null;
@@ -5698,7 +5683,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                         // Student
                         studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
-                        studentHistoryRecords, viewHistoricResult,
+                        studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                         progressPercent, score, studentAnswers, cheated, cheatReason,
                         quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
