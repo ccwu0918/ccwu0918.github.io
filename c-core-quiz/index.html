@@ -2182,7 +2182,69 @@
                                     </div>
                                     <div class="flex-1 w-full">
                                         <p class="text-xs text-slate-500 mb-2">此連結包含設定檔，供其他教師或您自己在其他裝置上使用。</p>
-                                        <!-- Tutorial Modal (詳細教學圖層) -->
+                                        <div class="flex gap-2">
+                                            <input type="text" :value="shareUrl" readonly
+                                                class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
+                                            <button @click="copyShareUrl('teacher')"
+                                                class="px-3 py-2 bg-slate-200 rounded hover:bg-slate-300 text-slate-600 text-xs font-bold whitespace-nowrap">複製</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 學生用 -->
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <p class="font-bold text-blue-800 mb-2">學生專用分享 (簡化介面)</p>
+                                <div class="flex flex-col sm:flex-row gap-6 items-center">
+                                    <div class="bg-white p-2 rounded-lg border shadow-sm cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-blue-500 transition"
+                                        @click="openQrModal('student')">
+                                        <div id="studentQrcode"></div>
+                                    </div>
+                                    <div class="flex-1 w-full">
+                                        <p class="text-xs text-slate-500 mb-2">學生將只能看到學生登入畫面，無法進入教師後台或更改設定。</p>
+                                        <div class="flex gap-2">
+                                            <input type="text" :value="studentShareUrl" readonly
+                                                class="flex-1 p-2 text-xs border rounded bg-white text-slate-500">
+                                            <button @click="copyShareUrl('student')"
+                                                class="px-3 py-2 bg-blue-200 rounded hover:bg-blue-300 text-blue-800 text-xs font-bold whitespace-nowrap">複製</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 區塊 2.5: 更新日誌 -->
+                    <div class="mb-6">
+                        <details>
+                            <summary
+                                class="text-sm font-bold text-slate-500 uppercase tracking-wider cursor-pointer border-l-4 border-violet-300 pl-2 select-none hover:text-violet-600 transition">
+                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> 更新日誌
+                            </summary>
+                            <div class="mt-3 space-y-2 max-h-48 overflow-y-auto pr-2">
+                                <div v-for="log in updateLog" :key="log.date + log.desc"
+                                    class="text-xs p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                    <span class="font-bold text-slate-700">{{ log.date }}</span>: {{ log.desc }}
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- 區塊 3: 重置 -->
+                    <div>
+                        <h4
+                            class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider border-l-4 border-red-500 pl-2">
+                            危險區域</h4>
+                        <button @click="resetConfig"
+                            class="w-full py-3 border border-red-200 text-red-600 rounded-xl text-sm hover:bg-red-50 font-bold transition">
+                            <i class="fa-solid fa-trash-can mr-2"></i>清除所有設定並登出 (Reset All)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Tutorial Modal (詳細教學圖層) -->
                                         <div v-if="showTutorialModal"
                                             class="fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur flex items-center justify-center p-4">
                                             <div
@@ -2409,7 +2471,8 @@ service cloud.firestore {
                                         </div>
                                     </div>
 
-                                    <!-- 全域訊息 Modal (取代 alert/confirm) -->
+                                    
+        <!-- 全域訊息 Modal (取代 alert/confirm) -->
                                     <transition name="modal">
                                         <div v-if="modalState.show"
                                             class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
