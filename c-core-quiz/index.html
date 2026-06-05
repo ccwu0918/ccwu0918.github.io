@@ -318,7 +318,7 @@
                             <i class="fa-solid fa-language text-sm"></i>
                             {{ currentLang === 'zh' ? 'English' : '繁體中文' }}
                         </button>
-                        <button v-if="!isStudentView && isTeacherUser" @click="toggleSettings"
+                        <button v-if="currentView === 'teacher-dashboard' && isTeacherUser" @click="toggleSettings"
                             class="p-2 text-slate-500 hover:text-violet-600 transition" title="系統設定">
                             <i class="fa-solid fa-gear text-lg"></i>
                         </button>
@@ -3417,6 +3417,9 @@ service cloud.firestore {
                                                                 isAdminTeacher.value = (googleUser.email === data.adminEmail);
                                                                 fetchTeacherList();
                                                                 startActiveSessionsListener();
+                                                                if (!isStudentView.value && (currentView.value === 'landing' || currentView.value === 'teacher-login')) {
+                                                                    goToView('teacher-dashboard');
+                                                                }
                                                             }
                                                         }
                                                     } catch (e) {
