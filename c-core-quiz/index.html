@@ -5246,26 +5246,26 @@ Output format must be a strict JSON Array without Markdown markers:
                                                             const quizData = doc.data();
 
                                                             // [新增] 檢查是否允許重複作答
-                                                            if (quizData.allowRepeat === false) {
-                                                                try {
-                                                                    const checkSnap = await db.collection('results')
-                                                                        .where('quizId', '==', activeQuizId.value)
-                                                                        .where('studentName', '==', studentName.value)
-                                                                        .get();
-                                                                    if (checkSnap.size > 0) {
-                                                                        showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，系統將自動登出以維護公平性。", "warning");
-                                                                        if (auth) {
-                                                                            await auth.signOut();
-                                                                        }
-                                                                        goToView('landing');
-                                                                        return;
-                                                                    }
-                                                                } catch (e) {
-                                                                    console.error("檢查重複測驗失敗", e);
-                                                                }
-                                                            }
+                                                             if (quizData.allowRepeat === false) {
+                                                                 try {
+                                                                     const checkSnap = await db.collection('results')
+                                                                         .where('quizId', '==', activeQuizId.value)
+                                                                         .where('studentName', '==', studentName.value)
+                                                                         .get();
+                                                                     if (checkSnap.size > 0) {
+                                                                         const title = currentLang.value === 'zh' ? "禁止重複測驗" : "Duplicate Attempt Forbidden";
+                                                                         const message = currentLang.value === 'zh' 
+                                                                             ? "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗。" 
+                                                                             : "You have already completed this quiz! The current setting is 'No repeating allowed', and you are not permitted to enter again.";
+                                                                         showAlert(title, message, "warning");
+                                                                         return;
+                                                                     }
+                                                                 } catch (e) {
+                                                                     console.error("檢查重複測驗失敗", e);
+                                                                 }
+                                                             }
 
-                                                            // 1. 亂數排序邏輯
+                                                             // 1. 亂數排序邏輯
                                                             const originalQuestions = quizData.questions || [];
                                                             const shuffledIndices = generateShuffledIndices(originalQuestions.length);
 
