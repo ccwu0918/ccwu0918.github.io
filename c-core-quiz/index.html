@@ -1576,7 +1576,9 @@
                                                 {{ rec.score !== null ? (currentLang === 'zh' ? rec.score + '分' : rec.score + ' Pts') : (currentLang === 'zh' ? '閱卷中' : 'Grading...') }}
                                             </span>
                                             <button @click="viewHistoricResult(rec)"
-                                                class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition">
+                                                :disabled="loadingHistoryId !== null"
+                                                class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-1 rounded-lg font-bold hover:bg-sky-500 hover:text-white hover:border-sky-500 transition flex items-center gap-1">
+                                                <i v-if="loadingHistoryId === rec.id" class="fa-solid fa-spinner fa-spin"></i>
                                                 {{ currentLang === 'zh' ? '查看' : 'View' }}
                                             </button>
                                         </div>
@@ -2990,6 +2992,7 @@ service cloud.firestore {
                                                 // Student Auth
                                                 const studentName = ref('');
                                                 const isStudentLoading = ref(false);
+                                                const loadingHistoryId = ref(null);
                                                 const studentHistoryRecords = ref([]);
                                                 const selectedQuizId = ref(''); // 保留變數但主要依賴 activeQuizId
                                                 const activeQuizId = ref(null); // 全域啟用中的 Quiz ID
@@ -5217,7 +5220,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 const viewHistoricResult = async (rec) => {
                                                     try {
-                                                        isStudentLoading.value = true;
+                                                        loadingHistoryId.value = rec.id;
 
                                                         // 1. 載入題目資訊
                                                         const quizDoc = await db.collection('quizzes').doc(rec.quizId).get();
@@ -5252,34 +5255,17 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         }
                                                         submissionTimestamp.value = submitTimeMs;
 
-                                                        // 2. 嘗試載入答案解析
-                                                        try {
-                                                             const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
-                                                             if (answersDoc.exists) {
-                                                                 const answersData = answersDoc.data();
-                                                                 activeQuiz.value.questions = activeQuiz.value.questions.map((q, idx) => {
-                                                                     const origIdx = q._originalIndex !== undefined ? q._originalIndex : idx;
-                                                                     if (answersData.answers && answersData.answers[origIdx]) {
-                                                                         return {
-                                                                             ...q,
-                                                                             answer: answersData.answers[origIdx].answer,
-                                                                             explanation: answersData.answers[origIdx].explanation || '',
-                                                                             'explanation-eng': answersData.answers[origIdx]['explanation-eng'] || ''
-                                                                         };
-                                                                     }
-                                                                     return q;
-                                                                 });
-                                                             }
-                                                         } catch (e) {
-                                                             console.log("載入歷史答案解析受阻 (若未解鎖屬正常現象)", e);
-                                                         }
+                                                        // 2. 嘗試載入答案解析 (使用具有重試與響應更新機制的全域函數)
+                                                        if (canShowExplanations.value) {
+                                                            await fetchAnswersForStudent();
+                                                        }
 
                                                         goToView('result');
                                                     } catch (e) {
                                                         console.error("讀取歷史成績詳情失敗", e);
                                                         showAlert("載入失敗", e.message, "error");
                                                     } finally {
-                                                        isStudentLoading.value = false;
+                                                        loadingHistoryId.value = null;
                                                     }
                                                 };
 
@@ -5694,7 +5680,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                                                     // Student
                                                     studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
-                                                    studentHistoryRecords, viewHistoricResult,
+                                                    studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                                                     activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                                                     progressPercent, score, studentAnswers, cheated, cheatReason,
                                                     quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
