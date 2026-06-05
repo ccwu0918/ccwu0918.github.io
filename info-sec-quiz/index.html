@@ -5583,15 +5583,15 @@ Output format must be a strict JSON Array without Markdown markers:
                         // 如果沒有交卷時間(異常)，不顯示
                         if (!submissionTimestamp.value) return false;
 
-                        // 檢查是否超過 30 分鐘 (30 * 60 * 1000 毫秒)
+                        // 檢查是否超過 1 小時 (60 * 60 * 1000 毫秒)
                         const timePassed = (nowTimestamp.value - submissionTimestamp.value);
-                        return timePassed >= (30 * 60 * 1000);
+                        return timePassed >= (60 * 60 * 1000);
                     });
 
                     const timeRemainingForExplanation = computed(() => {
                         if (!submissionTimestamp.value || canShowExplanations.value) return null;
 
-                        const diff = (30 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
+                        const diff = (60 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
                         if (diff <= 0) return null;
 
                         const m = Math.floor(diff / 60000).toString().padStart(2, '0');
