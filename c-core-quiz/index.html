@@ -1737,10 +1737,8 @@
                                         </span>
                                     </h2>
                                     <p class="text-indigo-100">
-                                        <span v-if="cheated">{{ currentLang === 'zh' ? '測驗因違規而結束，' : 'Quiz ended due to
-                                            violation, ' }}{{ studentName }}</span>
-                                        <span v-else>{{ currentLang === 'zh' ? '測驗完成，' : 'Quiz completed, ' }}{{
-                                            studentName }}!</span>
+                                        <span v-if="cheated">{{ currentLang === 'zh' ? '測驗因違規而結束，' : 'Quiz ended due to violation, ' }}{{ studentName }}</span>
+                                        <span v-else>{{ currentLang === 'zh' ? '測驗完成，' : 'Quiz completed, ' }}{{ studentName }}!</span>
                                     </p>
                                 </div>
                             </div>
@@ -2187,103 +2185,7 @@
                                                         </div>
                                                     </section>
 
-                                                    <!-- Step 5 -->
-                                                    <section class="flex gap-4">
-                                                        <div
-                                                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
-                                                            5</div>
-                                                        <div class="w-full">
-                                                            <h4 class="text-lg font-bold text-slate-800 mb-2">設定安全性規則
-                                                                (建議)</h4>
-                                                            <p class="text-slate-600 mb-2 text-sm">在 Firestore
-                                                                頁面上方切換到「規則 (Rules)」頁籤，貼上以下規則以確保權限正確：</p>
-                                                            <div
-                                                                class="bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto relative group mt-2 border border-slate-700 shadow-inner">
-                                                                <pre>rules_version = '2';
 
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // 允許所有人讀寫測驗狀態 (如 activeQuizId)
-    match /config/quizStatus {
-      allow read, write: if true;
-    }
-    
-    // 允許所有人讀取教師白名單；僅已登入用戶可寫入 (如首次登入的教師)
-    match /config/teachers {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    // 允許所有人讀取無答案的題目資料；僅教師帳號能新增、編輯和刪除
-    match /quizzes/{quizId} {
-      allow read: if true;
-      allow create, update, delete: if request.auth != null;
-    }
-    
-    // 標準答案與解析防弊保護區
-    match /quiz_answers/{quizId} {
-      allow write: if request.auth != null;
-      // 學生只有在「已登入」且「該試卷開啟解析」或「交卷超過 1 小時」時，才允許讀取答案與解析
-      // 教師白名單中的信箱則不受限制，隨時可讀取
-      allow read: if request.auth != null && (
-        ('showExplanations' in get(/databases/$(database)/documents/quizzes/$(quizId)).data && get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true) ||
-        (exists(/databases/$(database)/documents/config/teachers) && 
-         get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
-      );
-    }
-    
-    // 測驗結果 (已登入學生交卷、教師閱卷、刪除成績)
-    match /results/{resultId} {
-      allow create, read, update, delete: if request.auth != null;
-    }
-    
-    // 線上學生狀態監控讀寫權限
-    match /student_sessions/{sessionId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // 學生端自動解鎖答案所需之解鎖紀錄
-    match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
-      allow write: if request.auth != null && 
-        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
-        (
-          request.resource.data.timestamp == request.time ||
-          (
-            request.resource.data.resultId != null &&
-            (
-              (
-                'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
-              ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
-            ) &&
-            request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
-          )
-        );
-    }
-  }
-}</pre>
-                                                                <button @click="copyRules"
-                                                                    class="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-xs transition">複製</button>
-                                                            </div>
-                                                        </div>
-                                                    </section>
-                                                </div>
-
-                                                <!-- Footer -->
-                                                <div class="p-4 border-t bg-slate-50 text-center rounded-b-2xl">
-                                                    <button @click="showTutorialModal = false"
-                                                        class="px-8 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition shadow-lg shadow-violet-200">
-                                                        我了解了，開始設定
-                                                    </button>料庫 (Create database)」。</li>
-                                                    <li>選擇「以測試模式啟動 (Start in test mode)」(方便快速測試)。</li>
-                                                    <li>選擇位置 (Location)，通常選預設即可，等待建立完成。</li>
-                                                    </ul>
-                                                </div>
-                                                </section>
 
                                                 <!-- Step 5 -->
                                                 <section class="flex gap-4">
@@ -2479,6 +2381,14 @@ service cloud.firestore {
                                     </transition>
 
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                                 <!-- Firebase SDK -->
                                 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
