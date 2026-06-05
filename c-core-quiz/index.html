@@ -5257,7 +5257,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                         // 2. 嘗試載入答案解析 (使用具有重試與響應更新機制的全域函數)
                                                         if (canShowExplanations.value) {
-                                                            await fetchAnswersForStudent();
+                                                            fetchAnswersForStudent();
                                                         }
 
                                                         goToView('result');
