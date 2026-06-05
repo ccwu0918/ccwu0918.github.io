@@ -3790,7 +3790,11 @@ service cloud.firestore {
                             const snapshot = await db.collection('results').where('score', '==', null).get();
                             for (const doc of snapshot.docs) {
                                 const result = { id: doc.id, ...doc.data() };
-                                const quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                let quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                if (!quizObj) {
+                                    const quizDoc = await db.collection('quizzes').doc(result.quizId).get();
+                                    if (quizDoc.exists) quizObj = quizDoc.data();
+                                }
                                 const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
                                 if (autoGradingEnabled) {
                                     await gradeResult(result);
@@ -3821,7 +3825,11 @@ service cloud.firestore {
 
                                     for (const result of pending) {
                                         // 檢索該 result 對應之試卷，判斷是否啟用自動批改 (預設為 true)
-                                        const quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                        let quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                        if (!quizObj) {
+                                            const quizDoc = await db.collection('quizzes').doc(result.quizId).get();
+                                            if (quizDoc.exists) quizObj = quizDoc.data();
+                                        }
                                         const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
                                         if (autoGradingEnabled) {
                                             await gradeResult(result);
