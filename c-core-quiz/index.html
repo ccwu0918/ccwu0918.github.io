@@ -5257,13 +5257,17 @@ Output format must be a strict JSON Array without Markdown markers:
                                                              const answersDoc = await db.collection('quiz_answers').doc(rec.quizId).get();
                                                              if (answersDoc.exists) {
                                                                  const answersData = answersDoc.data();
-                                                                 activeQuiz.value.questions.forEach((q, idx) => {
+                                                                 activeQuiz.value.questions = activeQuiz.value.questions.map((q, idx) => {
                                                                      const origIdx = q._originalIndex !== undefined ? q._originalIndex : idx;
                                                                      if (answersData.answers && answersData.answers[origIdx]) {
-                                                                         q.answer = answersData.answers[origIdx].answer;
-                                                                         q.explanation = answersData.answers[origIdx].explanation || '';
-                                                                         q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
+                                                                         return {
+                                                                             ...q,
+                                                                             answer: answersData.answers[origIdx].answer,
+                                                                             explanation: answersData.answers[origIdx].explanation || '',
+                                                                             'explanation-eng': answersData.answers[origIdx]['explanation-eng'] || ''
+                                                                         };
                                                                      }
+                                                                     return q;
                                                                  });
                                                              }
                                                          } catch (e) {
@@ -5525,13 +5529,17 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         const answersDoc = await db.collection('quiz_answers').doc(activeQuiz.value.id).get();
                                                         if (answersDoc.exists) {
                                                             const answersData = answersDoc.data();
-                                                            activeQuiz.value.questions.forEach((q, idx) => {
+                                                            activeQuiz.value.questions = activeQuiz.value.questions.map((q, idx) => {
                                                                 const origIdx = q.hasOwnProperty('_originalIndex') && q._originalIndex !== undefined ? q._originalIndex : idx;
                                                                 if (answersData.answers && answersData.answers[origIdx]) {
-                                                                    q.answer = answersData.answers[origIdx].answer;
-                                                                    q.explanation = answersData.answers[origIdx].explanation || '';
-                                                                    q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
+                                                                    return {
+                                                                        ...q,
+                                                                        answer: answersData.answers[origIdx].answer,
+                                                                        explanation: answersData.answers[origIdx].explanation || '',
+                                                                        'explanation-eng': answersData.answers[origIdx]['explanation-eng'] || ''
+                                                                    };
                                                                 }
+                                                                return q;
                                                             });
                                                             console.log('學生端答案解析已成功載入');
                                                         } else if (retryCount < 5) {
@@ -5575,10 +5583,10 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     return `${m}:${s}`;
                                                 });
 
-                                                // 新增：監聽 canShowExplanations 狀態，當其解鎖時，若已算出分數，則立即拉取答案
+                                                // 新增：監聽 canShowExplanations 狀態與分數變更，當符合條件時，立即拉取答案
                                                 // (移至 computed 宣告之後，避免 JavaScript 暫時性死區 ReferenceError)
-                                                watch(canShowExplanations, async (newVal) => {
-                                                    if (newVal && score.value !== null && activeQuiz.value) {
+                                                watch([canShowExplanations, score], async ([canShow, newScore]) => {
+                                                    if (canShow && newScore !== null && activeQuiz.value) {
                                                         const firstQuestion = activeQuiz.value.questions[0];
                                                         if (firstQuestion && (firstQuestion.answer === undefined || firstQuestion.answer === null)) {
                                                             await fetchAnswersForStudent();
@@ -5608,6 +5616,18 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     }
                                                 });
 
+                                                // 新增：監聽教師身分以即時同步背景自動批改監聽器
+                                                watch(isTeacherUser, (isTeacher) => {
+                                                    if (isTeacher && db) {
+                                                        startResultsGradingListener();
+                                                    } else {
+                                                        if (resultsGradingListener) {
+                                                            resultsGradingListener();
+                                                            resultsGradingListener = null;
+                                                        }
+                                                    }
+                                                }, { immediate: true });
+                                                
                                                 // 新增：監聽活動中測驗 ID，並即時訂閱同步活動測驗之 flag 設定至 activeQuiz.value
                                                 let activeQuizListener = null;
                                                 watch(activeQuizId, (newId) => {
