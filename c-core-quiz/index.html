@@ -5548,6 +5548,23 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     document.title = t('appName');
                                                 }, { immediate: true });
 
+                                                watch(showSettingsModal, (newVal) => {
+                                                    if (newVal && isConfigured.value) {
+                                                        nextTick(() => {
+                                                            const teacherQrContainer = document.getElementById("qrcode");
+                                                            if (teacherQrContainer) {
+                                                                teacherQrContainer.innerHTML = "";
+                                                                new QRCode(teacherQrContainer, { text: shareUrl.value, width: 100, height: 100 });
+                                                            }
+                                                            const studentQrContainer = document.getElementById("studentQrcode");
+                                                            if (studentQrContainer) {
+                                                                studentQrContainer.innerHTML = "";
+                                                                new QRCode(studentQrContainer, { text: studentShareUrl.value, width: 100, height: 100 });
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
                                                 // 新增：監聽活動中測驗 ID，並即時訂閱同步活動測驗之 flag 設定至 activeQuiz.value
                                                 let activeQuizListener = null;
                                                 watch(activeQuizId, (newId) => {
