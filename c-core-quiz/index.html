@@ -318,7 +318,7 @@
                             <i class="fa-solid fa-language text-sm"></i>
                             {{ currentLang === 'zh' ? 'English' : '繁體中文' }}
                         </button>
-                        <button v-if="!isStudentView" @click="toggleSettings"
+                        <button v-if="!isStudentView && isTeacherUser" @click="toggleSettings"
                             class="p-2 text-slate-500 hover:text-violet-600 transition" title="系統設定">
                             <i class="fa-solid fa-gear text-lg"></i>
                         </button>
@@ -2014,7 +2014,7 @@
         </div>
 
         <!-- Settings Modal -->
-        <div v-if="showSettingsModal"
+        <div v-if="showSettingsModal && (!isConfigured || isTeacherUser)"
             class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
                 <!-- Header -->
@@ -3258,6 +3258,7 @@ service cloud.firestore {
 
                                                 const toggleSettings = () => {
                                                     if (isStudentView.value) return; // Safeguard
+                                                    if (isConfigured.value && !isTeacherUser.value) return; // Safeguard
                                                     showSettingsModal.value = !showSettingsModal.value;
                                                     if (showSettingsModal.value && isConfigured.value) {
                                                         nextTick(() => {
