@@ -3414,6 +3414,14 @@ service cloud.firestore {
                             triggerManualGrading();
                             startResultsGradingListener();
                             startActiveSessionsListener();
+                            // 每 8 秒自動掃描一次未批改的成績，確保自動批改不遺漏
+                            if (!window._gradingInterval) {
+                                window._gradingInterval = setInterval(() => {
+                                    if (isTeacherUser.value && db) {
+                                        triggerManualGrading();
+                                    }
+                                }, 8000);
+                            }
                         }
                         if (view === 'student-login') {
                             fetchStudentHistory();
@@ -5509,6 +5517,19 @@ Output format must be a strict JSON Array without Markdown markers:
                                     }
                                 }
                             });
+                            // 額外安全機制：定期檢查是否需要載入答案（防止單次 fetch 失敗後永遠停留在 spinner）
+                            const answerRetryInterval = setInterval(async () => {
+                                if (score.value !== null && canShowExplanations.value && activeQuiz.value) {
+                                    const firstQ = activeQuiz.value.questions[0];
+                                    if (firstQ && (firstQ.answer === undefined || firstQ.answer === null)) {
+                                        console.log('定期重試載入答案解析...');
+                                        await fetchAnswersForStudent();
+                                    } else {
+                                        clearInterval(answerRetryInterval);
+                                    }
+                                }
+                            }, 3000);
+                            setTimeout(() => clearInterval(answerRetryInterval), 60000);
                         } catch (e) {
                             showAlert("交卷失敗", e.message, "error");
                         }
@@ -5522,7 +5543,7 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
 
                     // 新增：學生端在允許查看解析時，動態下載答案與解析合併回 activeQuiz.value.questions
-                    const fetchAnswersForStudent = async () => {
+                    const fetchAnswersForStudent = async (retryCount = 0) => {
                         if (!activeQuiz.value || !db) return;
                         try {
                             const answersDoc = await db.collection('quiz_answers').doc(activeQuiz.value.id).get();
@@ -5536,9 +5557,16 @@ Output format must be a strict JSON Array without Markdown markers:
                                         q['explanation-eng'] = answersData.answers[origIdx]['explanation-eng'] || '';
                                     }
                                 });
+                                console.log('學生端答案解析已成功載入');
+                            } else if (retryCount < 5) {
+                                console.warn('quiz_answers 文件不存在，' + (retryCount + 1) + ' 秒後重試...');
+                                setTimeout(() => fetchAnswersForStudent(retryCount + 1), (retryCount + 1) * 1000);
                             }
                         } catch (e) {
-                            console.error("學生端獲取答案解析失敗", e);
+                            console.error("學生端獲取答案解析失敗 (嘗試 " + (retryCount + 1) + "):", e);
+                            if (retryCount < 5) {
+                                setTimeout(() => fetchAnswersForStudent(retryCount + 1), (retryCount + 1) * 2000);
+                            }
                         }
                     };
 
