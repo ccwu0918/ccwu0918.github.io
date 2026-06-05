@@ -1598,7 +1598,7 @@
                         <div v-if="activeQuiz.questionType === 'reading-comprehension'"
                             class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                             <!-- Left Column: Reading Passage with Highlighter -->
-                            <div class="ide-container shadow-2xl flex flex-col h-[500px]">
+                            <div class="ide-container shadow-2xl flex flex-col h-[400px] lg:h-[680px]">
                                 <!-- IDE Header -->
                                 <div class="ide-header justify-between">
                                     <div class="flex items-center">
@@ -1629,11 +1629,11 @@
 
                                 <!-- Text Content (IDE Editor Style) -->
                                 <div class="relative flex-grow bg-slate-900 overflow-hidden">
-                                    <div
-                                        class="absolute left-0 top-0 bottom-0 w-12 bg-slate-800 border-r border-slate-700 flex flex-col items-end pt-4 pr-2 text-slate-500 text-xs font-mono select-none">
-                                        <div v-for="n in 25" :key="n" class="leading-6">{{n}}</div>
+                                    <div ref="studentLineNumbers"
+                                        class="absolute left-0 top-0 bottom-0 w-12 bg-slate-800 border-r border-slate-700 flex flex-col items-end pt-4 pr-2 text-slate-500 text-xs font-mono select-none overflow-y-hidden">
+                                        <div v-for="n in Math.max(passageLineCount, 50)" :key="n" class="leading-6">{{n}}</div>
                                     </div>
-                                    <div ref="passageContainer"
+                                    <div ref="passageContainer" @scroll="syncStudentScroll"
                                         class="passage-content ide-mode-content absolute left-12 right-0 top-0 bottom-0 p-4 text-slate-300 font-mono text-sm leading-6 whitespace-pre-wrap overflow-y-auto ide-scroll select-text"
                                         v-html="highlightedPassage" @click="handlePassageClick"></div>
                                 </div>
@@ -1646,7 +1646,7 @@
 
                             <!-- Right Column: Question -->
                             <div
-                                class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 relative overflow-hidden">
+                                class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 relative overflow-y-auto ide-scroll h-auto lg:h-[680px]">
                                 <div class="absolute top-0 left-0 w-2 h-full bg-sky-500"></div>
                                 <div class="flex items-center justify-between mb-4">
                                     <h3 class="text-lg font-bold text-slate-800">{{ currentLang === 'zh' ? '題目' : 'Question' }}</h3>
@@ -2229,8 +2229,8 @@ service cloud.firestore {
         get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
          get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     
@@ -2249,9 +2249,9 @@ service cloud.firestore {
     
     // 學生端自動解鎖答案所需之解鎖紀錄 (Email 統一加載 .lower() 防大小寫敏感)
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
@@ -2259,9 +2259,9 @@ service cloud.firestore {
             (
               (
                 'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
               ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
             ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
@@ -3123,17 +3123,17 @@ service cloud.firestore {
         get(/databases/$(database)/documents/quizzes/$(quizId)).data.showExplanations == true ||
         (exists(/databases/$(database)/documents/config/teachers) && 
          get(/databases/$(database)/documents/config/teachers).data.authorizedEmails.hasAny([request.auth.token.email])) ||
-        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)) &&
-         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email.lower() + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
+        (exists(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)) &&
+         request.time >= get(/databases/$(database)/documents/quiz_unlocks/$(request.auth.token.email + '_' + quizId)).data.timestamp + duration.value(1, 'h'))
       );
     }
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
     }
     match /quiz_unlocks/{unlockId} {
-      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email.lower();
+      allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
       allow write: if request.auth != null && 
-        unlockId == request.auth.token.email.lower() + '_' + request.resource.data.quizId &&
+        unlockId == request.auth.token.email + '_' + request.resource.data.quizId &&
         (
           request.resource.data.timestamp == request.time ||
           (
@@ -3141,9 +3141,9 @@ service cloud.firestore {
             (
               (
                 'studentEmail' in get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data &&
-                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail.lower() == request.auth.token.email.lower()
+                get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentEmail == request.auth.token.email
               ) ||
-              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email.lower() + '\\)$')
+              get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.studentName.matches('.*\\(' + request.auth.token.email + '\\)$')
             ) &&
             request.resource.data.timestamp == get(/databases/$(database)/documents/results/$(request.resource.data.resultId)).data.timestamp
           )
@@ -4521,10 +4521,23 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 // --- New Highlighter State ---
                                                 const passageContainer = ref(null);
+                                                const studentLineNumbers = ref(null);
                                                 const highlights = ref([]); // {start, end, color, id}
                                                 const nextHighlightId = ref(0);
 
                                                 // --- New Highlighter Functions ---
+                                                const passageLineCount = computed(() => {
+                                                    if (!activeQuiz.value) return 1;
+                                                    const text = getQuizReadingPassage(activeQuiz.value);
+                                                    if (!text) return 1;
+                                                    return text.split('\n').length;
+                                                });
+
+                                                const syncStudentScroll = (event) => {
+                                                    if (studentLineNumbers.value) {
+                                                        studentLineNumbers.value.scrollTop = event.target.scrollTop;
+                                                    }
+                                                };
                                                 const highlightedPassage = computed(() => {
                                                     if (!activeQuiz.value || !(activeQuiz.value.readingPassage || activeQuiz.value['readingPassage-eng'])) return '';
 
@@ -5100,7 +5113,11 @@ Output format must be a strict JSON Array without Markdown markers:
                                                                         .where('studentName', '==', studentName.value)
                                                                         .get();
                                                                     if (checkSnap.size > 0) {
-                                                                        showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗系統。", "warning");
+                                                                        showAlert("禁止重複測驗", "您已完成過此測驗！目前設定為「禁止重覆本測驗」，系統將自動登出以維護公平性。", "warning");
+                                                                        if (auth) {
+                                                                            await auth.signOut();
+                                                                        }
+                                                                        goToView('landing');
                                                                         return;
                                                                     }
                                                                 } catch (e) {
@@ -5401,6 +5418,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     canShowExplanations, timeRemainingForExplanation,
                                                     // Highlighter
                                                     passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
+                                                    studentLineNumbers, passageLineCount, syncStudentScroll,
                                                     // Logs
                                                     updateLog,
                                                     // IDE Helper
