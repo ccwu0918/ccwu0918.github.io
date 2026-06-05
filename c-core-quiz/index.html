@@ -3752,13 +3752,18 @@ service cloud.firestore {
                                                     }
                                                 };
 
-                                                // 新增：手動/立即觸發所有未批改學生的計分
+                                                // 新增：手動/立即觸發所有未批改學生的計分 (新增 autoGradingEnabled 狀態檢查)
                                                 const triggerManualGrading = async () => {
                                                     if (!db) return;
                                                     try {
                                                         const snapshot = await db.collection('results').where('score', '==', null).get();
                                                         for (const doc of snapshot.docs) {
-                                                            await gradeResult({ id: doc.id, ...doc.data() });
+                                                            const result = { id: doc.id, ...doc.data() };
+                                                            const quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                                            const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
+                                                            if (autoGradingEnabled) {
+                                                                await gradeResult(result);
+                                                            }
                                                         }
                                                     } catch (e) {
                                                         console.error("執行手動批改失敗", e);
