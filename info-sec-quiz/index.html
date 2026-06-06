@@ -5310,7 +5310,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 };
 
                                                 const updateStudentSession = async (status, extraData = {}) => {
-                                                    if (!db || !user.value || user.value.isAnonymous || isTeacherUser.value) return;
+                                                    if (!db || !user.value || user.value.isAnonymous || (isTeacherUser.value && !isStudentView.value)) return;
                                                     const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
                                                     if (!quizId) return;
 
