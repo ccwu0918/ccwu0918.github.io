@@ -2691,11 +2691,39 @@ service cloud.firestore {
                                                     'explanation-eng': ''
                                                 });
                                                 const currentEditingQuestionIndex = ref(-1);
+                                                // 動態解析學科中英文名稱
+                                                const parseSubject = () => {
+                                                    let zhName = 'C語言程式設計';
+                                                    let enName = 'C Programming';
+                                                    const originalTitle = document.title || '';
+                                                    if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
+                                                        const parts = originalTitle.split(' - ');
+                                                        if (parts.length >= 2) {
+                                                            zhName = parts[0].trim();
+                                                            enName = parts[1].trim();
+                                                        }
+                                                    } else {
+                                                        const path = window.location.pathname;
+                                                        if (path.includes('cpp-oop-quiz')) {
+                                                            zhName = 'C++物件導向程式設計';
+                                                            enName = 'C++ Object-Oriented Programming';
+                                                        } else if (path.includes('info-sec-quiz')) {
+                                                            zhName = '資訊與網路安全概論';
+                                                            enName = 'Information & Network security';
+                                                        } else if (path.includes('c-core-quiz')) {
+                                                            zhName = 'C語言程式設計';
+                                                            enName = 'C Programming';
+                                                        }
+                                                    }
+                                                    return { zhName, enName };
+                                                };
+                                                const { zhName, enName } = parseSubject();
+                                                
 
                                                 // i18n
                                                 const i18n = {
                                                     zh: {
-                                                        appName: 'C語言程式設計',
+                                                        appName: zhName,
                                                         studentPortal: '我是學生',
                                                         studentPortalDesc: '輸入姓名，立即加入老師的測驗',
                                                         teacherPortal: '我是老師',
@@ -2710,7 +2738,7 @@ service cloud.firestore {
                                                         historyTitle: '歷史成績紀錄',
                                                         quizResult: '測驗結果',
                                                         scoreLabel: '得分',
-                                                        welcomeTitle: '歡迎來到 C語言程式設計',
+                                                        welcomeTitle: '歡迎來到 ' + zhName,
                                                         welcomeDesc: '老師輕鬆出題，學生快樂學習',
                                                         connected: '已連線',
                                                         notConnected: '未連線 (點此設定)',
@@ -2799,7 +2827,7 @@ service cloud.firestore {
                                                         scoreDetail: '得分詳情'
                                                     },
                                                     en: {
-                                                        appName: 'C Programming',
+                                                        appName: enName,
                                                         studentPortal: 'Student Portal',
                                                         studentPortalDesc: 'Enter your name and join the quiz',
                                                         teacherPortal: 'Teacher Portal',
@@ -2814,7 +2842,7 @@ service cloud.firestore {
                                                         historyTitle: 'Quiz History',
                                                         quizResult: 'Quiz Results',
                                                         scoreLabel: 'Score',
-                                                        welcomeTitle: 'Welcome to C Programming Quiz',
+                                                        welcomeTitle: 'Welcome to ' + enName,
                                                         welcomeDesc: 'Easy quiz creation, fun learning experience',
                                                         connected: 'Connected',
                                                         notConnected: 'Disconnected (Click to setup)',
@@ -4949,7 +4977,7 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 const handleWindowFocus = () => {
                                                     if (isTakingQuiz.value) {
-                                                        document.title = "C語言程式設計";
+                                                        document.title = t('appName');
                                                     }
                                                 };
 
