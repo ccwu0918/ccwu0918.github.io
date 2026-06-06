@@ -523,6 +523,7 @@
                                                 <th class="py-3 px-4">開始時間 / 已作答時間</th>
                                                 <th class="py-3 px-4">目前狀態</th>
                                                 <th class="py-3 px-4">防弊違規狀態</th>
+                                                <th class="py-3 px-4 text-center">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-50">
@@ -605,9 +606,20 @@
                                                     </span>
                                                     <span v-else class="text-slate-400 text-xs">無違規記錄</span>
                                                 </td>
+                                                <td class="py-3.5 px-4 text-center" @click.stop>
+                                                    <button v-if="sess.status !== 'banned'" @click="banStudentSession(sess)"
+                                                        class="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-200 mr-1.5 font-bold transition">
+                                                        禁止測驗
+                                                    </button>
+                                                    <span v-else class="text-xs text-rose-500 font-bold mr-1.5">已停權</span>
+                                                    <button @click="deleteStudentSession(sess)"
+                                                        class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded hover:bg-red-200 font-bold transition">
+                                                        刪除帳號
+                                                    </button>
+                                                </td>
                                             </tr>
                                             <tr v-if="activeSessions.length === 0">
-                                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                                <td colspan="6" class="py-8 text-center text-slate-400">
                                                     目前尚無學生登入此測驗
                                                 </td>
                                             </tr>
@@ -1292,7 +1304,8 @@
                                         <table class="w-full text-sm text-left">
                                             <thead class="bg-slate-100 text-slate-600 font-bold">
                                                 <tr>
-                                                    <th class="p-3">學生姓名</th>
+                                                    <th class="p-3">學號</th>
+                                                    <th class="p-3">學生姓名 及 E-mail</th>
                                                     <th class="p-3">得分</th>
                                                     <th class="p-3 text-center">操作</th>
                                                 </tr>
@@ -1301,7 +1314,11 @@
                                                 <tr v-for="res in analyticsData" :key="res.id"
                                                     class="border-b border-slate-50 hover:bg-slate-50 transition cursor-pointer"
                                                     @click="viewStudentDetails(res)">
-                                                    <td class="p-3 font-medium">{{ res.studentName }}</td>
+                                                    <td class="p-3 font-medium">{{ parseStudentNameField(res.studentName).studentId }}</td>
+                                                    <td class="p-3 font-medium">
+                                                        <div class="font-bold text-slate-800">{{ parseStudentNameField(res.studentName).name }}</div>
+                                                        <div class="text-xs text-slate-400 font-mono">{{ parseStudentNameField(res.studentName).email }}</div>
+                                                    </td>
                                                     <td class="p-3 font-bold" :class="getScoreColor(res.score)">{{
                                                         res.score }}</td>
                                                     <td class="p-3 text-center" @click.stop>
@@ -1316,7 +1333,7 @@
                                                     </td>
                                                 </tr>
                                                 <tr v-if="analyticsData.length === 0">
-                                                    <td colspan="3" class="p-4 text-center text-slate-400">尚無學生作答記錄</td>
+                                                    <td colspan="4" class="p-4 text-center text-slate-400">尚無學生作答記錄</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -2590,6 +2607,24 @@ service cloud.firestore {
                                                      if (path.includes('info-sec-quiz')) return 'info_sec';
                                                      if (path.includes('c-core-quiz')) return 'c_core';
                                                      return 'c_core';
+                                                 };
+
+                                                 const parseStudentNameField = (studentName) => {
+                                                     let name = studentName || '';
+                                                     let email = '';
+                                                     let studentId = '';
+
+                                                     const match = name.match(/^(.*?)\s*\((.*?)\)$/);
+                                                     if (match) {
+                                                         name = match[1].trim();
+                                                         email = match[2].trim();
+                                                         
+                                                         const idMatch = email.toLowerCase().match(/^s(\d+)@student\.nqu\.edu\.tw$/);
+                                                         if (idMatch) {
+                                                             studentId = idMatch[1];
+                                                         }
+                                                     }
+                                                     return { name, email, studentId };
                                                  };
 
                                                 // --- 程式碼設定區 ---
@@ -4600,16 +4635,19 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     csvContent += `總人數,${totalStudents},平均分數,${avgScore}\n\n`;
 
                                                     // Headers
-                                                    let headers = ["學生姓名", "得分", "交卷時間"];
+                                                    let headers = ["學號", "學生姓名", "E-mail", "得分", "交卷時間"];
                                                     quiz.questions.forEach((q, i) => {
                                                         headers.push(`Q${i + 1} (正確:${String.fromCharCode(64 + parseInt(q.answer))})`);
                                                     });
                                                     csvContent += headers.join(",") + "\n";
 
                                                     // Rows
+                                                         const parsedInfo = parseStudentNameField(res.studentName);
                                                     results.forEach(res => {
                                                         let row = [
-                                                            res.studentName,
+                                                            parsedInfo.studentId,
+                                                             parsedInfo.name,
+                                                             parsedInfo.email,
                                                             res.score,
                                                             formatDate(res.timestamp).replace(',', ' ') // Avoid comma issues
                                                         ];
@@ -4638,7 +4676,100 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     document.body.removeChild(link);
                                                 };
 
-                                                const deleteResult = async (result) => {
+                                                const kickStudentOut = (message) => {
+                                                     isTakingQuiz.value = false;
+                                                     cheated.value = true;
+                                                     cheatReason.value = message;
+                                                     stopDevToolsDetector();
+                                                     stopStudentHeartbeat();
+                                                     if (document.exitFullscreen) {
+                                                         document.exitFullscreen().catch(() => { });
+                                                     }
+                                                     showAlert("登入失效 / 遭停權", message, "error");
+                                                     goToView('landing');
+                                                 };
+
+                                                 const banStudentSession = async (sess) => {
+                                                     if (!db) return;
+                                                     const confirm = await showConfirm(
+                                                         "禁止測驗",
+                                                         `確定要禁止學生 ${sess.name} (${sess.email}) 進行此測驗嗎？這將會強制中斷其目前的測驗。`
+                                                     );
+                                                     if (!confirm) return;
+
+                                                     try {
+                                                         const quizId = activeQuizId.value || sess.quizId;
+                                                         const sessionId = `${sess.email.toLowerCase()}_${quizId}`;
+                                                         await db.collection('student_sessions').doc(sessionId).set({
+                                                             status: 'banned'
+                                                         }, { merge: true });
+                                                         showAlert("已停權", `已將學生 ${sess.name} 設定為禁止測驗狀態。`, "success");
+                                                     } catch (e) {
+                                                         console.error("禁止測驗失敗", e);
+                                                         showAlert("錯誤", "設定禁止測驗狀態時發生錯誤，請重試。", "error");
+                                                     }
+                                                 };
+
+                                                 const deleteStudentSession = async (sess) => {
+                                                     if (!db) return;
+                                                     const confirm = await showConfirm(
+                                                         "刪除帳號與記錄",
+                                                         `確定要刪除學生 ${sess.name} (${sess.email}) 的登入狀態與所有測驗記錄嗎？此動作無法復原！`
+                                                     );
+                                                     if (!confirm) return;
+
+                                                     try {
+                                                         const quizId = activeQuizId.value || sess.quizId;
+                                                         const sessionId = `${sess.email.toLowerCase()}_${quizId}`;
+                                                         
+                                                         await db.collection('student_sessions').doc(sessionId).delete();
+
+                                                         const resultsSnap = await db.collection('results')
+                                                             .where('quizId', '==', quizId)
+                                                             .get();
+
+                                                         const deletePromises = [];
+                                                         resultsSnap.forEach(doc => {
+                                                             const data = doc.data();
+                                                             if (data.studentEmail === sess.email || 
+                                                                 (data.studentName && data.studentName.endsWith(`(${sess.email})`))) {
+                                                                 deletePromises.push(doc.ref.delete());
+                                                             }
+                                                         });
+                                                         await Promise.all(deletePromises);
+
+                                                         showAlert("已刪除", `已成功刪除學生 ${sess.name} 的登入狀態與測驗成績記錄。`, "success");
+                                                     } catch (e) {
+                                                         console.error("刪除帳號失敗", e);
+                                                         showAlert("錯誤", "刪除帳號記錄時發生錯誤，請重試。", "error");
+                                                     }
+                                                 };
+
+                                                 let studentSessionListener = null;
+                                                 watch([activeQuizId, user], ([newQuizId, newUser]) => {
+                                                     if (studentSessionListener) {
+                                                         studentSessionListener();
+                                                         studentSessionListener = null;
+                                                     }
+                                                     if (!db || !newUser || newUser.isAnonymous || !newQuizId || isTeacherUser.value) return;
+
+                                                     const emailLower = newUser.email.toLowerCase();
+                                                     const sessionId = `${emailLower}_${newQuizId}`;
+                                                     studentSessionListener = db.collection('student_sessions').doc(sessionId).onSnapshot(doc => {
+                                                         if (doc.exists) {
+                                                             const data = doc.data();
+                                                             if (data.status === 'banned') {
+                                                                 kickStudentOut("您已被老師禁止進行此測驗！");
+                                                             }
+                                                         } else {
+                                                             if (isTakingQuiz.value) {
+                                                                 kickStudentOut("您的登入狀態已被老師刪除，無法繼續進行測驗！");
+                                                             }
+                                                         }
+                                                     });
+                                                 });
+
+                                                 const deleteResult = async (result) => {
                                                     if (!db) return;
 
                                                     // 1. 找出該名學生在此測驗中的所有成績記錄
@@ -5370,6 +5501,21 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 // 3. 修改 startQuiz 函數 (加入啟動計時)
                                                 const startQuiz = async () => {
+                                                    // 檢查是否已被禁止測驗
+                                                    if (user.value && !user.value.isAnonymous) {
+                                                        const emailLower = user.value.email.toLowerCase();
+                                                        const sessionId = `${emailLower}_${activeQuizId.value}`;
+                                                        try {
+                                                            const sessDoc = await db.collection('student_sessions').doc(sessionId).get();
+                                                            if (sessDoc.exists && sessDoc.data().status === 'banned') {
+                                                                showAlert("無法開始", "您已被老師禁止進行此測驗！請與老師聯繫。", "error");
+                                                                return;
+                                                            }
+                                                        } catch (e) {
+                                                            console.error("檢查登入狀態失敗", e);
+                                                        }
+                                                    }
+
                                                     if (!activeQuizId.value) {
                                                         showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
                                                         return;
@@ -5744,7 +5890,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     // Analytics
                                                     viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                                                     // Student
-                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
+                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin, banStudentSession, deleteStudentSession, parseStudentNameField,
                                                     studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                                                     activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                                                     progressPercent, score, studentAnswers, cheated, cheatReason, isDevToolsOpen,
