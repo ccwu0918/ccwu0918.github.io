@@ -523,7 +523,6 @@
                                                 <th class="py-3 px-4">開始時間 / 已作答時間</th>
                                                 <th class="py-3 px-4">目前狀態</th>
                                                 <th class="py-3 px-4">防弊違規狀態</th>
-                                                <th class="py-3 px-4 text-center">操作</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-50">
@@ -606,20 +605,9 @@
                                                     </span>
                                                     <span v-else class="text-slate-400 text-xs">無違規記錄</span>
                                                 </td>
-                                                <td class="py-3.5 px-4 text-center" @click.stop>
-                                                    <button v-if="sess.status !== 'banned'" @click="banStudentSession(sess)"
-                                                        class="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-200 mr-1.5 font-bold transition">
-                                                        禁止測驗
-                                                    </button>
-                                                    <span v-else class="text-xs text-rose-500 font-bold mr-1.5">已停權</span>
-                                                    <button @click="deleteStudentSession(sess)"
-                                                        class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded hover:bg-red-200 font-bold transition">
-                                                        刪除帳號
-                                                    </button>
-                                                </td>
                                             </tr>
                                             <tr v-if="activeSessions.length === 0">
-                                                <td colspan="6" class="py-8 text-center text-slate-400">
+                                                <td colspan="5" class="py-8 text-center text-slate-400">
                                                     目前尚無學生登入此測驗
                                                 </td>
                                             </tr>
@@ -1304,8 +1292,7 @@
                                         <table class="w-full text-sm text-left">
                                             <thead class="bg-slate-100 text-slate-600 font-bold">
                                                 <tr>
-                                                    <th class="p-3">學號</th>
-                                                    <th class="p-3">學生姓名 及 E-mail</th>
+                                                    <th class="p-3">學生姓名</th>
                                                     <th class="p-3">得分</th>
                                                     <th class="p-3 text-center">操作</th>
                                                 </tr>
@@ -1314,11 +1301,7 @@
                                                 <tr v-for="res in analyticsData" :key="res.id"
                                                     class="border-b border-slate-50 hover:bg-slate-50 transition cursor-pointer"
                                                     @click="viewStudentDetails(res)">
-                                                    <td class="p-3 font-medium">{{ parseStudentNameField(res.studentName).studentId }}</td>
-                                                    <td class="p-3 font-medium">
-                                                        <div class="font-bold text-slate-800">{{ parseStudentNameField(res.studentName).name }}</div>
-                                                        <div class="text-xs text-slate-400 font-mono">{{ parseStudentNameField(res.studentName).email }}</div>
-                                                    </td>
+                                                    <td class="p-3 font-medium">{{ res.studentName }}</td>
                                                     <td class="p-3 font-bold" :class="getScoreColor(res.score)">{{
                                                         res.score }}</td>
                                                     <td class="p-3 text-center" @click.stop>
@@ -1333,7 +1316,7 @@
                                                     </td>
                                                 </tr>
                                                 <tr v-if="analyticsData.length === 0">
-                                                    <td colspan="4" class="p-4 text-center text-slate-400">尚無學生作答記錄</td>
+                                                    <td colspan="3" class="p-4 text-center text-slate-400">尚無學生作答記錄</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1505,10 +1488,11 @@
                                                         {{ getQuestionOption(q, q.answer-1) }}
                                                     </span>
                                                 </div>
-                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q.explanation_en)"
+                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q['explanation-eng'])"
                                                     class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
-                                                    <span class="font-bold text-amber-800">解析：</span>{{ getQuestionExplanation(q) }}
+                                                    <span class="font-bold text-amber-800">解析：</span>{{
+                                                    getQuestionExplanation(q) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1528,19 +1512,6 @@
                             <h3 class="text-xl font-bold mb-2">{{ currentLang === 'zh' ? '準備測驗' : 'Prepare Quiz' }}</h3>
                             <p class="text-slate-400 text-sm mb-6">{{ currentLang === 'zh' ? '請使用您的 Google 帳號登入，系統將自動記錄您的身份並進入測驗' : 'Please sign in with your Google account. The system will automatically record your identity and start the quiz.' }}</p>
 
-                            <!-- 顯示「禁止重複本測驗」警告區塊 -->
-                            <div v-if="activeQuizId && quizStatusConfig.allowRepeat === false" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left animate-fade-in">
-                                <div class="flex items-start gap-2.5">
-                                    <i class="fa-solid fa-ban text-amber-500 text-lg mt-0.5"></i>
-                                    <div>
-                                        <h5 class="text-sm font-bold text-amber-800">{{ currentLang === 'zh' ? '提示：禁止重複本測驗' : 'Notice: Repeat Attempt Disabled' }}</h5>
-                                        <p class="text-xs text-amber-600 mt-1">
-                                            {{ currentLang === 'zh' ? '老師已將此測驗設定為「禁止重複測驗」。如果您之前已經提交過此測驗，將無法再次進入作答！' : 'The teacher has configured this quiz to not allow repeat attempts. If you have submitted before, you will not be allowed to take it again.' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div v-if="activeQuizId" class="mb-4 text-center">
                                 <span
                                     class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full animate-pulse">
@@ -1554,40 +1525,20 @@
                             </div>
 
                             <div v-if="user && !user.isAnonymous"
-                                class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left flex justify-between items-center">
-                                <div class="min-w-0 flex-1 pr-2">
-                                    <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
-                                    <p class="text-sm font-bold text-slate-800 mt-1 truncate" :title="studentName">{{ studentName }}</p>
-                                </div>
-                                <button @click="studentLogout"
-                                    class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-200 font-bold transition flex-shrink-0">
-                                    {{ currentLang === 'zh' ? '登出' : 'Logout' }}
-                                </button>
-                            </div>
-                            <div v-if="isDevToolsOpen" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-left">
-                                <div class="flex items-start gap-2.5">
-                                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg mt-0.5 animate-bounce"></i>
-                                    <div>
-                                        <h5 class="text-sm font-bold text-red-800">{{ currentLang === 'zh' ? '警告：已偵測到開發者工具' : 'Warning: DevTools Detected' }}</h5>
-                                        <p class="text-xs text-red-600 mt-1">
-                                            {{ currentLang === 'zh' ? '系統檢測到您已開啟瀏覽器開發人員工具 (F12)。請關閉開發人員工具，否則將無法開始測驗！' : 'System has detected that DevTools is open. Please close Developer Tools, or you will not be able to start the quiz!' }}
-                                        </p>
-                                    </div>
-                                </div>
+                                class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left">
+                                <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
+                                <p class="text-sm font-bold text-slate-800 mt-1 truncate">{{ studentName }}</p>
                             </div>
 
                             <!-- 按鈕區 -->
                             <div class="space-y-3">
                                 <!-- 學生尚未登入 Google 帳號時，隱藏此按鈕以防止不正確記錄成績 -->
-                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="isDevToolsOpen ? null : startQuiz"
-                                    :disabled="isStudentLoading || isDevToolsOpen"
-                                    :class="isDevToolsOpen ? 'bg-red-500 hover:bg-red-500 shadow-red-200 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-green-200'"
-                                    class="w-full py-3 text-white rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2">
+                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="startQuiz"
+                                    :disabled="isStudentLoading"
+                                    class="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-200 flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
-                                    <i v-else-if="isDevToolsOpen" class="fa-solid fa-triangle-exclamation"></i>
                                     <i v-else class="fa-solid fa-play"></i>
                                     <span v-if="isStudentLoading">{{ currentLang === 'zh' ? '載入中...' : 'Loading...' }}</span>
-                                    <span v-else-if="isDevToolsOpen">{{ currentLang === 'zh' ? '請關閉開發者工具以開始測驗' : 'Close DevTools to start quiz' }}</span>
                                     <span v-else>{{ currentLang === 'zh' ? '開始測驗' : 'Start Quiz' }}</span>
                                 </button>
 
@@ -2619,32 +2570,6 @@ service cloud.firestore {
 
                                         createApp({
                                             setup() {
-                                                 const getSubjectKey = () => {
-                                                     const path = window.location.pathname;
-                                                     if (path.includes('cpp-oop-quiz')) return 'cpp_oop';
-                                                     if (path.includes('info-sec-quiz')) return 'info_sec';
-                                                     if (path.includes('c-core-quiz')) return 'c_core';
-                                                     return 'c_core';
-                                                 };
-
-                                                 const parseStudentNameField = (studentName) => {
-                                                     let name = studentName || '';
-                                                     let email = '';
-                                                     let studentId = '';
-
-                                                     const match = name.match(/^(.*?)\s*\((.*?)\)$/);
-                                                     if (match) {
-                                                         name = match[1].trim();
-                                                         email = match[2].trim();
-                                                         
-                                                         const idMatch = email.toLowerCase().match(/^s(\d+)@student\.nqu\.edu\.tw$/);
-                                                         if (idMatch) {
-                                                             studentId = idMatch[1];
-                                                         }
-                                                     }
-                                                     return { name, email, studentId };
-                                                 };
-
                                                 // --- 程式碼設定區 ---
                                                 const manualConfig = {
                                                     //在這裡貼上六行firebase設定好的程式碼
@@ -2699,7 +2624,7 @@ service cloud.firestore {
                                                 const currentView = ref('landing');
 
                                                 // Settings & AI
-                                                const customApiKey = ref(localStorage.getItem('custom_api_key_' + getSubjectKey()) || '');
+                                                const customApiKey = ref(localStorage.getItem('custom_api_key') || '');
                                                 const showSettingsModal = ref(false);
                                                 const showConfigEdit = ref(false);
                                                 const showTutorialModal = ref(false);
@@ -2770,24 +2695,24 @@ service cloud.firestore {
                                                 const parseSubject = () => {
                                                     let zhName = 'C語言程式設計';
                                                     let enName = 'C Programming';
-                                                    const path = window.location.pathname;
-                                                    if (path.includes('cpp-oop-quiz')) {
-                                                        zhName = 'C++物件導向程式設計';
-                                                        enName = 'C++ Object-Oriented Programming';
-                                                    } else if (path.includes('info-sec-quiz')) {
-                                                        zhName = '資訊與網路安全概論';
-                                                        enName = 'Information & Network security';
-                                                    } else if (path.includes('c-core-quiz')) {
-                                                        zhName = 'C語言程式設計';
-                                                        enName = 'C Programming';
+                                                    const originalTitle = document.title || '';
+                                                    if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
+                                                        const parts = originalTitle.split(' - ');
+                                                        if (parts.length >= 2) {
+                                                            zhName = parts[0].trim();
+                                                            enName = parts[1].trim();
+                                                        }
                                                     } else {
-                                                        const originalTitle = document.title || '';
-                                                        if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
-                                                            const parts = originalTitle.split(' - ');
-                                                            if (parts.length >= 2) {
-                                                                zhName = parts[0].trim();
-                                                                enName = parts[1].trim();
-                                                            }
+                                                        const path = window.location.pathname;
+                                                        if (path.includes('cpp-oop-quiz')) {
+                                                            zhName = 'C++物件導向程式設計';
+                                                            enName = 'C++ Object-Oriented Programming';
+                                                        } else if (path.includes('info-sec-quiz')) {
+                                                            zhName = '資訊與網路安全概論';
+                                                            enName = 'Information & Network security';
+                                                        } else if (path.includes('c-core-quiz')) {
+                                                            zhName = 'C語言程式設計';
+                                                            enName = 'C Programming';
                                                         }
                                                     }
                                                     return { zhName, enName };
@@ -3078,7 +3003,25 @@ service cloud.firestore {
                                                 const score = ref(0);
 
                                                 // 1. 新增變數狀態 (State)
-                                                                                                 
+                                                const quizStatusConfig = computed(() => {
+                                                    const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                                                    if (activeQ) {
+                                                        return {
+                                                            activeQuizId: activeQuizId.value,
+                                                            allowRepeat: activeQ.allowRepeat !== false,
+                                                            autoGrading: activeQ.autoGrading !== false,
+                                                            showExplanations: !!activeQ.showExplanations,
+                                                            active: !!activeQ.active
+                                                        };
+                                                    }
+                                                    return {
+                                                        activeQuizId: null,
+                                                        allowRepeat: false,
+                                                        autoGrading: true,
+                                                        showExplanations: false,
+                                                        active: false
+                                                    };
+                                                });
                                                 const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                                                 const submissionTimestamp = ref(null);    // 學生交卷時間
                                                 const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -3152,7 +3095,6 @@ service cloud.firestore {
                                                     // ★★★ 在此處加入禁止開發者工具的程式碼 ★★★
                                                     // ==========================================
 
-                                                     startDevToolsDetector();
                                                     // 禁止右鍵
                                                     document.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -3188,21 +3130,21 @@ service cloud.firestore {
                                                         try {
                                                             const decoded = atob(encryptedConfig);
                                                             const configObj = JSON.parse(decoded);
-                                                            localStorage.setItem('firebase_config_' + getSubjectKey(), JSON.stringify(configObj));
+                                                            localStorage.setItem('firebase_config', JSON.stringify(configObj));
                                                             // Clean URL completely
                                                             const cleanUrl = window.location.pathname;
                                                             window.history.replaceState({}, document.title, cleanUrl);
                                                         } catch (e) { console.error("Config decode failed", e); }
                                                     }
 
-                                                    const storedConfig = localStorage.getItem('firebase_config_' + getSubjectKey());
+                                                    const storedConfig = localStorage.getItem('firebase_config');
                                                     if (storedConfig) {
                                                         try {
                                                             const config = JSON.parse(storedConfig);
                                                             if (config && config.apiKey) {
                                                                 initializeFirebase(config);
                                                             }
-                                                        } catch (e) { localStorage.removeItem('firebase_config_' + getSubjectKey()); }
+                                                        } catch (e) { localStorage.removeItem('firebase_config'); }
                                                     }
                                                 };
 
@@ -3255,7 +3197,7 @@ service cloud.firestore {
                                                     } catch (e) {
                                                         console.error(e);
                                                         showAlert("錯誤", "Firebase 初始化失敗", "error");
-                                                        localStorage.removeItem('firebase_config_' + getSubjectKey());
+                                                        localStorage.removeItem('firebase_config');
                                                         isConfigured.value = false;
                                                     }
                                                 };
@@ -3285,7 +3227,7 @@ service cloud.firestore {
                                                     });
 
                                                     if (found && config.apiKey) {
-                                                        localStorage.setItem('firebase_config_' + getSubjectKey(), JSON.stringify(config));
+                                                        localStorage.setItem('firebase_config', JSON.stringify(config));
                                                         window.location.reload();
                                                     } else {
                                                         showAlert("設定錯誤", "無法解析 Config，請確保複製完整的 firebaseConfig 物件內容。", "error");
@@ -3295,7 +3237,7 @@ service cloud.firestore {
                                                 const clearFirebaseConfig = async () => {
                                                     const confirm = await showConfirm("清除連線設定", "確定要清除本機的 Firebase 連線設定嗎？\n(這不會清除其他資料)");
                                                     if (confirm) {
-                                                        localStorage.removeItem('firebase_config_' + getSubjectKey());
+                                                        localStorage.removeItem('firebase_config');
                                                         window.location.reload();
                                                     }
                                                 };
@@ -3307,7 +3249,7 @@ service cloud.firestore {
                                                     clearTimeout(debounceTimer);
                                                     isApiKeySaved.value = false;
                                                     debounceTimer = setTimeout(() => {
-                                                        localStorage.setItem('custom_api_key_' + getSubjectKey(), newValue);
+                                                        localStorage.setItem('custom_api_key', newValue);
                                                         isApiKeySaved.value = true;
                                                         setTimeout(() => isApiKeySaved.value = false, 2000);
                                                     }, 500);
@@ -4366,29 +4308,6 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     return levelNames[level] || level;
                                                 };
 
-                                                const quizStatusConfig = computed(() => {
-                                                     let activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
-                                                     if (!activeQ && activeQuiz.value && activeQuiz.value.id === activeQuizId.value) {
-                                                         activeQ = activeQuiz.value;
-                                                     }
-                                                     if (activeQ) {
-                                                         return {
-                                                             activeQuizId: activeQuizId.value,
-                                                             allowRepeat: activeQ.allowRepeat !== false,
-                                                             autoGrading: activeQ.autoGrading !== false,
-                                                             showExplanations: !!activeQ.showExplanations,
-                                                             active: !!activeQ.active
-                                                         };
-                                                     }
-                                                     return {
-                                                         activeQuizId: null,
-                                                         allowRepeat: true,
-                                                         autoGrading: true,
-                                                         showExplanations: false,
-                                                         active: false
-                                                     };
-                                                 });
-
                                                 // 新增：編輯題庫功能
                                                 const editQuiz = async (quiz) => {
                                                     editingQuizId.value = quiz.id;
@@ -4658,19 +4577,16 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     csvContent += `總人數,${totalStudents},平均分數,${avgScore}\n\n`;
 
                                                     // Headers
-                                                    let headers = ["學號", "學生姓名", "E-mail", "得分", "交卷時間"];
+                                                    let headers = ["學生姓名", "得分", "交卷時間"];
                                                     quiz.questions.forEach((q, i) => {
                                                         headers.push(`Q${i + 1} (正確:${String.fromCharCode(64 + parseInt(q.answer))})`);
                                                     });
                                                     csvContent += headers.join(",") + "\n";
 
                                                     // Rows
-                                                         const parsedInfo = parseStudentNameField(res.studentName);
                                                     results.forEach(res => {
                                                         let row = [
-                                                            parsedInfo.studentId,
-                                                             parsedInfo.name,
-                                                             parsedInfo.email,
+                                                            res.studentName,
                                                             res.score,
                                                             formatDate(res.timestamp).replace(',', ' ') // Avoid comma issues
                                                         ];
@@ -4699,105 +4615,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     document.body.removeChild(link);
                                                 };
 
-                                                const kickStudentOut = (message) => {
-                                                     isTakingQuiz.value = false;
-                                                     cheated.value = true;
-                                                     cheatReason.value = message;
-                                                     stopDevToolsDetector();
-                                                     stopStudentHeartbeat();
-                                                     if (document.exitFullscreen) {
-                                                         try {
-                                                             const p = document.exitFullscreen();
-                                                             if (p && p.catch) p.catch(() => {});
-                                                         } catch (e) {
-                                                             console.log("Exit fullscreen failed:", e);
-                                                         }
-                                                     }
-                                                     showAlert("登入失效 / 遭停權", message, "error");
-                                                     goToView('landing');
-                                                 };
-
-                                                 const banStudentSession = async (sess) => {
-                                                     if (!db) return;
-                                                     const confirm = await showConfirm(
-                                                         "禁止測驗",
-                                                         `確定要禁止學生 ${sess.name} (${sess.email}) 進行此測驗嗎？這將會強制中斷其目前的測驗。`
-                                                     );
-                                                     if (!confirm) return;
-
-                                                     try {
-                                                         const quizId = activeQuizId.value || sess.quizId;
-                                                         const sessionId = `${sess.email.toLowerCase()}_${quizId}`;
-                                                         await db.collection('student_sessions').doc(sessionId).set({
-                                                             status: 'banned'
-                                                         }, { merge: true });
-                                                         showAlert("已停權", `已將學生 ${sess.name} 設定為禁止測驗狀態。`, "success");
-                                                     } catch (e) {
-                                                         console.error("禁止測驗失敗", e);
-                                                         showAlert("錯誤", "設定禁止測驗狀態時發生錯誤，請重試。", "error");
-                                                     }
-                                                 };
-
-                                                 const deleteStudentSession = async (sess) => {
-                                                     if (!db) return;
-                                                     const confirm = await showConfirm(
-                                                         "刪除帳號與記錄",
-                                                         `確定要刪除學生 ${sess.name} (${sess.email}) 的登入狀態與所有測驗記錄嗎？此動作無法復原！`
-                                                     );
-                                                     if (!confirm) return;
-
-                                                     try {
-                                                         const quizId = activeQuizId.value || sess.quizId;
-                                                         const sessionId = `${sess.email.toLowerCase()}_${quizId}`;
-                                                         
-                                                         await db.collection('student_sessions').doc(sessionId).delete();
-
-                                                         const resultsSnap = await db.collection('results')
-                                                             .where('quizId', '==', quizId)
-                                                             .get();
-
-                                                         const deletePromises = [];
-                                                         resultsSnap.forEach(doc => {
-                                                             const data = doc.data();
-                                                             if (data.studentEmail === sess.email || 
-                                                                 (data.studentName && data.studentName.endsWith(`(${sess.email})`))) {
-                                                                 deletePromises.push(doc.ref.delete());
-                                                             }
-                                                         });
-                                                         await Promise.all(deletePromises);
-
-                                                         showAlert("已刪除", `已成功刪除學生 ${sess.name} 的登入狀態與測驗成績記錄。`, "success");
-                                                     } catch (e) {
-                                                         console.error("刪除帳號失敗", e);
-                                                         showAlert("錯誤", "刪除帳號記錄時發生錯誤，請重試。", "error");
-                                                     }
-                                                 };
-
-                                                 let studentSessionListener = null;
-                                                 watch([activeQuizId, user], ([newQuizId, newUser]) => {
-                                                     if (studentSessionListener) {
-                                                         studentSessionListener();
-                                                         studentSessionListener = null;
-                                                     }
-                                                     if (!db || !newUser || newUser.isAnonymous || !newQuizId || isTeacherUser.value || !newUser.email) return;
-
-                                                     const emailLower = newUser.email.toLowerCase();
-                                                     const sessionId = `${emailLower}_${newQuizId}`;
-                                                     studentSessionListener = db.collection('student_sessions').doc(sessionId).onSnapshot(doc => {
-                                                         if (doc.exists) {
-                                                             const data = doc.data();
-                                                             if (data.status === 'banned') {
-                                                                 kickStudentOut("您已被老師禁止進行此測驗！");
-                                                             }
-                                                         } else {
-                                                             if (isTakingQuiz.value) {
-                                                                 kickStudentOut("您的登入狀態已被老師刪除，無法繼續進行測驗！");
-                                                             }
-                                                         }
-                                                     });
-                                                 });
-
-                                                 const deleteResult = async (result) => {
+                                                const deleteResult = async (result) => {
                                                     if (!db) return;
 
                                                     // 1. 找出該名學生在此測驗中的所有成績記錄
@@ -5091,43 +4909,25 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 };
 
 
-
-
                                                 // --- Student Logic (Updated with Anti-Cheating, Locking & Randomization) ---
 
                                                 // 防作弊狀態
                                                 const isTakingQuiz = ref(false);
-                                                const isDevToolsOpen = ref(false);
                                                 const switchCount = ref(0);
                                                 const cheated = ref(false);
                                                 const cheatReason = ref('');
 
                                                 // --- 新增：進入全螢幕函數 ---
                                                 const enterFullscreen = () => {
-                                                     try {
-                                                         const elem = document.documentElement;
-                                                         if (elem.requestFullscreen) {
-                                                             const p = elem.requestFullscreen();
-                                                             if (p && p.catch) {
-                                                                 p.catch(err => console.log("Fullscreen blocked:", err));
-                                                             }
-                                                         } else if (elem.webkitRequestFullscreen) { /* Safari */
-                                                             try {
-                                                                 elem.webkitRequestFullscreen();
-                                                             } catch (err) {
-                                                                 console.log("webkitFullscreen blocked:", err);
-                                                             }
-                                                         } else if (elem.msRequestFullscreen) { /* IE11 */
-                                                             try {
-                                                                 elem.msRequestFullscreen();
-                                                             } catch (err) {
-                                                                 console.log("msFullscreen blocked:", err);
-                                                             }
-                                                         }
-                                                     } catch (err) {
-                                                         console.log("Fullscreen request failed:", err);
-                                                     }
-                                                 };
+                                                    const elem = document.documentElement;
+                                                    if (elem.requestFullscreen) {
+                                                        elem.requestFullscreen().catch(err => console.log("Fullscreen blocked:", err));
+                                                    } else if (elem.webkitRequestFullscreen) { /* Safari */
+                                                        elem.webkitRequestFullscreen();
+                                                    } else if (elem.msRequestFullscreen) { /* IE11 */
+                                                        elem.msRequestFullscreen();
+                                                    }
+                                                };
 
                                                 // --- 新增：全螢幕狀態監聽 (限制次數) ---
                                                 const handleFullscreenChange = async () => {
@@ -5190,7 +4990,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     stopDevToolsDetector();
 
                                                     if (document.exitFullscreen) {
-                                                        (() => { try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch(e) {} })();
+                                                        document.exitFullscreen().catch(() => { });
                                                     }
 
                                                     cheated.value = true;
@@ -5250,35 +5050,28 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 const startDevToolsDetector = () => {
                                                     if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
                                                     hasDetectedCheat = false;
-                                                    isDevToolsOpen.value = false;
+
+                                                    // 1. Image getter 檢測法
+                                                    const devtoolsElement = new Image();
+                                                    Object.defineProperty(devtoolsElement, 'id', {
+                                                        get: function () {
+                                                            handleDevToolsCheat();
+                                                        }
+                                                    });
 
                                                     devtoolsDetectorInterval = setInterval(() => {
-                                                        // 只對學生進行檢測，不影響老師
-                                                        if (!isStudentView.value) {
-                                                            isDevToolsOpen.value = false;
-                                                            return;
-                                                        }
+                                                        if (!isTakingQuiz.value) return;
 
-                                                        let devtoolsCheckTriggered = false;
-
-                                                        // 1. Image getter 檢測法 (每次都建立新物件以防瀏覽器快取/殘留)
-                                                        
+                                                        // 印出此元素，如果 DevTools 開啟會自動觸發 getter
+                                                        console.log('%c', devtoolsElement);
+                                                        console.clear();
 
                                                         // 2. debugger 時間差檢測法
                                                         const start = Date.now();
                                                         debugger;
                                                         const end = Date.now();
-                                                        if (end - start > 200) {
-                                                            devtoolsCheckTriggered = true;
-                                                        }
-
-                                                        if (devtoolsCheckTriggered) {
-                                                            isDevToolsOpen.value = true;
-                                                            if (isTakingQuiz.value) {
-                                                                handleDevToolsCheat();
-                                                            }
-                                                        } else {
-                                                            isDevToolsOpen.value = false;
+                                                        if (end - start > 100) {
+                                                            handleDevToolsCheat();
                                                         }
                                                     }, 1000);
                                                 };
@@ -5344,7 +5137,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 };
 
                                                 const updateStudentSession = async (status, extraData = {}) => {
-                                                    if (!db || !user.value || user.value.isAnonymous || (isTeacherUser.value && !isStudentView.value)) return;
+                                                    if (!db || !user.value || user.value.isAnonymous || isTeacherUser.value) return;
                                                     const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
                                                     if (!quizId) return;
 
@@ -5515,15 +5308,14 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         studentName.value = `${name} (${email})`;
 
                                                         // 只有在有進行中測驗時才開始測驗，否則只加載歷史紀錄
-                                                        // 登入後，一律加載歷史紀錄，留在準備測驗畫面，讓學生手動點擊「開始測驗」以確保瀏覽器全螢幕權限正常觸發
-                                                         await fetchStudentHistory();
-                                                         updateStudentSession('login');
-                                                         startStudentHeartbeat();
-                                                         if (activeQuizId.value) {
-                                                             showAlert("登入成功", "請點擊下方的「開始測驗」按鈕開始進行測驗。", "success");
-                                                         } else {
-                                                             showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看歷史成績紀錄。", "success");
-                                                         }
+                                                        if (activeQuizId.value) {
+                                                            await startQuiz();
+                                                        } else {
+                                                            await fetchStudentHistory();
+                                                            updateStudentSession('login');
+                                                            startStudentHeartbeat();
+                                                            showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看歷史成績紀錄。", "success");
+                                                        }
                                                     } catch (error) {
                                                         if (error.code !== 'auth/popup-closed-by-user') {
                                                             console.error('Student login error:', error);
@@ -5534,48 +5326,8 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     }
                                                 };
 
-                                                 const studentLogout = async () => {
-                                                     try {
-                                                         isStudentLoading.value = true;
-                                                         stopStudentHeartbeat();
-                                                         if (db && user.value && !user.value.isAnonymous) {
-                                                             const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
-                                                             if (quizId) {
-                                                                 const emailLower = user.value.email.toLowerCase();
-                                                                 const sessionId = `${emailLower}_${quizId}`;
-                                                                 await db.collection('student_sessions').doc(sessionId).delete().catch(() => {});
-                                                             }
-                                                         }
-                                                         await auth.signOut();
-                                                         await auth.signInAnonymously();
-                                                         studentName.value = '';
-                                                         studentHistoryRecords.value = [];
-                                                         showAlert("已登出", "您已成功登出帳號。", "success");
-                                                     } catch (e) {
-                                                         console.error("Logout failed:", e);
-                                                         showAlert("錯誤", "登出失敗，請重試", "error");
-                                                     } finally {
-                                                         isStudentLoading.value = false;
-                                                     }
-                                                 };
-
                                                 // 3. 修改 startQuiz 函數 (加入啟動計時)
                                                 const startQuiz = async () => {
-                                                    // 檢查是否已被禁止測驗
-                                                    if (user.value && !user.value.isAnonymous && user.value.email) {
-                                                        const emailLower = user.value.email.toLowerCase();
-                                                        const sessionId = `${emailLower}_${activeQuizId.value}`;
-                                                        try {
-                                                            const sessDoc = await db.collection('student_sessions').doc(sessionId).get();
-                                                            if (sessDoc.exists && sessDoc.data().status === 'banned') {
-                                                                showAlert("無法開始", "您已被老師禁止進行此測驗！請與老師聯繫。", "error");
-                                                                return;
-                                                            }
-                                                        } catch (e) {
-                                                            console.error("檢查登入狀態失敗", e);
-                                                        }
-                                                    }
-
                                                     if (!activeQuizId.value) {
                                                         showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
                                                         return;
@@ -5597,7 +5349,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                                  try {
                                                                      const checkSnap = await db.collection('results')
                                                                          .where('quizId', '==', activeQuizId.value)
-                                                                         .where('studentEmail', '==', user.value.email)
+                                                                         .where('studentName', '==', studentName.value)
                                                                          .get();
                                                                      if (checkSnap.size > 0) {
                                                                          const title = currentLang.value === 'zh' ? "禁止重複測驗" : "Duplicate Attempt Forbidden";
@@ -5693,7 +5445,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     isTakingQuiz.value = false;
                                                     stopDevToolsDetector(); // 停止 DevTools 偵測
                                                     if (document.exitFullscreen) {
-                                                        (() => { try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch(e) {} })(); // 忽略錯誤
+                                                        document.exitFullscreen().catch(() => { }); // 忽略錯誤
                                                     }
 
                                                     // [新增] 停止計時並記錄時間
@@ -5895,26 +5647,21 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     if (newId && db) {
                                                         startActiveSessionsListener();
                                                         activeQuizListener = db.collection('quizzes').doc(newId).onSnapshot(doc => {
-                                                             if (doc.exists) {
-                                                                 const data = doc.data();
-                                                                 // 學生進行中或查看中時，即時同步更新狀態欄位
-                                                                 if (activeQuiz.value && activeQuiz.value.id === newId) {
-                                                                      activeQuiz.value.allowRepeat = data.allowRepeat;
-                                                                      activeQuiz.value.autoGrading = data.autoGrading;
-                                                                      activeQuiz.value.showExplanations = data.showExplanations;
-                                                                      activeQuiz.value.active = data.active;
-                                                                  } else {
-                                                                      activeQuiz.value = { id: doc.id, ...data };
-                                                                  }
-                                                             }
-                                                         }, err => {
-                                                             console.error("監聽活動中測驗變更失敗", err);
-                                                         });
-                                                     } else {
-                                                         activeQuiz.value = null;
-                                                         stopActiveSessionsListener();
-                                                     }
-                                                 });
+                                                            if (doc.exists) {
+                                                                const data = doc.data();
+                                                                // 學生進行中或查看中時，即時同步更新狀態欄位
+                                                                if (activeQuiz.value && activeQuiz.value.id === newId) {
+                                                                    activeQuiz.value.allowRepeat = data.allowRepeat;
+                                                                    activeQuiz.value.autoGrading = data.autoGrading;
+                                                                    activeQuiz.value.showExplanations = data.showExplanations;
+                                                                    activeQuiz.value.active = data.active;
+                                                                }
+                                                            }
+                                                        }, err => {
+                                                            console.error("監聽活動中測驗變更失敗", err);
+                                                        });
+                                                    }
+                                                });
 
                                                 // --- IDE Editor Helpers ---
                                                 const highlightCode = () => {
@@ -5955,10 +5702,10 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     // Analytics
                                                     viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                                                     // Student
-                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin, studentLogout, banStudentSession, deleteStudentSession, parseStudentNameField,
+                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
                                                     studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                                                     activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
-                                                    progressPercent, score, studentAnswers, cheated, cheatReason, isDevToolsOpen,
+                                                    progressPercent, score, studentAnswers, cheated, cheatReason,
                                                     quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
                                                     canShowExplanations, timeRemainingForExplanation,
                                                     // Highlighter
