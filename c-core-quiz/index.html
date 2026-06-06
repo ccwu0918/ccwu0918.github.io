@@ -1505,11 +1505,10 @@
                                                         {{ getQuestionOption(q, q.answer-1) }}
                                                     </span>
                                                 </div>
-                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q['explanation-eng'])"
+                                                <div v-if="selectedStudentResult.answers[idx] != q.answer && selectedAnalyticsQuiz.showExplanations && (q.explanation || q.explanation_en)"
                                                     class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-lg text-slate-600 text-xs leading-relaxed">
                                                     <i class="fa-regular fa-lightbulb mr-1 text-amber-500"></i>
-                                                    <span class="font-bold text-amber-800">解析：</span>{{
-                                                    getQuestionExplanation(q) }}
+                                                    <span class="font-bold text-amber-800">解析：</span>{{ getQuestionExplanation(q) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1528,6 +1527,19 @@
                             </div>
                             <h3 class="text-xl font-bold mb-2">{{ currentLang === 'zh' ? '準備測驗' : 'Prepare Quiz' }}</h3>
                             <p class="text-slate-400 text-sm mb-6">{{ currentLang === 'zh' ? '請使用您的 Google 帳號登入，系統將自動記錄您的身份並進入測驗' : 'Please sign in with your Google account. The system will automatically record your identity and start the quiz.' }}</p>
+
+                            <!-- 顯示「禁止重複本測驗」警告區塊 -->
+                            <div v-if="activeQuizId && quizStatusConfig.allowRepeat === false" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left animate-fade-in">
+                                <div class="flex items-start gap-2.5">
+                                    <i class="fa-solid fa-ban text-amber-500 text-lg mt-0.5"></i>
+                                    <div>
+                                        <h5 class="text-sm font-bold text-amber-800">{{ currentLang === 'zh' ? '提示：禁止重複本測驗' : 'Notice: Repeat Attempt Disabled' }}</h5>
+                                        <p class="text-xs text-amber-600 mt-1">
+                                            {{ currentLang === 'zh' ? '老師已將此測驗設定為「禁止重複測驗」。如果您之前已經提交過此測驗，將無法再次進入作答！' : 'The teacher has configured this quiz to not allow repeat attempts. If you have submitted before, you will not be allowed to take it again.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div v-if="activeQuizId" class="mb-4 text-center">
                                 <span
@@ -3060,25 +3072,7 @@ service cloud.firestore {
                                                 const score = ref(0);
 
                                                 // 1. 新增變數狀態 (State)
-                                                const quizStatusConfig = computed(() => {
-                                                    const activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
-                                                    if (activeQ) {
-                                                        return {
-                                                            activeQuizId: activeQuizId.value,
-                                                            allowRepeat: activeQ.allowRepeat !== false,
-                                                            autoGrading: activeQ.autoGrading !== false,
-                                                            showExplanations: !!activeQ.showExplanations,
-                                                            active: !!activeQ.active
-                                                        };
-                                                    }
-                                                    return {
-                                                        activeQuizId: null,
-                                                        allowRepeat: false,
-                                                        autoGrading: true,
-                                                        showExplanations: false,
-                                                        active: false
-                                                    };
-                                                });
+                                                                                                 
                                                 const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                                                 const submissionTimestamp = ref(null);    // 學生交卷時間
                                                 const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -4366,6 +4360,29 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     return levelNames[level] || level;
                                                 };
 
+                                                const quizStatusConfig = computed(() => {
+                                                     let activeQ = quizzes.value.find(q => q.id === activeQuizId.value);
+                                                     if (!activeQ && activeQuiz.value && activeQuiz.value.id === activeQuizId.value) {
+                                                         activeQ = activeQuiz.value;
+                                                     }
+                                                     if (activeQ) {
+                                                         return {
+                                                             activeQuizId: activeQuizId.value,
+                                                             allowRepeat: activeQ.allowRepeat !== false,
+                                                             autoGrading: activeQ.autoGrading !== false,
+                                                             showExplanations: !!activeQ.showExplanations,
+                                                             active: !!activeQ.active
+                                                         };
+                                                     }
+                                                     return {
+                                                         activeQuizId: null,
+                                                         allowRepeat: true,
+                                                         autoGrading: true,
+                                                         showExplanations: false,
+                                                         active: false
+                                                     };
+                                                 });
+
                                                 // 新增：編輯題庫功能
                                                 const editQuiz = async (quiz) => {
                                                     editingQuizId.value = quiz.id;
@@ -5537,7 +5554,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                                  try {
                                                                      const checkSnap = await db.collection('results')
                                                                          .where('quizId', '==', activeQuizId.value)
-                                                                         .where('studentName', '==', studentName.value)
+                                                                         .where('studentEmail', '==', user.value.email)
                                                                          .get();
                                                                      if (checkSnap.size > 0) {
                                                                          const title = currentLang.value === 'zh' ? "禁止重複測驗" : "Duplicate Attempt Forbidden";
@@ -5835,21 +5852,25 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     if (newId && db) {
                                                         startActiveSessionsListener();
                                                         activeQuizListener = db.collection('quizzes').doc(newId).onSnapshot(doc => {
-                                                            if (doc.exists) {
-                                                                const data = doc.data();
-                                                                // 學生進行中或查看中時，即時同步更新狀態欄位
-                                                                if (activeQuiz.value && activeQuiz.value.id === newId) {
-                                                                    activeQuiz.value.allowRepeat = data.allowRepeat;
-                                                                    activeQuiz.value.autoGrading = data.autoGrading;
-                                                                    activeQuiz.value.showExplanations = data.showExplanations;
-                                                                    activeQuiz.value.active = data.active;
-                                                                }
-                                                            }
-                                                        }, err => {
-                                                            console.error("監聽活動中測驗變更失敗", err);
-                                                        });
-                                                    }
-                                                });
+                                                             if (doc.exists) {
+                                                                 const data = doc.data();
+                                                                 // 學生進行中或查看中時，即時同步更新狀態欄位
+                                                                 if (activeQuiz.value && activeQuiz.value.id === newId) {
+                                                                      activeQuiz.value.allowRepeat = data.allowRepeat;
+                                                                      activeQuiz.value.autoGrading = data.autoGrading;
+                                                                      activeQuiz.value.showExplanations = data.showExplanations;
+                                                                      activeQuiz.value.active = data.active;
+                                                                  } else {
+                                                                      activeQuiz.value = { id: doc.id, ...data };
+                                                                  }
+                                                             }
+                                                         }, err => {
+                                                             console.error("監聽活動中測驗變更失敗", err);
+                                                         });
+                                                     } else {
+                                                         activeQuiz.value = null;
+                                                     }
+                                                 });
 
                                                 // --- IDE Editor Helpers ---
                                                 const highlightCode = () => {
