@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C語言程式設計 - C Programming</title>
+    <title>資訊與網路安全概論 - Information & Network security</title>
     <!-- Google Fonts: Noto Sans TC & Fira Code (IDE Font) -->
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap"
@@ -1529,30 +1529,16 @@
                                 <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
                                 <p class="text-sm font-bold text-slate-800 mt-1 truncate">{{ studentName }}</p>
                             </div>
-                            <div v-if="isDevToolsOpen" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-left">
-                                <div class="flex items-start gap-2.5">
-                                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg mt-0.5 animate-bounce"></i>
-                                    <div>
-                                        <h5 class="text-sm font-bold text-red-800">{{ currentLang === 'zh' ? '警告：已偵測到開發者工具' : 'Warning: DevTools Detected' }}</h5>
-                                        <p class="text-xs text-red-600 mt-1">
-                                            {{ currentLang === 'zh' ? '系統檢測到您已開啟瀏覽器開發人員工具 (F12)。請關閉開發人員工具，否則將無法開始測驗！' : 'System has detected that DevTools is open. Please close Developer Tools, or you will not be able to start the quiz!' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- 按鈕區 -->
                             <div class="space-y-3">
                                 <!-- 學生尚未登入 Google 帳號時，隱藏此按鈕以防止不正確記錄成績 -->
-                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="isDevToolsOpen ? null : startQuiz"
-                                    :disabled="isStudentLoading || isDevToolsOpen"
-                                    :class="isDevToolsOpen ? 'bg-red-500 hover:bg-red-500 shadow-red-200 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-green-200'"
-                                    class="w-full py-3 text-white rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2">
+                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="startQuiz"
+                                    :disabled="isStudentLoading"
+                                    class="w-full py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-200 flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
-                                    <i v-else-if="isDevToolsOpen" class="fa-solid fa-triangle-exclamation"></i>
                                     <i v-else class="fa-solid fa-play"></i>
                                     <span v-if="isStudentLoading">{{ currentLang === 'zh' ? '載入中...' : 'Loading...' }}</span>
-                                    <span v-else-if="isDevToolsOpen">{{ currentLang === 'zh' ? '請關閉開發者工具以開始測驗' : 'Close DevTools to start quiz' }}</span>
                                     <span v-else>{{ currentLang === 'zh' ? '開始測驗' : 'Start Quiz' }}</span>
                                 </button>
 
@@ -2707,26 +2693,26 @@ service cloud.firestore {
                                                 const currentEditingQuestionIndex = ref(-1);
                                                 // 動態解析學科中英文名稱
                                                 const parseSubject = () => {
-                                                    let zhName = 'C語言程式設計';
-                                                    let enName = 'C Programming';
-                                                    const path = window.location.pathname;
-                                                    if (path.includes('cpp-oop-quiz')) {
-                                                        zhName = 'C++物件導向程式設計';
-                                                        enName = 'C++ Object-Oriented Programming';
-                                                    } else if (path.includes('info-sec-quiz')) {
-                                                        zhName = '資訊與網路安全概論';
-                                                        enName = 'Information & Network security';
-                                                    } else if (path.includes('c-core-quiz')) {
-                                                        zhName = 'C語言程式設計';
-                                                        enName = 'C Programming';
+                                                    let zhName = '資訊與網路安全概論';
+                                                    let enName = 'Information & Network security';
+                                                    const originalTitle = document.title || '';
+                                                    if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
+                                                        const parts = originalTitle.split(' - ');
+                                                        if (parts.length >= 2) {
+                                                            zhName = parts[0].trim();
+                                                            enName = parts[1].trim();
+                                                        }
                                                     } else {
-                                                        const originalTitle = document.title || '';
-                                                        if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
-                                                            const parts = originalTitle.split(' - ');
-                                                            if (parts.length >= 2) {
-                                                                zhName = parts[0].trim();
-                                                                enName = parts[1].trim();
-                                                            }
+                                                        const path = window.location.pathname;
+                                                        if (path.includes('cpp-oop-quiz')) {
+                                                            zhName = 'C++物件導向程式設計';
+                                                            enName = 'C++ Object-Oriented Programming';
+                                                        } else if (path.includes('info-sec-quiz')) {
+                                                            zhName = '資訊與網路安全概論';
+                                                            enName = 'Information & Network security';
+                                                        } else if (path.includes('c-core-quiz')) {
+                                                            zhName = 'C語言程式設計';
+                                                            enName = 'C Programming';
                                                         }
                                                     }
                                                     return { zhName, enName };
@@ -3109,7 +3095,6 @@ service cloud.firestore {
                                                     // ★★★ 在此處加入禁止開發者工具的程式碼 ★★★
                                                     // ==========================================
 
-                                                     startDevToolsDetector();
                                                     // 禁止右鍵
                                                     document.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -4924,13 +4909,10 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 };
 
 
-
-
                                                 // --- Student Logic (Updated with Anti-Cheating, Locking & Randomization) ---
 
                                                 // 防作弊狀態
                                                 const isTakingQuiz = ref(false);
-                                                const isDevToolsOpen = ref(false);
                                                 const switchCount = ref(0);
                                                 const cheated = ref(false);
                                                 const cheatReason = ref('');
@@ -5068,25 +5050,17 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 const startDevToolsDetector = () => {
                                                     if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
                                                     hasDetectedCheat = false;
-                                                    isDevToolsOpen.value = false;
 
                                                     // 1. Image getter 檢測法
-                                                    let devtoolsCheckTriggered = false;
                                                     const devtoolsElement = new Image();
                                                     Object.defineProperty(devtoolsElement, 'id', {
                                                         get: function () {
-                                                            devtoolsCheckTriggered = true;
+                                                            handleDevToolsCheat();
                                                         }
                                                     });
 
                                                     devtoolsDetectorInterval = setInterval(() => {
-                                                        // 只對學生進行檢測，不影響老師
-                                                        if (!isStudentView.value) {
-                                                            isDevToolsOpen.value = false;
-                                                            return;
-                                                        }
-
-                                                        devtoolsCheckTriggered = false;
+                                                        if (!isTakingQuiz.value) return;
 
                                                         // 印出此元素，如果 DevTools 開啟會自動觸發 getter
                                                         console.log('%c', devtoolsElement);
@@ -5097,16 +5071,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         debugger;
                                                         const end = Date.now();
                                                         if (end - start > 100) {
-                                                            devtoolsCheckTriggered = true;
-                                                        }
-
-                                                        if (devtoolsCheckTriggered) {
-                                                            isDevToolsOpen.value = true;
-                                                            if (isTakingQuiz.value) {
-                                                                handleDevToolsCheat();
-                                                            }
-                                                        } else {
-                                                            isDevToolsOpen.value = false;
+                                                            handleDevToolsCheat();
                                                         }
                                                     }, 1000);
                                                 };
@@ -5740,7 +5705,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin,
                                                     studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                                                     activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
-                                                    progressPercent, score, studentAnswers, cheated, cheatReason, isDevToolsOpen,
+                                                    progressPercent, score, studentAnswers, cheated, cheatReason,
                                                     quizStatusConfig, quizTimerDisplay, toggleExplanations, toggleAutoGrading, toggleAllowRepeat,
                                                     canShowExplanations, timeRemainingForExplanation,
                                                     // Highlighter
