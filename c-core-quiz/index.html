@@ -1554,9 +1554,15 @@
                             </div>
 
                             <div v-if="user && !user.isAnonymous"
-                                class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left">
-                                <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
-                                <p class="text-sm font-bold text-slate-800 mt-1 truncate">{{ studentName }}</p>
+                                class="bg-sky-50 border border-sky-100 p-4 rounded-2xl mb-4 text-left flex justify-between items-center">
+                                <div class="min-w-0 flex-1 pr-2">
+                                    <p class="text-xs font-bold text-sky-700">{{ currentLang === 'zh' ? '已登入身分：' : 'Logged in as:' }}</p>
+                                    <p class="text-sm font-bold text-slate-800 mt-1 truncate" :title="studentName">{{ studentName }}</p>
+                                </div>
+                                <button @click="studentLogout"
+                                    class="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-200 font-bold transition flex-shrink-0">
+                                    {{ currentLang === 'zh' ? '登出' : 'Logout' }}
+                                </button>
                             </div>
                             <div v-if="isDevToolsOpen" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-left">
                                 <div class="flex items-start gap-2.5">
@@ -5256,22 +5262,13 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         let devtoolsCheckTriggered = false;
 
                                                         // 1. Image getter 檢測法 (每次都建立新物件以防瀏覽器快取/殘留)
-                                                        const devtoolsElement = new Image();
-                                                        Object.defineProperty(devtoolsElement, 'id', {
-                                                            get: function () {
-                                                                devtoolsCheckTriggered = true;
-                                                            }
-                                                        });
-
-                                                        // 印出此元素，如果 DevTools 開啟會自動觸發 getter
-                                                        console.log('%c', devtoolsElement);
-                                                        console.clear();
+                                                        
 
                                                         // 2. debugger 時間差檢測法
                                                         const start = Date.now();
                                                         debugger;
                                                         const end = Date.now();
-                                                        if (end - start > 100) {
+                                                        if (end - start > 200) {
                                                             devtoolsCheckTriggered = true;
                                                         }
 
@@ -5518,14 +5515,15 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         studentName.value = `${name} (${email})`;
 
                                                         // 只有在有進行中測驗時才開始測驗，否則只加載歷史紀錄
-                                                        if (activeQuizId.value) {
-                                                            await startQuiz();
-                                                        } else {
-                                                            await fetchStudentHistory();
-                                                            updateStudentSession('login');
-                                                            startStudentHeartbeat();
-                                                            showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看歷史成績紀錄。", "success");
-                                                        }
+                                                        // 登入後，一律加載歷史紀錄，留在準備測驗畫面，讓學生手動點擊「開始測驗」以確保瀏覽器全螢幕權限正常觸發
+                                                         await fetchStudentHistory();
+                                                         updateStudentSession('login');
+                                                         startStudentHeartbeat();
+                                                         if (activeQuizId.value) {
+                                                             showAlert("登入成功", "請點擊下方的「開始測驗」按鈕開始進行測驗。", "success");
+                                                         } else {
+                                                             showAlert("已登入", "您已成功登入 Google 帳號。目前沒有進行中的測驗，您可在下方查看歷史成績紀錄。", "success");
+                                                         }
                                                     } catch (error) {
                                                         if (error.code !== 'auth/popup-closed-by-user') {
                                                             console.error('Student login error:', error);
@@ -5535,6 +5533,31 @@ Output format must be a strict JSON Array without Markdown markers:
                                                         isStudentLoading.value = false;
                                                     }
                                                 };
+
+                                                 const studentLogout = async () => {
+                                                     try {
+                                                         isStudentLoading.value = true;
+                                                         stopStudentHeartbeat();
+                                                         if (db && user.value && !user.value.isAnonymous) {
+                                                             const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
+                                                             if (quizId) {
+                                                                 const emailLower = user.value.email.toLowerCase();
+                                                                 const sessionId = \`\${emailLower}_\${quizId}\`;
+                                                                 await db.collection('student_sessions').doc(sessionId).delete().catch(() => {});
+                                                             }
+                                                         }
+                                                         await auth.signOut();
+                                                         await auth.signInAnonymously();
+                                                         studentName.value = '';
+                                                         studentHistoryRecords.value = [];
+                                                         showAlert("已登出", "您已成功登出帳號。", "success");
+                                                     } catch (e) {
+                                                         console.error("Logout failed:", e);
+                                                         showAlert("錯誤", "登出失敗，請重試", "error");
+                                                     } finally {
+                                                         isStudentLoading.value = false;
+                                                     }
+                                                 };
 
                                                 // 3. 修改 startQuiz 函數 (加入啟動計時)
                                                 const startQuiz = async () => {
@@ -5931,7 +5954,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     // Analytics
                                                     viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV, deleteResult,
                                                     // Student
-                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin, banStudentSession, deleteStudentSession, parseStudentNameField,
+                                                    studentName, selectedQuizId, startQuiz, isStudentLoading, studentGoogleLogin, studentLogout, banStudentSession, deleteStudentSession, parseStudentNameField,
                                                     studentHistoryRecords, viewHistoricResult, loadingHistoryId,
                                                     activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                                                     progressPercent, score, studentAnswers, cheated, cheatReason, isDevToolsOpen,
