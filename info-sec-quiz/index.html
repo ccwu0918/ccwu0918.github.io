@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
+                                                        } else if (path.includes('info-sec-quiz')) {
+                                                            zhName = '資訊與網路安全概論';
+                                                            enName = 'Information & Network security';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C語言程式設計 - C Programming</title>
+    <title>資訊與網路安全概論 - Information & Network security</title>
     <!-- Google Fonts: Noto Sans TC & Fira Code (IDE Font) -->
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap"
@@ -2693,8 +2695,8 @@ service cloud.firestore {
                                                 const currentEditingQuestionIndex = ref(-1);
                                                 // 動態解析學科中英文名稱
                                                 const parseSubject = () => {
-                                                    let zhName = 'C語言程式設計';
-                                                    let enName = 'C Programming';
+                                                    let zhName = '資訊與網路安全概論';
+                                                    let enName = 'Information & Network security';
                                                     const originalTitle = document.title || '';
                                                     if (originalTitle && originalTitle.includes(' - ') && !originalTitle.startsWith('⚠️')) {
                                                         const parts = originalTitle.split(' - ');
