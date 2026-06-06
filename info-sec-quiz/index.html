@@ -4751,7 +4751,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                          studentSessionListener();
                                                          studentSessionListener = null;
                                                      }
-                                                     if (!db || !newUser || newUser.isAnonymous || !newQuizId || isTeacherUser.value) return;
+                                                     if (!db || !newUser || newUser.isAnonymous || !newQuizId || isTeacherUser.value || !newUser.email) return;
 
                                                      const emailLower = newUser.email.toLowerCase();
                                                      const sessionId = `${emailLower}_${newQuizId}`;
@@ -5502,7 +5502,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 // 3. 修改 startQuiz 函數 (加入啟動計時)
                                                 const startQuiz = async () => {
                                                     // 檢查是否已被禁止測驗
-                                                    if (user.value && !user.value.isAnonymous) {
+                                                    if (user.value && !user.value.isAnonymous && user.value.email) {
                                                         const emailLower = user.value.email.toLowerCase();
                                                         const sessionId = `${emailLower}_${activeQuizId.value}`;
                                                         try {
