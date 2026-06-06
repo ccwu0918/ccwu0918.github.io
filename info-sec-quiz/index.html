@@ -3791,11 +3791,16 @@ service cloud.firestore {
                             for (const doc of snapshot.docs) {
                                 const result = { id: doc.id, ...doc.data() };
                                 let quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                let source = 'memory';
                                 if (!quizObj) {
                                     const quizDoc = await db.collection('quizzes').doc(result.quizId).get();
-                                    if (quizDoc.exists) quizObj = quizDoc.data();
+                                    if (quizDoc.exists) {
+                                        quizObj = quizDoc.data();
+                                        source = 'db';
+                                    }
                                 }
                                 const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
+                                console.log('[Manual Sweep] Result:', result.studentName, 'Quiz:', result.quizId, 'autoGrading:', quizObj ? quizObj.autoGrading : 'not found', 'source:', source, 'autoGradingEnabled:', autoGradingEnabled);
                                 if (autoGradingEnabled) {
                                     await gradeResult(result);
                                 }
@@ -3826,11 +3831,16 @@ service cloud.firestore {
                                     for (const result of pending) {
                                         // 檢索該 result 對應之試卷，判斷是否啟用自動批改 (預設為 true)
                                         let quizObj = quizzes.value.find(q => q.id === result.quizId);
+                                        let source = 'memory';
                                         if (!quizObj) {
                                             const quizDoc = await db.collection('quizzes').doc(result.quizId).get();
-                                            if (quizDoc.exists) quizObj = quizDoc.data();
+                                            if (quizDoc.exists) {
+                                                quizObj = quizDoc.data();
+                                                source = 'db';
+                                            }
                                         }
                                         const autoGradingEnabled = quizObj ? (quizObj.autoGrading !== false) : true;
+                                        console.log('[Real-time Listener] Result:', result.studentName, 'Quiz:', result.quizId, 'autoGrading:', quizObj ? quizObj.autoGrading : 'not found', 'source:', source, 'autoGradingEnabled:', autoGradingEnabled);
                                         if (autoGradingEnabled) {
                                             await gradeResult(result);
                                         }
