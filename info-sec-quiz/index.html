@@ -4700,7 +4700,12 @@ Output format must be a strict JSON Array without Markdown markers:
                                                      stopDevToolsDetector();
                                                      stopStudentHeartbeat();
                                                      if (document.exitFullscreen) {
-                                                         document.exitFullscreen().catch(() => { });
+                                                         try {
+                                                             const p = document.exitFullscreen();
+                                                             if (p && p.catch) p.catch(() => {});
+                                                         } catch (e) {
+                                                             console.log("Exit fullscreen failed:", e);
+                                                         }
                                                      }
                                                      showAlert("登入失效 / 遭停權", message, "error");
                                                      goToView('landing');
@@ -5093,15 +5098,30 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 // --- 新增：進入全螢幕函數 ---
                                                 const enterFullscreen = () => {
-                                                    const elem = document.documentElement;
-                                                    if (elem.requestFullscreen) {
-                                                        elem.requestFullscreen().catch(err => console.log("Fullscreen blocked:", err));
-                                                    } else if (elem.webkitRequestFullscreen) { /* Safari */
-                                                        elem.webkitRequestFullscreen();
-                                                    } else if (elem.msRequestFullscreen) { /* IE11 */
-                                                        elem.msRequestFullscreen();
-                                                    }
-                                                };
+                                                     try {
+                                                         const elem = document.documentElement;
+                                                         if (elem.requestFullscreen) {
+                                                             const p = elem.requestFullscreen();
+                                                             if (p && p.catch) {
+                                                                 p.catch(err => console.log("Fullscreen blocked:", err));
+                                                             }
+                                                         } else if (elem.webkitRequestFullscreen) { /* Safari */
+                                                             try {
+                                                                 elem.webkitRequestFullscreen();
+                                                             } catch (err) {
+                                                                 console.log("webkitFullscreen blocked:", err);
+                                                             }
+                                                         } else if (elem.msRequestFullscreen) { /* IE11 */
+                                                             try {
+                                                                 elem.msRequestFullscreen();
+                                                             } catch (err) {
+                                                                 console.log("msFullscreen blocked:", err);
+                                                             }
+                                                         }
+                                                     } catch (err) {
+                                                         console.log("Fullscreen request failed:", err);
+                                                     }
+                                                 };
 
                                                 // --- 新增：全螢幕狀態監聽 (限制次數) ---
                                                 const handleFullscreenChange = async () => {
@@ -5164,7 +5184,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     stopDevToolsDetector();
 
                                                     if (document.exitFullscreen) {
-                                                        document.exitFullscreen().catch(() => { });
+                                                        (() => { try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch(e) {} })();
                                                     }
 
                                                     cheated.value = true;
@@ -5650,7 +5670,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     isTakingQuiz.value = false;
                                                     stopDevToolsDetector(); // 停止 DevTools 偵測
                                                     if (document.exitFullscreen) {
-                                                        document.exitFullscreen().catch(() => { }); // 忽略錯誤
+                                                        (() => { try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch(e) {} })(); // 忽略錯誤
                                                     }
 
                                                     // [新增] 停止計時並記錄時間
