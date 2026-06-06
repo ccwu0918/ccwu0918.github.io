@@ -2584,6 +2584,14 @@ service cloud.firestore {
 
                                         createApp({
                                             setup() {
+                                                 const getSubjectKey = () => {
+                                                     const path = window.location.pathname;
+                                                     if (path.includes('cpp-oop-quiz')) return 'cpp_oop';
+                                                     if (path.includes('info-sec-quiz')) return 'info_sec';
+                                                     if (path.includes('c-core-quiz')) return 'c_core';
+                                                     return 'c_core';
+                                                 };
+
                                                 // --- 程式碼設定區 ---
                                                 const manualConfig = {
                                                     //在這裡貼上六行firebase設定好的程式碼
@@ -2638,7 +2646,7 @@ service cloud.firestore {
                                                 const currentView = ref('landing');
 
                                                 // Settings & AI
-                                                const customApiKey = ref(localStorage.getItem('custom_api_key') || '');
+                                                const customApiKey = ref(localStorage.getItem('custom_api_key_' + getSubjectKey()) || '');
                                                 const showSettingsModal = ref(false);
                                                 const showConfigEdit = ref(false);
                                                 const showTutorialModal = ref(false);
@@ -3145,21 +3153,21 @@ service cloud.firestore {
                                                         try {
                                                             const decoded = atob(encryptedConfig);
                                                             const configObj = JSON.parse(decoded);
-                                                            localStorage.setItem('firebase_config', JSON.stringify(configObj));
+                                                            localStorage.setItem('firebase_config_' + getSubjectKey(), JSON.stringify(configObj));
                                                             // Clean URL completely
                                                             const cleanUrl = window.location.pathname;
                                                             window.history.replaceState({}, document.title, cleanUrl);
                                                         } catch (e) { console.error("Config decode failed", e); }
                                                     }
 
-                                                    const storedConfig = localStorage.getItem('firebase_config');
+                                                    const storedConfig = localStorage.getItem('firebase_config_' + getSubjectKey());
                                                     if (storedConfig) {
                                                         try {
                                                             const config = JSON.parse(storedConfig);
                                                             if (config && config.apiKey) {
                                                                 initializeFirebase(config);
                                                             }
-                                                        } catch (e) { localStorage.removeItem('firebase_config'); }
+                                                        } catch (e) { localStorage.removeItem('firebase_config_' + getSubjectKey()); }
                                                     }
                                                 };
 
@@ -3212,7 +3220,7 @@ service cloud.firestore {
                                                     } catch (e) {
                                                         console.error(e);
                                                         showAlert("錯誤", "Firebase 初始化失敗", "error");
-                                                        localStorage.removeItem('firebase_config');
+                                                        localStorage.removeItem('firebase_config_' + getSubjectKey());
                                                         isConfigured.value = false;
                                                     }
                                                 };
@@ -3242,7 +3250,7 @@ service cloud.firestore {
                                                     });
 
                                                     if (found && config.apiKey) {
-                                                        localStorage.setItem('firebase_config', JSON.stringify(config));
+                                                        localStorage.setItem('firebase_config_' + getSubjectKey(), JSON.stringify(config));
                                                         window.location.reload();
                                                     } else {
                                                         showAlert("設定錯誤", "無法解析 Config，請確保複製完整的 firebaseConfig 物件內容。", "error");
@@ -3252,7 +3260,7 @@ service cloud.firestore {
                                                 const clearFirebaseConfig = async () => {
                                                     const confirm = await showConfirm("清除連線設定", "確定要清除本機的 Firebase 連線設定嗎？\n(這不會清除其他資料)");
                                                     if (confirm) {
-                                                        localStorage.removeItem('firebase_config');
+                                                        localStorage.removeItem('firebase_config_' + getSubjectKey());
                                                         window.location.reload();
                                                     }
                                                 };
@@ -3264,7 +3272,7 @@ service cloud.firestore {
                                                     clearTimeout(debounceTimer);
                                                     isApiKeySaved.value = false;
                                                     debounceTimer = setTimeout(() => {
-                                                        localStorage.setItem('custom_api_key', newValue);
+                                                        localStorage.setItem('custom_api_key_' + getSubjectKey(), newValue);
                                                         isApiKeySaved.value = true;
                                                         setTimeout(() => isApiKeySaved.value = false, 2000);
                                                     }, 500);
@@ -5070,15 +5078,6 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     hasDetectedCheat = false;
                                                     isDevToolsOpen.value = false;
 
-                                                    // 1. Image getter 檢測法
-                                                    let devtoolsCheckTriggered = false;
-                                                    const devtoolsElement = new Image();
-                                                    Object.defineProperty(devtoolsElement, 'id', {
-                                                        get: function () {
-                                                            devtoolsCheckTriggered = true;
-                                                        }
-                                                    });
-
                                                     devtoolsDetectorInterval = setInterval(() => {
                                                         // 只對學生進行檢測，不影響老師
                                                         if (!isStudentView.value) {
@@ -5086,7 +5085,15 @@ Output format must be a strict JSON Array without Markdown markers:
                                                             return;
                                                         }
 
-                                                        devtoolsCheckTriggered = false;
+                                                        let devtoolsCheckTriggered = false;
+
+                                                        // 1. Image getter 檢測法 (每次都建立新物件以防瀏覽器快取/殘留)
+                                                        const devtoolsElement = new Image();
+                                                        Object.defineProperty(devtoolsElement, 'id', {
+                                                            get: function () {
+                                                                devtoolsCheckTriggered = true;
+                                                            }
+                                                        });
 
                                                         // 印出此元素，如果 DevTools 開啟會自動觸發 getter
                                                         console.log('%c', devtoolsElement);
