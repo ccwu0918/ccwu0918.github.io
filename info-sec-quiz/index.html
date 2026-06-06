@@ -5542,7 +5542,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                              const quizId = activeQuizId.value || (activeQuiz.value ? activeQuiz.value.id : null);
                                                              if (quizId) {
                                                                  const emailLower = user.value.email.toLowerCase();
-                                                                 const sessionId = \`\${emailLower}_\${quizId}\`;
+                                                                 const sessionId = `${emailLower}_${quizId}`;
                                                                  await db.collection('student_sessions').doc(sessionId).delete().catch(() => {});
                                                              }
                                                          }
@@ -5912,6 +5912,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                                          });
                                                      } else {
                                                          activeQuiz.value = null;
+                                                         stopActiveSessionsListener();
                                                      }
                                                  });
 
