@@ -1579,8 +1579,8 @@
                             <!-- 按鈕區 -->
                             <div class="space-y-3">
                                 <!-- 學生尚未登入 Google 帳號時，隱藏此按鈕以防止不正確記錄成績 -->
-                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="startQuiz"
-                                    :disabled="isStudentLoading"
+                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="isDevToolsOpen ? null : startQuiz"
+                                    :disabled="isStudentLoading || isDevToolsOpen"
                                     :class="isDevToolsOpen ? 'bg-red-500 hover:bg-red-500 shadow-red-200 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-green-200'"
                                     class="w-full py-3 text-white rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
@@ -3149,22 +3149,21 @@ service cloud.firestore {
                                                     // ★★★ 在此處加入禁止開發者工具的程式碼 ★★★
                                                     // ==========================================
 
-                                                     // 暫時停用以供偵錯：
-                                                     // startDevToolsDetector();
-                                                     // 禁止右鍵
-                                                     // document.addEventListener('contextmenu', e => e.preventDefault());
+                                                     startDevToolsDetector();
+                                                    // 禁止右鍵
+                                                    document.addEventListener('contextmenu', e => e.preventDefault());
 
-                                                     // 禁止 F12 與相關快捷鍵
-                                                     // document.addEventListener('keydown', (e) => {
-                                                     //     if (
-                                                     //         e.key === 'F12' ||
-                                                     //         (e.ctrlKey && (e.key === 'u' || e.key === 'U')) ||
-                                                     //         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()))
-                                                     //     ) {
-                                                     //         e.preventDefault();
-                                                     //         return false;
-                                                     //     }
-                                                     // });
+                                                    // 禁止 F12 與相關快捷鍵
+                                                    document.addEventListener('keydown', (e) => {
+                                                        if (
+                                                            e.key === 'F12' ||
+                                                            (e.ctrlKey && (e.key === 'u' || e.key === 'U')) ||
+                                                            (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()))
+                                                        ) {
+                                                            e.preventDefault();
+                                                            return false;
+                                                        }
+                                                    });
                                                     // ==========================================
 
                                                     // Highlight code on mount and updates
@@ -5242,12 +5241,48 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 let hasDetectedCheat = false; // 防止重複觸發
 
                                                 const handleDevToolsCheat = async () => {
-                                                    // 暫時停用以供偵錯
+                                                    if (hasDetectedCheat || !isTakingQuiz.value) return;
+                                                    hasDetectedCheat = true;
+
+                                                    stopDevToolsDetector();
+                                                    showAlert("嚴重違規！", "偵測到您嘗試開啟開發者工具 (F12)！\n系統已強制將您交卷，並以 0 分記錄此作弊違規。", "error");
+                                                    await forceSubmitQuizByCheat("開啟開發者工具 (DevTools)");
                                                 };
 
                                                 const startDevToolsDetector = () => {
-                                                    // 暫時停用 DevTools 偵測以供偵錯
+                                                    if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
+                                                    hasDetectedCheat = false;
                                                     isDevToolsOpen.value = false;
+
+                                                    devtoolsDetectorInterval = setInterval(() => {
+                                                        // 只對學生進行檢測，不影響老師
+                                                        if (!isStudentView.value) {
+                                                            isDevToolsOpen.value = false;
+                                                            return;
+                                                        }
+
+                                                        let devtoolsCheckTriggered = false;
+
+                                                        // 1. Image getter 檢測法 (每次都建立新物件以防瀏覽器快取/殘留)
+                                                        
+
+                                                        // 2. debugger 時間差檢測法
+                                                        const start = Date.now();
+                                                        debugger;
+                                                        const end = Date.now();
+                                                        if (end - start > 200) {
+                                                            devtoolsCheckTriggered = true;
+                                                        }
+
+                                                        if (devtoolsCheckTriggered) {
+                                                            isDevToolsOpen.value = true;
+                                                            if (isTakingQuiz.value) {
+                                                                handleDevToolsCheat();
+                                                            }
+                                                        } else {
+                                                            isDevToolsOpen.value = false;
+                                                        }
+                                                    }, 1000);
                                                 };
 
                                                 const stopDevToolsDetector = () => {
