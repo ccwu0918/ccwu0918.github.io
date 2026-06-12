@@ -1579,8 +1579,8 @@
                             <!-- 按鈕區 -->
                             <div class="space-y-3">
                                 <!-- 學生尚未登入 Google 帳號時，隱藏此按鈕以防止不正確記錄成績 -->
-                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="isDevToolsOpen ? null : startQuiz"
-                                    :disabled="isStudentLoading || isDevToolsOpen"
+                                <button v-if="activeQuizId && user && !user.isAnonymous" @click="startQuiz"
+                                    :disabled="isStudentLoading"
                                     :class="isDevToolsOpen ? 'bg-red-500 hover:bg-red-500 shadow-red-200 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-green-200'"
                                     class="w-full py-3 text-white rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2">
                                     <i v-if="isStudentLoading" class="fa-solid fa-circle-notch fa-spin"></i>
@@ -5250,42 +5250,37 @@ Output format must be a strict JSON Array without Markdown markers:
                                                 };
 
                                                 const startDevToolsDetector = () => {
-                                                    if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
-                                                    hasDetectedCheat = false;
-                                                    isDevToolsOpen.value = false;
+                                                     if (devtoolsDetectorInterval) clearInterval(devtoolsDetectorInterval);
+                                                     hasDetectedCheat = false;
+                                                     isDevToolsOpen.value = false;
 
-                                                    devtoolsDetectorInterval = setInterval(() => {
-                                                        // 只對學生進行檢測，不影響老師
-                                                        if (!isStudentView.value) {
-                                                            isDevToolsOpen.value = false;
-                                                            return;
-                                                        }
+                                                     devtoolsDetectorInterval = setInterval(() => {
+                                                         // 只在學生進行測驗時進行檢測，不影響老師，也不在準備畫面干擾
+                                                         if (!isStudentView.value || !isTakingQuiz.value) {
+                                                             isDevToolsOpen.value = false;
+                                                             return;
+                                                         }
 
-                                                        let devtoolsCheckTriggered = false;
+                                                         let devtoolsCheckTriggered = false;
 
-                                                        // 1. Image getter 檢測法 (每次都建立新物件以防瀏覽器快取/殘留)
-                                                        
+                                                         // debugger 時間差檢測法
+                                                         const start = Date.now();
+                                                         debugger;
+                                                         const end = Date.now();
+                                                         if (end - start > 1000) {
+                                                             devtoolsCheckTriggered = true;
+                                                         }
 
-                                                        // 2. debugger 時間差檢測法
-                                                        const start = Date.now();
-                                                        debugger;
-                                                        const end = Date.now();
-                                                        if (end - start > 200) {
-                                                            devtoolsCheckTriggered = true;
-                                                        }
+                                                         if (devtoolsCheckTriggered) {
+                                                             isDevToolsOpen.value = true;
+                                                             handleDevToolsCheat();
+                                                         } else {
+                                                             isDevToolsOpen.value = false;
+                                                         }
+                                                     }, 1000);
+                                                 };
 
-                                                        if (devtoolsCheckTriggered) {
-                                                            isDevToolsOpen.value = true;
-                                                            if (isTakingQuiz.value) {
-                                                                handleDevToolsCheat();
-                                                            }
-                                                        } else {
-                                                            isDevToolsOpen.value = false;
-                                                        }
-                                                    }, 1000);
-                                                };
-
-                                                const stopDevToolsDetector = () => {
+                                                 const stopDevToolsDetector = () => {
                                                     if (devtoolsDetectorInterval) {
                                                         clearInterval(devtoolsDetectorInterval);
                                                         devtoolsDetectorInterval = null;
