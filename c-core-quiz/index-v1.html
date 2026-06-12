@@ -2451,9 +2451,6 @@ service cloud.firestore {
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
     }
-    match /student_sessions/{sessionId} {
-      allow read, write: if request.auth != null;
-    }
     
     // 線上學生狀態監控讀寫權限
     match /student_sessions/{sessionId} {
@@ -3383,6 +3380,9 @@ service cloud.firestore {
     }
     match /results/{resultId} {
       allow create, read, update, delete: if request.auth != null;
+    }
+    match /student_sessions/{sessionId} {
+      allow read, write: if request.auth != null;
     }
     match /quiz_unlocks/{unlockId} {
       allow read: if request.auth != null && unlockId.split('_')[0] == request.auth.token.email;
@@ -4784,17 +4784,19 @@ Output format must be a strict JSON Array without Markdown markers:
                                                      const emailLower = newUser.email.toLowerCase();
                                                      const sessionId = `${emailLower}_${newQuizId}`;
                                                      studentSessionListener = db.collection('student_sessions').doc(sessionId).onSnapshot(doc => {
-                                                         if (doc.exists) {
-                                                             const data = doc.data();
-                                                             if (data.status === 'banned') {
-                                                                 kickStudentOut("您已被老師禁止進行此測驗！");
-                                                             }
-                                                         } else {
-                                                             if (isTakingQuiz.value) {
-                                                                 kickStudentOut("您的登入狀態已被老師刪除，無法繼續進行測驗！");
-                                                             }
-                                                         }
-                                                     });
+                                                          if (doc.exists) {
+                                                              const data = doc.data();
+                                                              if (data.status === 'banned') {
+                                                                  kickStudentOut("您已被老師禁止進行此測驗！");
+                                                              }
+                                                          } else {
+                                                              if (isTakingQuiz.value) {
+                                                                  kickStudentOut("您的登入狀態已被老師刪除，無法繼續進行測驗！");
+                                                              }
+                                                          }
+                                                      }, err => {
+                                                          console.error("監聽學生 Session 狀態失敗:", err);
+                                                      });
                                                  });
 
                                                  const deleteResult = async (result) => {
@@ -5561,6 +5563,9 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                 // 3. 修改 startQuiz 函數 (加入啟動計時)
                                                 const startQuiz = async () => {
+                                                    // 嘗試進入全螢幕 (必須由點擊動作同步觸發，避免 await 非同步 Promise 延遲導致瀏覽器阻擋全螢幕模式)
+                                                    enterFullscreen();
+
                                                     // 檢查是否已被禁止測驗
                                                     if (user.value && !user.value.isAnonymous && user.value.email) {
                                                         const emailLower = user.value.email.toLowerCase();
@@ -5569,6 +5574,9 @@ Output format must be a strict JSON Array without Markdown markers:
                                                             const sessDoc = await db.collection('student_sessions').doc(sessionId).get();
                                                             if (sessDoc.exists && sessDoc.data().status === 'banned') {
                                                                 showAlert("無法開始", "您已被老師禁止進行此測驗！請與老師聯繫。", "error");
+                                                                if (document.exitFullscreen) {
+                                                                    document.exitFullscreen().catch(() => {});
+                                                                }
                                                                 return;
                                                             }
                                                         } catch (e) {
@@ -5578,12 +5586,18 @@ Output format must be a strict JSON Array without Markdown markers:
 
                                                     if (!activeQuizId.value) {
                                                         showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
+                                                        if (document.exitFullscreen) {
+                                                            document.exitFullscreen().catch(() => {});
+                                                        }
                                                         return;
                                                     }
 
                                                     // 檢查學生是否已登入 Google 帳號
                                                     if (!user.value || user.value.isAnonymous) {
                                                         showAlert("請先登入", "請先使用 Google 帳號登入以開始測驗，以維護成績記錄正確性。", "warning");
+                                                        if (document.exitFullscreen) {
+                                                            document.exitFullscreen().catch(() => {});
+                                                        }
                                                         return;
                                                     }
 
@@ -5605,6 +5619,9 @@ Output format must be a strict JSON Array without Markdown markers:
                                                                              ? "您已完成過此測驗！目前設定為「禁止重覆本測驗」，不允許再次進入測驗。" 
                                                                              : "You have already completed this quiz! The current setting is 'No repeating allowed', and you are not permitted to enter again.";
                                                                          showAlert(title, message, "warning");
+                                                                         if (document.exitFullscreen) {
+                                                                             document.exitFullscreen().catch(() => {});
+                                                                         }
                                                                          return;
                                                                      }
                                                                  } catch (e) {
@@ -5613,50 +5630,53 @@ Output format must be a strict JSON Array without Markdown markers:
                                                              }
 
                                                              // 1. 亂數排序邏輯
-                                                            const originalQuestions = quizData.questions || [];
-                                                            const shuffledIndices = generateShuffledIndices(originalQuestions.length);
+                                                             const originalQuestions = quizData.questions || [];
+                                                             const shuffledIndices = generateShuffledIndices(originalQuestions.length);
 
-                                                            const randomizedQuestions = shuffledIndices.map(originalIndex => {
-                                                                return {
-                                                                    ...originalQuestions[originalIndex],
-                                                                    _originalIndex: originalIndex
-                                                                };
-                                                            });
-                                                            quizData.questions = randomizedQuestions;
+                                                             const randomizedQuestions = shuffledIndices.map(originalIndex => {
+                                                                 return {
+                                                                     ...originalQuestions[originalIndex],
+                                                                     _originalIndex: originalIndex
+                                                                 };
+                                                             });
+                                                             quizData.questions = randomizedQuestions;
 
-                                                            // 2. 啟動防作弊偵測 & 進入全螢幕
-                                                            isTakingQuiz.value = true;
-                                                            switchCount.value = 0;
-                                                            cheated.value = false;
-                                                            cheatReason.value = '';
+                                                             // 2. 啟動防作弊偵測
+                                                             isTakingQuiz.value = true;
+                                                             switchCount.value = 0;
+                                                             cheated.value = false;
+                                                             cheatReason.value = '';
 
-                                                            // 嘗試進入全螢幕 (必須由使用者動作觸發，startQuiz 是由點擊觸發的，所以通常有效)
-                                                            enterFullscreen();
+                                                             // [新增] 啟動計時器
+                                                             startTimer();
 
-                                                            // [新增] 啟動計時器
-                                                            startTimer();
+                                                             // 啟動 DevTools 開發者工具背景偵測
+                                                             startDevToolsDetector();
 
-                                                            // 啟動 DevTools 開發者工具背景偵測
-                                                            startDevToolsDetector();
-
-                                                            // 3. 設定狀態
-                                                            activeQuiz.value = { id: doc.id, ...quizData };
-                                                            currentQuestionIndex.value = 0;
-                                                            studentAnswers.value = [];
-                                                            currentAnswer.value = null;
-                                                            highlights.value = [];
-                                                            nextHighlightId.value = 0;
-                                                            updateStudentSession('testing');
-                                                            startStudentHeartbeat();
-                                                            goToView('quiz');
-                                                        } else {
-                                                            showAlert("錯誤", "找不到該測驗，可能已被刪除。", "error");
-                                                        }
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                        showAlert("錯誤", "載入測驗失敗", "error");
-                                                    }
-                                                };
+                                                             // 3. 設定狀態
+                                                             activeQuiz.value = { id: doc.id, ...quizData };
+                                                             currentQuestionIndex.value = 0;
+                                                             studentAnswers.value = [];
+                                                             currentAnswer.value = null;
+                                                             highlights.value = [];
+                                                             nextHighlightId.value = 0;
+                                                             updateStudentSession('testing');
+                                                             startStudentHeartbeat();
+                                                             goToView('quiz');
+                                                         } else {
+                                                             showAlert("錯誤", "找不到該測驗，可能已被刪除。", "error");
+                                                             if (document.exitFullscreen) {
+                                                                 document.exitFullscreen().catch(() => {});
+                                                             }
+                                                         }
+                                                     } catch (e) {
+                                                         console.error(e);
+                                                         showAlert("錯誤", "載入測驗失敗", "error");
+                                                         if (document.exitFullscreen) {
+                                                             document.exitFullscreen().catch(() => {});
+                                                         }
+                                                     }
+                                                 };
 
                                                 const selectAnswer = (idx) => {
                                                     currentAnswer.value = idx;
