@@ -4665,12 +4665,12 @@ Output format must be a strict JSON Array without Markdown markers:
                                                     csvContent += headers.join(",") + "\n";
 
                                                     // Rows
+                                                         const parsedInfo = parseStudentNameField(res.studentName);
                                                     results.forEach(res => {
-                                                        const parsedInfo = parseStudentNameField(res.studentName);
                                                         let row = [
                                                             parsedInfo.studentId,
-                                                            parsedInfo.name,
-                                                            parsedInfo.email,
+                                                             parsedInfo.name,
+                                                             parsedInfo.email,
                                                             res.score,
                                                             formatDate(res.timestamp).replace(',', ' ') // Avoid comma issues
                                                         ];
