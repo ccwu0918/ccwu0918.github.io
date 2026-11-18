@@ -383,11 +383,11 @@
                             <div class="mb-6 inline-block p-4 bg-pink-100 text-pink-500 rounded-full text-3xl">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-4">教師專用入口</h3>
-                            <input type="password" v-model="teacherPassword" placeholder="請輸入密碼"
-                                class="w-full p-3 border border-slate-200 rounded-xl mb-4 focus:ring-2 focus:ring-pink-500 outline-none text-center">
-                            <button @click="verifyTeacher"
-                                class="w-full py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 transition">進入管理後台</button>
+                            <h3 class="text-xl font-bold mb-2">教師專用入口</h3>
+                            <p class="text-slate-400 text-sm mb-6">請使用已列入教師名單的 Google 帳號登入</p>
+                            <button @click="teacherLogin"
+                                class="w-full py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 transition">
+                                <i class="fa-brands fa-google mr-2"></i>以 Google 登入</button>
                             <button @click="goToView('landing')"
                                 class="mt-4 text-slate-400 text-sm hover:text-slate-600">返回首頁</button>
                         </div>
@@ -401,6 +401,14 @@
                                 <p class="text-slate-500">管理您的題庫與測驗狀態</p>
                             </div>
                             <div class="flex gap-2">
+                                <button @click="migrateLegacyQuizzes"
+                                    class="px-4 py-2.5 bg-white border border-amber-300 text-amber-700 rounded-xl font-medium hover:bg-amber-50 transition">
+                                    <i class="fa-solid fa-shield-halved mr-2"></i>遷移舊題庫
+                                </button>
+                                <button @click="teacherLogout"
+                                    class="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-right-from-bracket mr-2"></i>登出
+                                </button>
                                 <button @click="openCreateModal"
                                     class="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-medium shadow-lg shadow-violet-200 hover:bg-violet-700 transition">
                                     <i class="fa-solid fa-plus mr-2"></i>新增題庫
@@ -429,11 +437,11 @@
                                 </h3>
                             </div>
                             <div class="flex gap-2 mr-2">
-                                <button v-if="quizStatusConfig.showExplanations" @click="toggleExplanations(false)"
+                                <button v-if="activeQuizReleased" @click="releaseQuiz(activeQuizId, false)"
                                     class="bg-white/90 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition shadow-md flex items-center whitespace-nowrap">
                                     <i class="fa-regular fa-eye mr-2"></i>解析: 已開啟
                                 </button>
-                                <button v-else @click="toggleExplanations(true)"
+                                <button v-else @click="releaseQuiz(activeQuizId, true)"
                                     class="bg-slate-800/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800/40 transition shadow-md flex items-center whitespace-nowrap border border-white/30 backdrop-blur-sm">
                                     <i class="fa-regular fa-eye-slash mr-2"></i>解析: 已隱藏
                                 </button>
@@ -1156,11 +1164,11 @@
                                     <div class="space-y-4">
                                         <div v-for="(q, idx) in selectedAnalyticsQuiz.questions" :key="idx"
                                             class="p-4 rounded-xl border bg-white"
-                                            :class="selectedStudentResult.answers[idx] == q.answer ? 'border-green-100' : 'border-red-100'">
+                                            :class="selectedStudentResult.answers[idx] == analyticsKey.answers[idx] ? 'border-green-100' : 'border-red-100'">
 
                                             <div class="flex gap-3 mb-2">
                                                 <div class="mt-1 flex-shrink-0">
-                                                    <i v-if="selectedStudentResult.answers[idx] == q.answer"
+                                                    <i v-if="selectedStudentResult.answers[idx] == analyticsKey.answers[idx]"
                                                         class="fa-solid fa-circle-check text-green-500 text-lg"></i>
                                                     <i v-else class="fa-solid fa-circle-xmark text-red-500 text-lg"></i>
                                                 </div>
@@ -1174,15 +1182,15 @@
                                                 <div class="flex items-center gap-2">
                                                     <span class="text-slate-500 font-medium">學生回答：</span>
                                                     <span
-                                                        :class="selectedStudentResult.answers[idx] == q.answer ? 'text-green-600 font-bold' : 'text-red-600 font-bold line-through'">
+                                                        :class="selectedStudentResult.answers[idx] == analyticsKey.answers[idx] ? 'text-green-600 font-bold' : 'text-red-600 font-bold line-through'">
                                                         {{ q.options[selectedStudentResult.answers[idx]-1] || '未作答' }}
                                                     </span>
                                                 </div>
-                                                <div v-if="selectedStudentResult.answers[idx] != q.answer"
+                                                <div v-if="selectedStudentResult.answers[idx] != analyticsKey.answers[idx]"
                                                     class="flex items-center gap-2">
                                                     <span class="text-slate-500 font-medium">正確答案：</span>
                                                     <span class="text-green-600 font-bold">
-                                                        {{ q.options[q.answer-1] }}
+                                                        {{ q.options[analyticsKey.answers[idx]-1] }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1379,16 +1387,17 @@
                                 </div>
                                 <div class="relative z-10">
                                     <p class="text-indigo-200 mb-2">{{ activeQuiz.title }}</p>
-                                    <h2 class="text-5xl font-bold mb-2">{{ score }} <span
+                                    <h2 v-if="answerKey" class="text-5xl font-bold mb-2">{{ score }} <span
                                             class="text-2xl font-normal opacity-70">分</span></h2>
+                                    <h2 v-else class="text-2xl font-bold mb-2">已交卷，解析開放後可查看分數</h2>
                                     <p class="text-indigo-100">測驗完成，{{ studentName }}！</p>
                                 </div>
                             </div>
 
-                            <div v-if="canShowExplanations" class="animate-fade-in">
+                            <div v-if="answerKey" class="animate-fade-in">
                                 <h3 class="font-bold text-slate-700 mb-6 text-lg border-l-4 border-indigo-500 pl-3">詳細解析</h3>
                                 <div class="space-y-6">
-                                    <div v-for="(q, idx) in activeQuiz.questions" :key="idx"
+                                    <div v-for="(q, idx) in reviewQuestions" :key="idx"
                                         class="p-5 rounded-2xl border"
                                         :class="studentAnswers[idx] == q.answer ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'">
                                         <div class="flex gap-3 mb-3">
@@ -1431,8 +1440,8 @@
                                 </div>
                                 <h4 class="text-xl font-bold text-slate-600 mb-2">詳細解析已隱藏</h4>
                                 <p class="text-slate-500 text-sm mb-4">
-                                    為了維護測驗公平性，詳細解析將在<br>
-                                    <span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
+                                    為了維護測驗公平性，分數與詳細解析將在老師開放，<br>
+                                    或<span class="font-bold text-indigo-600">測驗提交 30 分鐘後</span> 自動開啟。
                                 </p>
                                 <div v-if="timeRemainingForExplanation" class="inline-block bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm font-mono text-slate-600">
                                     <i class="fa-solid fa-hourglass-half mr-2 text-indigo-500"></i>
@@ -1729,7 +1738,9 @@
                                 class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
                                 <li>點擊「開始使用 (Get started)」。</li>
                                 <li>切換到「Sign-in method」頁籤。</li>
-                                <li>選擇「匿名 (Anonymous)」，將開關 <strong class="text-green-600">啟用</strong> 並儲存。</li>
+                                <li>選擇「匿名 (Anonymous)」，將開關 <strong class="text-green-600">啟用</strong> 並儲存（學生作答用）。</li>
+                                <li>再新增「Google」登入方式，同樣 <strong class="text-green-600">啟用</strong> 並儲存（教師登入用）。</li>
+                                <li>到「Settings」>「授權網域 (Authorized domains)」，新增 <code class="bg-slate-200 px-1 rounded">ccwu0918.github.io</code>（只填網域，不含專案路徑）。使用 Firebase Hosting 的話，<code class="bg-slate-200 px-1 rounded">*.web.app</code> 與 <code class="bg-slate-200 px-1 rounded">*.firebaseapp.com</code> 已預設授權。</li>
                             </ul>
                         </div>
                     </section>
@@ -1745,7 +1756,7 @@
                             <ul
                                 class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
                                 <li>點擊「建立資料庫 (Create database)」。</li>
-                                <li>選擇「以測試模式啟動 (Start in test mode)」(方便快速測試)。</li>
+                                <li>選擇「以測試模式啟動 (Start in test mode)」，下一步會立刻用新規則取代它（測試模式的規則 30 天後會過期，且任何人都能讀寫）。</li>
                                 <li>選擇位置 (Location)，通常選預設即可，等待建立完成。</li>
                             </ul>
                         </div>
@@ -1757,28 +1768,43 @@
                             class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
                             5</div>
                         <div class="w-full">
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">設定安全性規則 (建議)</h4>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">貼上安全性規則並發布 (必要)</h4>
                             <p class="text-slate-600 mb-2 text-sm">在 Firestore 頁面上方切換到「規則 (Rules)」頁籤，貼上以下規則以確保權限正確：</p>
                             <div
                                 class="bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto relative group mt-2 border border-slate-700 shadow-inner">
-                                <pre>rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /config/quizStatus {
-      allow read, write: if true;
-    }
-    match /quizzes/{quizId} {
-      allow read: if true;
-      allow create, delete: if request.auth != null;
-    }
-    match /results/{resultId} {
-      allow create, read: if true;
-    }
-  }
-}</pre>
+                                <pre>{{ rulesText }}</pre>
                                 <button @click="copyRules"
                                     class="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-xs transition">複製</button>
                             </div>
+                            <p class="text-slate-500 text-xs mt-2">貼上後務必按「發布 (Publish)」。</p>
+                        </div>
+                    </section>
+
+                    <!-- Step 6 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            6</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">建立教師白名單 (admins)</h4>
+                            <ul
+                                class="list-disc list-inside text-slate-500 ml-1 space-y-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <li>回到本網站，進入「教師管理」並按「以 Google 登入」登入一次（此時會顯示「無教師權限」是正常的）。</li>
+                                <li>Firebase Console >「Authentication」>「Users」，複製您那一列的 <strong>使用者 UID</strong>。</li>
+                                <li>「Firestore Database」>「資料」>「開始集合」，集合 ID 填 <code class="bg-slate-200 px-1 rounded">admins</code>，文件 ID 貼上您的 UID，欄位可隨意（例如 <code class="bg-slate-200 px-1 rounded">name</code> = 您的名字）。</li>
+                                <li>重新整理網站並再次用 Google 登入，即可進入儀表板。</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Step 7 -->
+                    <section class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center font-bold">
+                            7</div>
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">遷移舊題庫 (已有舊資料才需要)</h4>
+                            <p class="text-slate-600 text-sm">在教師儀表板按「遷移舊題庫」：會把舊格式（答案與題目放在一起）拆成公開題目與答案文件，並建立 <code class="bg-slate-200 px-1 rounded">config/quizStatus</code>。可重複執行，不會影響已遷移的題庫。</p>
                         </div>
                     </section>
                 </div>
@@ -1889,11 +1915,199 @@ service cloud.firestore {
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
+    <!-- Firestore 安全性規則（唯一來源；教學視窗與「複製」按鈕都讀這裡，tests/rules-sync.test.js 確保與 firestore.rules 一致） -->
+    <script type="text/plain" id="firestore-rules">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function statusExists() {
+      return exists(/databases/$(database)/documents/config/quizStatus);
+    }
+
+    function status() {
+      return get(/databases/$(database)/documents/config/quizStatus).data;
+    }
+
+    function resultPath(quizId) {
+      return /databases/$(database)/documents/results/$(quizId + '_' + request.auth.uid);
+    }
+
+    // 教師白名單：只能在 Console 手動建立，使用者只能讀自己的那一份
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // 目前啟用的測驗與已開放解析清單：所有人可讀，只有教師可寫
+    match /config/quizStatus {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 題目（不含答案）：學生只能讀進行中的那一份，或自己已交過卷的那一份（結束後回來看成績）
+    match /quizzes/{quizId} {
+      allow read: if isAdmin() ||
+        (signedIn() && statusExists() && status().get('activeQuizId', null) == quizId) ||
+        (signedIn() && exists(resultPath(quizId)));
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 答案與解析：教師可讀寫；學生須已交卷，且（教師已開放，或測驗已結束且交卷滿 30 分鐘）
+    // 測驗仍在進行中時，即使滿 30 分鐘也不開放，避免先交白卷的人在考試中途取得答案
+    match /answerKeys/{quizId} {
+      allow write: if isAdmin();
+      allow read: if isAdmin() ||
+        (signedIn() && statusExists() && exists(resultPath(quizId)) &&
+          (quizId in status().get('releasedQuizIds', []) ||
+           (status().get('activeQuizId', null) != quizId &&
+            request.time >= get(resultPath(quizId)).data.timestamp + duration.value(30, 'm'))));
+    }
+
+    // 作答結果：每人每份測驗只能建立一次，不可修改
+    match /results/{resultId} {
+      allow create: if signedIn() && statusExists()
+        && request.resource.data.keys().hasOnly(
+             ['quizId', 'uid', 'studentName', 'answers', 'highlights', 'violationCount', 'timestamp'])
+        && request.resource.data.keys().hasAll(
+             ['quizId', 'uid', 'studentName', 'answers', 'highlights', 'violationCount', 'timestamp'])
+        && request.resource.data.uid == request.auth.uid
+        && resultId == request.resource.data.quizId + '_' + request.auth.uid
+        && request.resource.data.quizId == status().get('activeQuizId', null)
+        && request.resource.data.timestamp == request.time
+        && request.resource.data.answers is list
+        && request.resource.data.answers.size() <= 200
+        && request.resource.data.highlights is list
+        && request.resource.data.highlights.size() <= 100
+        && request.resource.data.violationCount is int
+        && request.resource.data.studentName is string
+        && request.resource.data.studentName.size() <= 100;
+      // 以文件 ID（quizId_uid）判斷本人：文件尚不存在時也能查詢「我交過了嗎」，
+      // 且只能查到結尾是自己 uid 的文件
+      allow read: if isAdmin() || (signedIn() && resultId.matches('.+_' + request.auth.uid));
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+  }
+}
+    </script>
+
+    <!-- 純邏輯模組（不依賴 Vue / Firebase / DOM，供 Node 單元測試載入） -->
+    <script id="quiz-logic">
+        window.QuizLogic = (function () {
+            const clone = (o) => JSON.parse(JSON.stringify(o));
+
+            // 把含答案的題庫拆成「公開題目」與「答案文件」
+            const splitQuiz = (quiz) => {
+                const publicQuiz = clone(quiz);
+                const key = { answers: [], explanations: [] };
+                // 白名單：只留下學生看得到的欄位，AI 多吐的欄位（correctAnswer 等）不會外洩
+                const PUBLIC_FIELDS = ['title', 'options', 'difficulty', 'pirlsLevel'];
+                publicQuiz.questions = (quiz.questions || []).map((q, i) => {
+                    const n = Array.isArray(q.options) ? q.options.length : 4;
+                    if (!Number.isInteger(q.answer) || q.answer < 1 || q.answer > n) {
+                        throw new Error(`第 ${i + 1} 題缺少有效的正確答案`);
+                    }
+                    key.answers.push(q.answer);
+                    key.explanations.push(q.explanation || '');
+                    const out = {};
+                    PUBLIC_FIELDS.forEach((f) => { if (q[f] !== undefined) out[f] = clone(q[f]); });
+                    return out;
+                });
+                return { publicQuiz, key };
+            };
+
+            // 把答案文件合併回公開題目（key 為 null 時原樣回傳）
+            const mergeQuiz = (publicQuiz, key) => {
+                if (!key) return publicQuiz;
+                const quiz = clone(publicQuiz);
+                quiz.questions = quiz.questions.map((q, i) => ({
+                    ...q,
+                    answer: key.answers[i],
+                    explanation: key.explanations[i],
+                }));
+                return quiz;
+            };
+
+            const hasLeakedAnswers = (quiz) =>
+                (quiz.questions || []).some((q) => 'answer' in q || 'explanation' in q);
+
+            const scoreAnswers = (answers, keyAnswers) => {
+                if (!keyAnswers.length) return 0;
+                let correct = 0;
+                keyAnswers.forEach((a, i) => { if (answers[i] != null && answers[i] == a) correct++; });
+                return Math.round((correct / keyAnswers.length) * 100);
+            };
+
+            const resultId = (quizId, uid) => `${quizId}_${uid}`;
+
+            const buildResultDoc = ({ quizId, uid, studentName, answers, highlights, violationCount }) => ({
+                quizId,
+                uid,
+                studentName,
+                answers: Array.from(answers, (a) => (a === undefined ? null : a)),
+                highlights: highlights || [],
+                violationCount: violationCount || 0,
+            });
+
+            const KEY_DELAY_MS = 30 * 60 * 1000;
+            const isKeyAvailable = ({ releasedQuizIds, quizId, submittedAtMs, nowMs, activeQuizId }) => {
+                if (submittedAtMs == null) return false;
+                if (Array.isArray(releasedQuizIds) && releasedQuizIds.includes(quizId)) return true;
+                // 測驗仍在進行中時不自動開放（與 Firestore 規則一致）
+                if (activeQuizId && activeQuizId === quizId) return false;
+                return nowMs - submittedAtMs >= KEY_DELAY_MS;
+            };
+
+            const questionStats = (questionCount, results, keyAnswers) =>
+                Array.from({ length: questionCount }, (_, index) => {
+                    const wrongStudents = [];
+                    let correct = 0;
+                    results.forEach((r) => {
+                        const choice = r.answers && r.answers[index] != null ? r.answers[index] : null;
+                        if (choice != null && choice == keyAnswers[index]) correct++;
+                        else wrongStudents.push({ name: r.studentName, choice });
+                    });
+                    const rate = results.length === 0 ? 0 : Math.round((correct / results.length) * 100);
+                    return { index, rate, wrongStudents };
+                });
+
+            const scoreDistribution = (scores) => {
+                const ranges = [0, 0, 0, 0, 0];
+                scores.forEach((s) => {
+                    if (s <= 20) ranges[0]++;
+                    else if (s <= 40) ranges[1]++;
+                    else if (s <= 60) ranges[2]++;
+                    else if (s <= 80) ranges[3]++;
+                    else ranges[4]++;
+                });
+                return ranges;
+            };
+
+            return {
+                splitQuiz, mergeQuiz, hasLeakedAnswers, scoreAnswers, resultId,
+                buildResultDoc, isKeyAvailable, questionStats, scoreDistribution,
+            };
+        })();
+    </script>
+
     <script>
         // Using IIFE (Immediately Invoked Function Expression) to avoid global scope pollution
         // This fixes the "Identifier 'createApp' has already been declared" error when script re-runs.
         (function () {
             const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+
+            // 在網址被 initApp 清理之前先記下是否使用 Emulator（僅供本機冒煙測試）
+            const USE_EMULATOR = new URLSearchParams(window.location.search).get('emulator') === '1';
 
             createApp({
                 setup() {
@@ -1965,7 +2179,7 @@ service cloud.firestore {
                     const qrModalTitle = ref('');
 
                     // Teacher
-                    const teacherPassword = ref('');
+                    const isAdmin = ref(false); // 登入者是否在 admins 白名單
                     const quizzes = ref([]);
                     const showCreateQuiz = ref(false);
                     const editingQuizId = ref(null); // Track which quiz is being edited
@@ -2010,6 +2224,7 @@ service cloud.firestore {
                     const analyticsTab = ref('score'); // 'score' or 'question'
                     const selectedAnalyticsQuiz = ref(null);
                     const analyticsData = ref([]);
+                    const analyticsKey = ref(null);   // 目前分析中測驗的答案文件（老師才讀得到）
                     const selectedStudentResult = ref(null);
 
                     // Student & Global State
@@ -2020,10 +2235,13 @@ service cloud.firestore {
                     const currentQuestionIndex = ref(0);
                     const studentAnswers = ref([]);
                     const currentAnswer = ref(null);
-                    const score = ref(0);
+                    const score = ref(null);
+                    const answerKey = ref(null);        // 交卷後、解析開放時才讀得到
+                    const submittedAnswers = ref([]);   // 原始題序的作答（計分用）
+                    const isSubmitting = ref(false);
 
                     // 1. 新增變數狀態 (State)
-                    const quizStatusConfig = ref({ activeQuizId: null, showExplanations: false }); // 用來同步資料庫設定
+                    const quizStatusConfig = ref({ activeQuizId: null, releasedQuizIds: [] }); // 用來同步資料庫設定
                     const quizTimerDisplay = ref('00:00:00'); // 計時器顯示字串
                     const submissionTimestamp = ref(null);    // 學生交卷時間
                     const nowTimestamp = ref(Date.now());     // 當前時間(用於倒數計算)
@@ -2039,6 +2257,7 @@ service cloud.firestore {
 
                     // --- 更新日誌 ---
                     const updateLog = ref([
+                        { date: '2026/11/18', desc: '安全性大改版：教師改用 Google 登入並以 admins 白名單控管；答案移至獨立文件，作答期間學生讀不到；成績改由教師端依答案文件計算；新增「遷移舊題庫」與解析開放機制；教學與 Rules 同步更新。' },
                         { date: '2025/12/05', desc: '新增手動清除 Firebase 連線設定的功能。' },
                         { date: '2025/12/04', desc: '新增學生專用分享連結，開啟後將隱藏教師入口與設定；修復 iPad 螢光筆功能；簡化 AI API 設定。' },
                         { date: '2025/12/04', desc: '教師儀表板增加顯示目前啟用題庫及結束測驗按鈕。' },
@@ -2145,10 +2364,18 @@ service cloud.firestore {
                             db = firebase.firestore();
                             appId = config.appId;
 
-                            auth.onAuthStateChanged((u) => {
+                            // 僅供本機冒煙測試：?emulator=1 時連到 Firebase Emulator
+                            if (USE_EMULATOR) {
+                                auth.useEmulator('http://localhost:9099');
+                                db.useEmulator('localhost', 8080);
+                            }
+
+                            auth.onAuthStateChanged(async (u) => {
                                 if (u) {
                                     user.value = u;
+                                    isAdmin.value = await checkAdmin(u);
                                 } else {
+                                    isAdmin.value = false;
                                     auth.signInAnonymously().catch((error) => {
                                         console.error("Auth Failed", error);
                                         showAlert("錯誤", "Firebase 連線失敗", "error");
@@ -2165,11 +2392,11 @@ service cloud.firestore {
                                     // [新增] 同步整份設定給 quizStatusConfig
                                     quizStatusConfig.value = {
                                         activeQuizId: data.activeQuizId,
-                                        showExplanations: !!data.showExplanations // 轉為 boolean
+                                        releasedQuizIds: Array.isArray(data.releasedQuizIds) ? data.releasedQuizIds : []
                                     };
                                 } else {
                                     activeQuizId.value = null;
-                                    quizStatusConfig.value = { activeQuizId: null, showExplanations: false };
+                                    quizStatusConfig.value = { activeQuizId: null, releasedQuizIds: [] };
                                 }
                             });
 
@@ -2279,23 +2506,9 @@ service cloud.firestore {
                         showAlert("成功", "連結已複製到剪貼簿", "success");
                     };
 
+                    const rulesText = ref(document.getElementById('firestore-rules').textContent.trim());
                     const copyRules = () => {
-                        const rules = `rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /config/quizStatus {
-      allow read, write: if true;
-    }
-    match /quizzes/{quizId} {
-      allow read: if true;
-      allow create, delete: if request.auth != null;
-    }
-    match /results/{resultId} {
-      allow create, read: if true;
-    }
-  }
-}`;
-                        navigator.clipboard.writeText(rules);
+                        navigator.clipboard.writeText(rulesText.value);
                         showAlert("成功", "規則已複製到剪貼簿", "success");
                     };
 
@@ -2333,11 +2546,12 @@ service cloud.firestore {
 
                     // --- Navigation & Helper ---
                     const goToView = (view) => {
+                        // 教師後台必須通過 admin 檢查，否則回到教師登入頁
+                        if (view === 'teacher-dashboard' && !isAdmin.value) view = 'teacher-login';
                         currentView.value = view;
                         if (view === 'teacher-dashboard') fetchQuizzes();
                         if (view === 'landing') {
                             studentName.value = '';
-                            teacherPassword.value = '';
                         }
                         // Re-highlight when view changes
                         nextTick(() => Prism.highlightAll());
@@ -2349,12 +2563,38 @@ service cloud.firestore {
                     };
 
                     // --- Teacher Logic ---
-                    const verifyTeacher = () => {
-                        if (teacherPassword.value === 'ccwu0918@nqu') {
-                            goToView('teacher-dashboard');
-                        } else {
-                            showAlert("登入失敗", "密碼錯誤", "error");
+                    // 匿名帳號不可能是教師；Google 帳號須在 admins/{uid} 白名單內
+                    const checkAdmin = async (u) => {
+                        if (!u || u.isAnonymous) return false;
+                        try {
+                            const snap = await db.collection('admins').doc(u.uid).get();
+                            return snap.exists;
+                        } catch (e) {
+                            return false;
                         }
+                    };
+
+                    const teacherLogin = async () => {
+                        try {
+                            const cred = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+                            const ok = await checkAdmin(cred.user);
+                            isAdmin.value = ok;
+                            if (ok) {
+                                goToView('teacher-dashboard');
+                            } else {
+                                await auth.signOut(); // 登出後 onAuthStateChanged 會自動回到匿名
+                                showAlert("無教師權限", "此 Google 帳號不在教師名單中，請聯絡管理者。", "error");
+                            }
+                        } catch (e) {
+                            if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+                            showAlert("登入失敗", e.message, "error");
+                        }
+                    };
+
+                    const teacherLogout = async () => {
+                        await auth.signOut();
+                        isAdmin.value = false;
+                        goToView('landing');
                     };
 
                     const fetchQuizzes = () => {
@@ -2386,8 +2626,14 @@ service cloud.firestore {
 
                     // 新增：啟用題庫功能
                     const activateQuiz = async (quizId) => {
+                        const target = quizzes.value.find(q => q.id === quizId);
+                        // 舊格式題庫的答案仍在題目裡，啟用後學生會讀到，必須先遷移
+                        if (!target || QuizLogic.hasLeakedAnswers(target)) {
+                            showAlert("尚未遷移", "此題庫仍是舊格式（答案與題目放在一起），啟用會讓學生看到答案。請先按「遷移舊題庫」。", "warning");
+                            return;
+                        }
                         try {
-                            await db.collection('config').doc('quizStatus').set({ activeQuizId: quizId });
+                            await db.collection('config').doc('quizStatus').set({ activeQuizId: quizId }, { merge: true });
                             showAlert("啟用成功", "此題庫已設定為進行中，學生現在可以進入作答。", "success");
                         } catch (e) {
                             console.error(e);
@@ -2400,7 +2646,7 @@ service cloud.firestore {
                         const confirm = await showConfirm("確認結束", "確定要結束目前的測驗嗎？學生將無法再進入作答。");
                         if (confirm) {
                             try {
-                                await db.collection('config').doc('quizStatus').set({ activeQuizId: null });
+                                await db.collection('config').doc('quizStatus').set({ activeQuizId: null }, { merge: true });
                                 showAlert("已結束", "測驗已結束。", "success");
                             } catch (e) {
                                 console.error(e);
@@ -2787,7 +3033,16 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
 
                     // 新增：編輯題庫功能
-                    const editQuiz = (quiz) => {
+                    // 讀取答案文件並合併回題目，供編輯 / 複製使用
+                    const loadFullQuiz = async (quiz) => {
+                        const snap = await db.collection('answerKeys').doc(quiz.id).get();
+                        return QuizLogic.mergeQuiz(quiz, snap.exists ? snap.data() : null);
+                    };
+
+                    const editQuiz = async (quizRow) => {
+                        let quiz;
+                        try { quiz = await loadFullQuiz(quizRow); }
+                        catch (e) { showAlert("讀取失敗", "無法讀取答案文件：" + e.message, "error"); return; }
                         editingQuizId.value = quiz.id;
                         newQuiz.title = quiz.title;
                         newQuiz.category = quiz.category;
@@ -2804,7 +3059,10 @@ Output format must be a strict JSON Array without Markdown markers:
                         nextTick(() => Prism.highlightAll());
                     };
 
-                    const duplicateQuiz = (quiz) => {
+                    const duplicateQuiz = async (quizRow) => {
+                        let quiz;
+                        try { quiz = await loadFullQuiz(quizRow); }
+                        catch (e) { showAlert("讀取失敗", "無法讀取答案文件：" + e.message, "error"); return; }
                         editingQuizId.value = null; // duplicating creates a NEW quiz
                         newQuiz.title = quiz.title + ' (副本)';
                         newQuiz.category = quiz.category;
@@ -2822,25 +3080,29 @@ Output format must be a strict JSON Array without Markdown markers:
                         if (!newQuiz.title) { showAlert("欄位缺失", "請輸入測驗標題", "warning"); return; }
 
                         try {
-                            const quizData = {
+                            // 題目（公開）與答案 / 解析（只有教師可讀）分開存放
+                            const { publicQuiz, key } = QuizLogic.splitQuiz({
                                 title: newQuiz.title,
                                 category: newQuiz.category || '未分類',
                                 questionType: newQuiz.questionType,
                                 readingPassage: newQuiz.readingPassage,
-                                questions: newQuiz.questions,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Update timestamp on edit? Maybe better to keep original created, add updated. For simplicity, just update.
+                                questions: newQuiz.questions
+                            });
+                            const quizData = {
+                                ...publicQuiz,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 teacherId: user.value.uid
                             };
 
-                            if (editingQuizId.value) {
-                                // Update existing
-                                await db.collection('quizzes').doc(editingQuizId.value).update(quizData);
-                                showAlert("成功", "題庫更新成功！", "success");
-                            } else {
-                                // Create new
-                                await db.collection('quizzes').add(quizData);
-                                showAlert("成功", "題庫建立成功！", "success");
-                            }
+                            const quizRef = editingQuizId.value
+                                ? db.collection('quizzes').doc(editingQuizId.value)
+                                : db.collection('quizzes').doc();
+                            const batch = db.batch();
+                            if (editingQuizId.value) batch.update(quizRef, quizData);
+                            else batch.set(quizRef, quizData);
+                            batch.set(db.collection('answerKeys').doc(quizRef.id), key);
+                            await batch.commit();
+                            showAlert("成功", editingQuizId.value ? "題庫更新成功！" : "題庫建立成功！", "success");
 
                             showCreateQuiz.value = false;
                             // Reset form
@@ -2896,10 +3158,49 @@ Output format must be a strict JSON Array without Markdown markers:
                         }
                     };
 
+                    // 把舊格式題庫（答案與題目同文件）拆成 quizzes + answerKeys；可重複執行
+                    const migrateLegacyQuizzes = async () => {
+                        try {
+                            const snap = await db.collection('quizzes').get();
+                            let migrated = 0, skipped = 0;
+                            const failed = [];
+                            for (const d of snap.docs) {
+                                const quiz = d.data();
+                                if (!QuizLogic.hasLeakedAnswers(quiz)) { skipped++; continue; }
+                                try {
+                                    const { publicQuiz, key } = QuizLogic.splitQuiz(quiz);
+                                    const batch = db.batch();
+                                    batch.set(db.collection('answerKeys').doc(d.id), key);
+                                    // 只更新 questions，其他欄位（createdAt 的 Timestamp 型別等）維持原樣
+                                    batch.update(db.collection('quizzes').doc(d.id), { questions: publicQuiz.questions });
+                                    await batch.commit();
+                                    migrated++;
+                                } catch (e) {
+                                    console.error(e);
+                                    failed.push(`${quiz.title || d.id}（${e.message}）`);
+                                }
+                            }
+                            // 規則需要 config/quizStatus 存在；不覆蓋既有內容
+                            await db.collection('config').doc('quizStatus').set({}, { merge: true });
+                            if (failed.length) {
+                                showAlert("遷移完成（部分失敗）", `已遷移 ${migrated} 份、略過 ${skipped} 份；失敗：${failed.join('、')}`, "warning");
+                            } else {
+                                showAlert("遷移完成", `已遷移 ${migrated} 份、略過 ${skipped} 份`, "success");
+                            }
+                            return { migrated, skipped };
+                        } catch (e) {
+                            console.error(e);
+                            showAlert("遷移失敗", e.message || String(e), "error");
+                        }
+                    };
+
                     const deleteQuiz = async (id) => {
                         const confirm = await showConfirm("刪除確認", "確定要刪除此題庫嗎？此動作無法復原。");
                         if (confirm) {
-                            await db.collection('quizzes').doc(id).delete();
+                            const batch = db.batch();
+                            batch.delete(db.collection('quizzes').doc(id));
+                            batch.delete(db.collection('answerKeys').doc(id));
+                            await batch.commit();
                         }
                     };
 
@@ -2913,24 +3214,38 @@ Output format must be a strict JSON Array without Markdown markers:
                         showAnalytics.value = true;
                         selectedStudentResult.value = null; // Reset detail view
                         analyticsTab.value = 'score'; // Reset tab
+                        analyticsData.value = [];
+                        analyticsKey.value = null;
+
+                        // 答案文件：老師才讀得到；成績一律由它重新計算，不採用結果文件裡的 score
+                        let keyDoc = await db.collection('answerKeys').doc(quiz.id).get();
+                        if (!keyDoc.exists) {
+                            showAlert("找不到答案", "此測驗沒有答案文件，請先按「遷移舊題庫」或重新儲存測驗。", "error");
+                            return;
+                        }
+                        analyticsKey.value = keyDoc.data();
 
                         // Fix: Remove orderBy to avoid index error. Sort in client side.
                         const snap = await db.collection('results')
                             .where('quizId', '==', quiz.id)
                             .get();
 
-                        const results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        // Sort by score descending
+                        const results = snap.docs.map(d => {
+                            const r = { id: d.id, ...d.data() };
+                            r.score = QuizLogic.scoreAnswers(r.answers || [], analyticsKey.value.answers);
+                            return r;
+                        });
                         analyticsData.value = results.sort((a, b) => b.score - a.score);
 
                         nextTick(renderChart);
                     };
 
                     const exportCSV = () => {
-                        if (!analyticsData.value.length || !selectedAnalyticsQuiz.value) return;
+                        if (!analyticsData.value.length || !selectedAnalyticsQuiz.value || !analyticsKey.value) return;
 
                         const quiz = selectedAnalyticsQuiz.value;
                         const results = analyticsData.value;
+                        const keyAns = (analyticsKey.value && analyticsKey.value.answers) || [];
 
                         // 1. Calculate Summary
                         const totalStudents = results.length;
@@ -2947,7 +3262,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         // Headers
                         let headers = ["學生姓名", "得分", "交卷時間"];
                         quiz.questions.forEach((q, i) => {
-                            headers.push(`Q${i + 1} (正確:${String.fromCharCode(64 + parseInt(q.answer))})`);
+                            headers.push(`Q${i + 1} (正確:${String.fromCharCode(64 + parseInt(keyAns[i]))})`);
                         });
                         csvContent += headers.join(",") + "\n";
 
@@ -2965,7 +3280,7 @@ Output format must be a strict JSON Array without Markdown markers:
                                     row.push("未作答");
                                 } else {
                                     const letter = String.fromCharCode(64 + parseInt(studentAnsIdx));
-                                    const isCorrect = studentAnsIdx == q.answer;
+                                    const isCorrect = studentAnsIdx == keyAns[i];
                                     row.push(isCorrect ? letter : `${letter} (X)`);
                                 }
                             });
@@ -2999,36 +3314,27 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     // --- Question Statistics Logic ---
                     const questionStats = computed(() => {
-                        if (!selectedAnalyticsQuiz.value || !analyticsData.value.length) return [];
-
-                        return selectedAnalyticsQuiz.value.questions.map((q, idx) => {
-                            let correctCount = 0;
-                            const wrongStudents = [];
-
-                            analyticsData.value.forEach(res => {
-                                // answers[idx] is 1-based answer index from student
-                                const studentAns = res.answers ? res.answers[idx] : null;
-                                if (studentAns == q.answer) {
-                                    correctCount++;
-                                } else {
-                                    wrongStudents.push({
-                                        name: res.studentName,
-                                        choice: studentAns
-                                    });
-                                }
-                            });
-
-                            const total = analyticsData.value.length;
-                            const rate = total === 0 ? 0 : Math.round((correctCount / total) * 100);
-
-                            return {
-                                question: q,
-                                index: idx,
-                                rate,
-                                wrongStudents
-                            };
-                        });
+                        if (!selectedAnalyticsQuiz.value || !analyticsKey.value || !analyticsData.value.length) return [];
+                        const stats = QuizLogic.questionStats(
+                            selectedAnalyticsQuiz.value.questions.length, analyticsData.value, analyticsKey.value.answers);
+                        return selectedAnalyticsQuiz.value.questions.map((q, idx) => ({
+                            question: q,
+                            index: idx,
+                            rate: stats[idx].rate,
+                            wrongStudents: stats[idx].wrongStudents
+                        }));
                     });
+
+                    // 學生交卷資料不可信：只接受整數位置與白名單顏色，才能放進 v-html
+                    const HIGHLIGHT_COLORS = ['yellow', 'green', 'pink'];
+                    const sanitizeHighlights = (list, textLen) => (Array.isArray(list) ? list : [])
+                        .map((h, i) => ({
+                            start: Math.max(0, Math.min(textLen, parseInt(h && h.start, 10) || 0)),
+                            end: Math.max(0, Math.min(textLen, parseInt(h && h.end, 10) || 0)),
+                            id: i,
+                            color: HIGHLIGHT_COLORS.includes(h && h.color) ? h.color : 'yellow'
+                        }))
+                        .filter(h => h.end > h.start);
 
                     const teacherHighlightedPassage = computed(() => {
                         if (!selectedAnalyticsQuiz.value || !selectedAnalyticsQuiz.value.readingPassage) {
@@ -3040,7 +3346,7 @@ Output format must be a strict JSON Array without Markdown markers:
                             return escapeHtml(text);
                         }
 
-                        const studentHighlights = selectedStudentResult.value.highlights;
+                        const studentHighlights = sanitizeHighlights(selectedStudentResult.value.highlights, text.length);
 
                         const sortedHighlights = [...studentHighlights].sort((a, b) => a.start - b.start);
 
@@ -3062,15 +3368,7 @@ Output format must be a strict JSON Array without Markdown markers:
                         const ctx = document.getElementById('scoreChart');
                         if (!ctx) return;
 
-                        const scores = analyticsData.value.map(d => d.score);
-                        const ranges = [0, 0, 0, 0, 0]; // 0-20, 21-40, 41-60, 61-80, 81-100
-                        scores.forEach(s => {
-                            if (s <= 20) ranges[0]++;
-                            else if (s <= 40) ranges[1]++;
-                            else if (s <= 60) ranges[2]++;
-                            else if (s <= 80) ranges[3]++;
-                            else ranges[4]++;
-                        });
+                        const ranges = QuizLogic.scoreDistribution(analyticsData.value.map(d => d.score));
 
                         new Chart(ctx, {
                             type: 'bar',
@@ -3317,14 +3615,58 @@ Output format must be a strict JSON Array without Markdown markers:
                     };
                     
                     // 3. 修改 startQuiz 函數 (加入啟動計時)
+                    // 以題庫文件＋自己的交卷紀錄還原結果頁（重新進入、交卷重複、測驗結束後回來看成績共用）
+                    const restoreSubmitted = (quizDoc, r) => {
+                        const quizData = quizDoc.data();
+                        activeQuiz.value = {
+                            id: quizDoc.id, ...quizData,
+                            questions: (quizData.questions || []).map((q, i) => ({ ...q, _originalIndex: i }))
+                        };
+                        studentAnswers.value = (r.answers || []).slice();
+                        submittedAnswers.value = (r.answers || []).slice();
+                        submissionTimestamp.value = r.timestamp ? r.timestamp.toMillis() : Date.now();
+                        answerKey.value = null;
+                        score.value = null;
+                        isTakingQuiz.value = false;
+                        stopTimer();
+                        goToView('result');
+                        loadAnswerKey();
+                    };
+
+                    // 測驗已結束時：找出老師已開放解析、且自己交過卷的測驗，讓學生回來看成績
+                    const openMyReleasedResult = async () => {
+                        const ids = (quizStatusConfig.value.releasedQuizIds || []).slice().reverse();
+                        for (const id of ids) {
+                            try {
+                                const mine = await db.collection('results').doc(QuizLogic.resultId(id, user.value.uid)).get();
+                                if (!mine.exists) continue;
+                                const qd = await db.collection('quizzes').doc(id).get();
+                                if (!qd.exists) continue;
+                                restoreSubmitted(qd, mine.data());
+                                showAlert("您的交卷紀錄", "目前沒有進行中的測驗，以下是您最近一次已開放解析的測驗。", "info");
+                                return true;
+                            } catch (e) { console.error(e); }
+                        }
+                        return false;
+                    };
+
                     const startQuiz = async () => {
                         if (!activeQuizId.value) {
+                            if (await openMyReleasedResult()) return;
                             showAlert("無法開始", "目前沒有正在進行中的測驗，請等待老師啟用。", "warning");
                             return;
                         }
 
                         try {
+                            // 已交過卷就不能再作答：還原交卷紀錄頁面
+                            const mine = await db.collection('results')
+                                .doc(QuizLogic.resultId(activeQuizId.value, user.value.uid)).get();
                             const doc = await db.collection('quizzes').doc(activeQuizId.value).get();
+                            if (doc.exists && mine.exists) {
+                                restoreSubmitted(doc, mine.data());
+                                showAlert("您已交卷", "此測驗您已經完成作答，以下是您的交卷紀錄。", "info");
+                                return;
+                            }
                             if (doc.exists) {
                                 const quizData = doc.data();
 
@@ -3354,6 +3696,11 @@ Output format must be a strict JSON Array without Markdown markers:
                                 activeQuiz.value = { id: doc.id, ...quizData };
                                 currentQuestionIndex.value = 0;
                                 studentAnswers.value = [];
+                                submittedAnswers.value = [];
+                                submissionTimestamp.value = null;
+                                answerKey.value = null;
+                                score.value = null;
+                                isSubmitting.value = false;
                                 currentAnswer.value = null;
                                 highlights.value = [];
                                 nextHighlightId.value = 0;
@@ -3393,85 +3740,136 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     // 4. 修改 submitQuiz 函數 (停止計時、記錄交卷時間)
                     const submitQuiz = async () => {
+                        if (isSubmitting.value) return;
                         if (currentAnswer.value === null) { showAlert("請選擇", "請先選擇一個答案", "warning"); return; }
 
                         // 儲存最後一題
                         studentAnswers.value[currentQuestionIndex.value] = currentAnswer.value;
 
-                        // 關閉防作弊偵測 & 退出全螢幕
-                        isTakingQuiz.value = false;
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen().catch(() => { }); // 忽略錯誤
-                        }
-
-                        // [新增] 停止計時並記錄時間
-                        stopTimer();
-                        submissionTimestamp.value = Date.now();
-                        
-                        let correctCount = 0;
-                        activeQuiz.value.questions.forEach((q, idx) => {
-                            if (q.answer == studentAnswers.value[idx]) correctCount++;
-                        });
-
-                        score.value = Math.round((correctCount / activeQuiz.value.questions.length) * 100);
-
-                        // 還原答案順序
+                        // 還原答案順序（題目有亂序，資料庫存原始題序）
                         const originalOrderAnswers = new Array(activeQuiz.value.questions.length);
                         activeQuiz.value.questions.forEach((q, currentIdx) => {
                             originalOrderAnswers[q._originalIndex] = studentAnswers.value[currentIdx];
                         });
 
-                        // 寫入資料庫 (包含 violationCount)
-                        await db.collection('results').add({
-                            quizId: activeQuiz.value.id,
-                            studentName: studentName.value,
-                            score: score.value,
-                            answers: originalOrderAnswers,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
-                            violationCount: switchCount.value // 紀錄違規次數
-                        });
+                        // 先寫入資料庫，成功後才關閉防作弊偵測；失敗時保留作答頁與已填答案
+                        isSubmitting.value = true;
+                        const resultRef = db.collection('results')
+                            .doc(QuizLogic.resultId(activeQuiz.value.id, user.value.uid));
+                        try {
+                            await resultRef.set({
+                                ...QuizLogic.buildResultDoc({
+                                    quizId: activeQuiz.value.id,
+                                    uid: user.value.uid,
+                                    studentName: studentName.value,
+                                    answers: originalOrderAnswers,
+                                    highlights: activeQuiz.value.questionType === 'reading-comprehension' ? highlights.value : [],
+                                    violationCount: switchCount.value // 紀錄違規次數
+                                }),
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch (e) {
+                            console.error(e);
+                            isSubmitting.value = false;
+                            // 可能其實已經交過（另一個分頁、或上次寫入成功但回應遺失）：有紀錄就直接還原，不要卡在作答頁
+                            try {
+                                const existing = await resultRef.get();
+                                if (existing.exists) {
+                                    document.exitFullscreen && document.fullscreenElement && document.exitFullscreen().catch(() => { });
+                                    restoreSubmitted(await db.collection('quizzes').doc(activeQuiz.value.id).get(), existing.data());
+                                    showAlert("您已交卷", "系統已有您的交卷紀錄，以下是您的交卷內容。", "info");
+                                    return;
+                                }
+                            } catch (e2) { console.error(e2); }
+                            showAlert("交卷失敗", "測驗可能已被老師結束，或網路異常。您的作答仍保留在此頁，請告知老師。", "error");
+                            return;
+                        }
+                        isSubmitting.value = false;
+                        try {
+                            const saved = await resultRef.get();
+                            const ts = saved.data() && saved.data().timestamp;
+                            submissionTimestamp.value = ts ? ts.toMillis() : Date.now();
+                        } catch (e) { submissionTimestamp.value = Date.now(); }
 
+                        // 關閉防作弊偵測 & 退出全螢幕 & 停止計時
+                        isTakingQuiz.value = false;
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen().catch(() => { }); // 忽略錯誤
+                        }
+                        stopTimer();
+
+                        submittedAnswers.value = originalOrderAnswers.map(a => (a === undefined ? null : a));
+                        answerKey.value = null;
+                        score.value = null;
                         goToView('result');
+                        loadAnswerKey(); // 若解析已開放就會成功；否則靜默失敗，等開放後再讀
                     };
 
-                    // 5. 新增：教師切換解析顯示功能
-                    const toggleExplanations = async (show) => {
-                        if (!activeQuizId.value) return;
+                    // 交卷後讀取答案文件並在本機計分；尚未開放時規則會拒絕，屬正常情況
+                    const loadAnswerKey = async () => {
+                        if (!activeQuiz.value || answerKey.value) return;
                         try {
-                            // 更新 quizStatus 中的 showExplanations 欄位
-                            await db.collection('config').doc('quizStatus').set({ 
-                                activeQuizId: activeQuizId.value,
-                                showExplanations: show 
+                            const snap = await db.collection('answerKeys').doc(activeQuiz.value.id).get();
+                            if (snap.exists) {
+                                answerKey.value = snap.data();
+                                score.value = QuizLogic.scoreAnswers(submittedAnswers.value, answerKey.value.answers);
+                            }
+                        } catch (e) {
+                            if (e.code === 'permission-denied') {
+                                // 本機時鐘可能比伺服器快：若本機認為已可讀，稍後再試
+                                if (keyAvailable.value) setTimeout(loadAnswerKey, 5000);
+                            } else {
+                                console.error(e);
+                            }
+                        }
+                    };
+
+                    // 5. 教師開放 / 關閉某份測驗的解析（寫入 releasedQuizIds）
+                    const releaseQuiz = async (quizId, release) => {
+                        if (!quizId) return;
+                        try {
+                            const FV = firebase.firestore.FieldValue;
+                            await db.collection('config').doc('quizStatus').set({
+                                releasedQuizIds: release ? FV.arrayUnion(quizId) : FV.arrayRemove(quizId)
                             }, { merge: true });
-                            
-                            showAlert("設定更新", show ? "已開放學生查看詳細解析" : "已隱藏詳細解析", "success");
+                            showAlert("設定更新", release ? "已開放學生查看詳細解析" : "已隱藏詳細解析", "success");
                         } catch (e) {
                             console.error(e);
                             showAlert("錯誤", "設定失敗", "error");
                         }
                     };
-                    
+
+                    const activeQuizReleased = computed(() =>
+                        !!activeQuizId.value && quizStatusConfig.value.releasedQuizIds.includes(activeQuizId.value));
+
                     // 6. 新增：計算屬性 (Computed) 控制解析顯示
                     // 建立一個每秒更新的時鐘，確保倒數計時會動
                     setInterval(() => {
                         nowTimestamp.value = Date.now();
                     }, 1000);
                     
-                    const canShowExplanations = computed(() => {
-                        // 如果老師手動開啟，則直接顯示
-                        if (quizStatusConfig.value.showExplanations) return true;
-                        
-                        // 如果沒有交卷時間(異常)，不顯示
-                        if (!submissionTimestamp.value) return false;
-                        
-                        // 檢查是否超過 30 分鐘 (30 * 60 * 1000 毫秒)
-                        const timePassed = (nowTimestamp.value - submissionTimestamp.value);
-                        return timePassed >= (30 * 60 * 1000);
+                    // 與 Firestore 規則一致：老師已開放，或交卷滿 30 分鐘
+                    const keyAvailable = computed(() => !!activeQuiz.value && QuizLogic.isKeyAvailable({
+                        releasedQuizIds: quizStatusConfig.value.releasedQuizIds,
+                        activeQuizId: quizStatusConfig.value.activeQuizId,
+                        quizId: activeQuiz.value.id,
+                        submittedAtMs: submissionTimestamp.value,
+                        nowMs: nowTimestamp.value
+                    }));
+                    watch(keyAvailable, (v) => { if (v) loadAnswerKey(); });
+
+                    // 逐題解析：把答案文件依 _originalIndex 對回（亂序後的）題目
+                    const reviewQuestions = computed(() => {
+                        if (!activeQuiz.value || !answerKey.value) return [];
+                        return activeQuiz.value.questions.map(q => ({
+                            ...q,
+                            answer: answerKey.value.answers[q._originalIndex],
+                            explanation: answerKey.value.explanations[q._originalIndex]
+                        }));
                     });
-                    
+
                     const timeRemainingForExplanation = computed(() => {
-                        if (!submissionTimestamp.value || canShowExplanations.value) return null;
+                        if (!submissionTimestamp.value || keyAvailable.value) return null;
                         
                         const diff = (30 * 60 * 1000) - (nowTimestamp.value - submissionTimestamp.value);
                         if (diff <= 0) return null;
@@ -3499,12 +3897,12 @@ Output format must be a strict JSON Array without Markdown markers:
 
                     return {
                         configInput, isConfigured, parseAndSaveConfig, clearFirebaseConfig,
-                        customApiKey, showSettingsModal, showConfigEdit, showTutorialModal, shareUrl, studentShareUrl, isStudentView, openQrModal, closeQrModal, showQrModal, qrModalTitle, toggleSettings, resetConfig, copyShareUrl, copyRules, isApiKeySaved, checkConfigAndGo,
+                        customApiKey, showSettingsModal, showConfigEdit, showTutorialModal, shareUrl, studentShareUrl, isStudentView, openQrModal, closeQrModal, showQrModal, qrModalTitle, toggleSettings, resetConfig, copyShareUrl, copyRules, rulesText, isApiKeySaved, checkConfigAndGo,
                         user, currentView, goToView,
                         // Modal
                         modalState, showAlert, showConfirm, handleConfirm, handleCancel,
                         // Teacher
-                        teacherPassword, verifyTeacher, quizzes, showCreateQuiz, createMode, openCreateModal, duplicateQuiz, editQuiz, editingQuizId,
+                        isAdmin, teacherLogin, teacherLogout, quizzes, showCreateQuiz, createMode, openCreateModal, duplicateQuiz, editQuiz, editingQuizId,
                         aiSourceText, aiImageBase64, isPdfLoading, isGenerating, manualInput, aiConfig, newQuiz, activeQuizId, selectedCategory, uniqueCategories, filteredQuizzes, getActiveQuizTitle,
                         // Reading Comprehension
                         readingConfig, canGenerateReading, handleTextFileUpload, generateReadingComprehension, generatePassageFromTopic, generateReadingQuestions, getPirlsLevelName,
@@ -3512,13 +3910,13 @@ Output format must be a strict JSON Array without Markdown markers:
                         showQuestionEditor, currentEditingQuestion, currentEditingQuestionIndex, addQuestion, editQuestion, saveQuestion, deleteQuestion,
                         handleImageUpload, handlePdfUpload, generateQuestions, parseManualInput, saveQuiz, deleteQuiz, activateQuiz, deactivateQuiz, formatDate,
                         // Analytics
-                        viewAnalytics, showAnalytics, selectedAnalyticsQuiz, analyticsData, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV,
+                        viewAnalytics, showAnalytics, selectedAnalyticsQuiz, migrateLegacyQuizzes, analyticsData, analyticsKey, analyticsTab, questionStats, teacherHighlightedPassage, getScoreColor, selectedStudentResult, viewStudentDetails, closeStudentDetails, exportCSV,
                         // Student
                         studentName, selectedQuizId, startQuiz,
                         activeQuiz, currentQuestionIndex, currentAnswer, selectAnswer, nextQuestion, prevQuestion, submitQuiz,
                         progressPercent, score, studentAnswers,                        
-                        quizStatusConfig, quizTimerDisplay, toggleExplanations, 
-                        canShowExplanations, timeRemainingForExplanation,
+                        quizStatusConfig, quizTimerDisplay, releaseQuiz, activeQuizReleased, 
+                        keyAvailable, answerKey, reviewQuestions, loadAnswerKey, timeRemainingForExplanation,
                         // Highlighter
                         passageContainer, highlights, highlightedPassage, applyHighlight, handlePassageClick,
                         // Logs
