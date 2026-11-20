@@ -146,6 +146,25 @@ svg text{font-family:var(--sans)}
 .fc-metrics .v{font-family:var(--serif);font-size:22px;margin-top:6px;font-variant-numeric:tabular-nums}
 .fc-metrics .v small{font-family:var(--sans);font-size:12px;color:var(--ink-3)}
 .fc-metrics .x{font-size:11px;color:var(--ink-3);margin-top:4px;line-height:1.5}
+.mbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
+.mlbl{font-size:12px;color:var(--ink-3);letter-spacing:.08em}
+.mchip small{color:var(--ink-3);font-size:11px;margin-left:2px}
+.mchip em,.cmp em{font-style:normal;font-size:10px;color:var(--gold-2);border:1px solid var(--gold-dim);border-radius:999px;padding:0 6px;margin-left:2px}
+.mchip em.best,.cmp em.best{color:#5fc38a;border-color:#2c6b47}
+.mchip[aria-checked=true]{border-color:var(--gold);background:#2a2418;color:var(--ink)}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th{font-weight:500;color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+.cmp td{padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.cmp td .sw{display:inline-block;margin-right:8px;vertical-align:middle}
+.cmp .n{text-align:right;font-variant-numeric:tabular-nums}
+.cmp tbody tr{cursor:pointer}
+.cmp tbody tr:hover td{background:rgba(255,255,255,.02)}
+.cmp tr.on td{background:rgba(201,169,110,.08);color:var(--ink)}
+.cmp tr:focus-visible{outline:2px solid var(--gold)}
+.cmp td:nth-child(2){display:flex;align-items:center;gap:10px;min-width:180px}
+.mbarc{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:220px}
+.mbarc i{display:block;height:100%;border-radius:3px}
+.cmp-wrap{overflow-x:auto}
 .section-title{display:flex;align-items:center;gap:14px;margin:34px 0 14px}
 .section-title h3{margin:0;font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.06em}
 .section-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-2),transparent)}
@@ -554,46 +573,81 @@ function renderRisk(){
 }
 
 /* ---------- forecast panels ---------- */
+const MSHORT={ens:"組合",lgbm:"LightGBM",hgb:"HistGB",ets:"ETS",sreg:"季節迴歸",wk4:"同星期中位數",naive7:"上週同日"};
+const MCOLOR={ens:"#e2c995",lgbm:"#3987e5",hgb:"#199e70",ets:"#d95926",sreg:"#9085e9",wk4:"#d55181",naive7:"#8a857a"};
+S.fcModel={};S.fcCompare={};
 function buildForecast(sys,list){
   const host=$("#fc-"+sys);const avail=list.filter(s=>F[s.id]);
-  host.innerHTML=`<div class="card"><div class="card-head"><div><h3 id="fcT-${sys}">—</h3><div class="note">實際值、回測（最後 21 天樣本外）與未來 30 天預測；陰影為 80% 預測區間</div></div>
+  host.innerHTML=`<div class="card"><div class="card-head"><div><h3 id="fcT-${sys}">—</h3><div class="note">實際值、最近一次回測（樣本外）與未來 30 天預測；陰影為所選模型的 80% 預測區間</div></div>
     <select id="fcSel-${sys}" aria-label="選擇預測序列">${avail.map(s=>`<option value="${s.id}">${s.kind==="water"?"用水・":""}${s.name}</option>`).join("")}</select></div>
+    <div class="mbar"><span class="mlbl">預測模型</span><div class="chips" id="fcMod-${sys}" role="radiogroup" aria-label="預測模型"></div>
+      <button class="chip" id="fcCmp-${sys}" aria-pressed="false" title="同時畫出所有模型的預測">疊加全部模型</button></div>
     <div class="chart" id="fcC-${sys}"></div>
-    <div class="legend"><span><i class="ln" style="background:#b9b3a6"></i>實際值</span><span><i class="ln dash" style="color:#3987e5;background:#3987e5"></i>回測預測</span><span><i class="ln" style="background:#e2c995"></i>未來預測</span><span><i class="bx" style="background:rgba(226,201,149,.25)"></i>80% 區間</span></div>
+    <div class="legend" id="fcL-${sys}"></div>
     <div class="grid fc-metrics" id="fcM-${sys}"></div>
+    <div class="cmp-wrap"><div class="card-head" style="margin:18px 0 6px"><div><h3>模型比較</h3><div class="note" id="fcN-${sys}">—</div></div></div>
+      <table class="cmp" id="fcTbl-${sys}"></table></div>
     <div id="fcH-${sys}" style="margin-top:18px"></div></div>`;
   $("#fcSel-"+sys).onchange=()=>renderForecast(sys,list);
+  $("#fcCmp-"+sys).onclick=e=>{S.fcCompare[sys]=!S.fcCompare[sys];e.currentTarget.setAttribute("aria-pressed",!!S.fcCompare[sys]);renderForecast(sys,list)};
   renderForecast(sys,list);
 }
+function pickModel(sys,list,id,m){S.fcModel[id]=m;renderForecast(sys,list)}
 function renderForecast(sys,list){
   const id=$("#fcSel-"+sys).value,s=list.find(x=>x.id===id),f=F[id];if(!f)return;
+  const mk=(S.fcModel[id]&&f.models[S.fcModel[id]])?S.fcModel[id]:f.default;const md=f.models[mk];
+  const u=s.dunit,ff=s.kind==="water"?fmt1:fmt;
   $("#fcT-"+sys).textContent=`${s.name}・每日${s.kind==="water"?"用水":"用電"}預測`;
+  // model chips
+  $("#fcMod-"+sys).innerHTML=f.order.map(k=>{const m=f.models[k];
+    return `<button class="chip mchip" role="radio" data-m="${k}" aria-checked="${k===mk}" aria-pressed="${k===mk}" title="${m.name}"><i class="sw" style="background:${MCOLOR[k]}"></i>${MSHORT[k]}<small>${m.mape??"—"}%</small>${k===f.default?'<em>預設</em>':''}${k===f.best?'<em class="best">回測最佳</em>':''}</button>`}).join("");
+  $("#fcMod-"+sys).onclick=e=>{const b=e.target.closest(".mchip");if(b)pickModel(sys,list,id,b.dataset.m)};
+  // chart data
   const P=d=>new Date(d+"T00:00:00Z");
-  const all=[...new Set(f.history.dates.concat(f.forecast.dates))].sort();
+  const all=[...new Set(f.history.dates.concat(f.bt_dates,f.dates))].sort();
   const idx=new Map(all.map((d,k)=>[d,k]));const N=all.length;
-  const act=Array(N).fill(null),bt=Array(N).fill(null),fc=Array(N).fill(null),lo=Array(N).fill(null),hi=Array(N).fill(null);
-  f.history.dates.forEach((d,k)=>act[idx.get(d)]=f.history.values[k]);
-  f.backtest.dates.forEach((d,k)=>bt[idx.get(d)]=f.backtest.pred[k]);
-  f.forecast.dates.forEach((d,k)=>{const q=idx.get(d);fc[q]=f.forecast.pred[k];lo[q]=f.forecast.lo[k];hi[q]=f.forecast.hi[k]});
-  const u=s.dunit;
-  tsChart($("#fcC-"+sys),{x:all.map(P),unit:u,height:300,vfmt:s.kind==="water"?fmt1:fmt,tfmt:d=>`${ymd(d)} ${WD[wdOf(d)]}`,
-    marker:{x:P(f.forecast.dates[0]),label:"預測"},
-    series:[{name:"實際",color:"#b9b3a6",values:act,width:1.6},{name:"回測",color:"#3987e5",values:bt,dash:true},{name:"預測",color:"#e2c995",values:fc,band:[lo,hi],width:2.4}]});
-  const sc=f.backtest.scores,names={reg:"季節迴歸",wk:"同星期中位數",blend:"組合"};
-  const yoy=f.forecast.last_year_total;
-  const ff=s.kind==="water"?fmt1:fmt;
+  const col=()=>Array(N).fill(null);
+  const act=col();f.history.dates.forEach((d,k)=>act[idx.get(d)]=f.history.values[k]);
+  const series=[{name:"實際",color:"#b9b3a6",values:act,width:1.6}];
+  if(md.bt){const bt=col();f.bt_dates.forEach((d,k)=>bt[idx.get(d)]=md.bt[k]);series.push({name:`回測・${MSHORT[mk]}`,color:"#3987e5",values:bt,dash:true})}
+  if(S.fcCompare[sys]){
+    f.order.filter(k=>k!==mk).forEach(k=>{const v=col();f.dates.forEach((d,j)=>v[idx.get(d)]=f.models[k].pred[j]);series.push({name:MSHORT[k],color:MCOLOR[k],values:v,width:1.2})});
+  }
+  const fc=col(),lo=col(),hi=col();f.dates.forEach((d,j)=>{const q=idx.get(d);fc[q]=md.pred[j];lo[q]=md.lo[j];hi[q]=md.hi[j]});
+  series.push({name:`預測・${MSHORT[mk]}`,color:MCOLOR[mk]==="#8a857a"?"#e2c995":MCOLOR[mk],values:fc,band:[lo,hi],width:2.6});
+  tsChart($("#fcC-"+sys),{x:all.map(P),unit:u,height:310,vfmt:ff,tfmt:d=>`${ymd(d)} ${WD[wdOf(d)]}`,marker:{x:P(f.dates[0]),label:"預測"},series});
+  const lg=[`<span><i class="ln" style="background:#b9b3a6"></i>實際值</span>`];
+  if(md.bt)lg.push(`<span><i class="ln dash" style="color:#3987e5;background:#3987e5"></i>回測（${f.bt_dates[0]} 起，${MSHORT[mk]}）</span>`);
+  lg.push(`<span><i class="ln" style="background:${series.at(-1).color}"></i>未來預測（${MSHORT[mk]}）</span><span><i class="bx" style="background:${series.at(-1).color};opacity:.35"></i>80% 區間</span>`);
+  if(S.fcCompare[sys])f.order.filter(k=>k!==mk).forEach(k=>lg.push(`<span><i class="ln" style="background:${MCOLOR[k]}"></i>${MSHORT[k]}</span>`));
+  $("#fcL-"+sys).innerHTML=lg.join("");
+  // metrics
+  const yoy=f.last_year_total;
+  const grade=md.mape==null?"—":md.mape<15?"準確度良好":md.mape<30?"可作趨勢參考":"波動大，僅供參考";
   $("#fcM-"+sys).innerHTML=[
-    ["未來 30 天預測",`${ff(f.forecast.total)}<small> ${u}</small>`,`${f.forecast.dates[0]} ～ ${f.forecast.dates.at(-1)}`],
-    ["去年同期實際",yoy?`${ff(yoy)}<small> ${u}</small>`:"—",yoy?`預測較去年 ${f.forecast.total>yoy?"增加":"減少"} ${fmt1(Math.abs(f.forecast.total/yoy-1)*100)}%`:"去年同期資料不足"],
-    ["採用模型",f.model_name,`依回測 MAPE 自動選擇；${Object.entries(sc).map(([k,v])=>`${names[k]} ${v??"—"}%`).join("・")}`],
-    ["回測誤差 MAPE",`${f.backtest.mape??"—"}<small> %</small>`,`MAE ${ff(f.backtest.mae)} ${u}／日；${f.backtest.mape<15?"準確度良好":f.backtest.mape<30?"可作趨勢參考":"波動大，僅供參考"}`],
+    ["未來 30 天預測",`${ff(md.total)}<small> ${u}</small>`,`${f.dates[0]} ～ ${f.dates.at(-1)}`],
+    ["去年同期實際",yoy?`${ff(yoy)}<small> ${u}</small>`:"—",yoy?`預測較去年 ${md.total>yoy?"增加":"減少"} ${fmt1(Math.abs(md.total/yoy-1)*100)}%`:"去年同期資料不足"],
+    ["目前模型",MSHORT[mk],`${md.name}${mk===f.default?"（預設）":""}`],
+    ["回測誤差 MAPE",`${md.mape??"—"}<small> %</small>`,`相對上週同日 ${md.mase??"—"}（<1 較佳）；${grade}`],
     ["訓練資料",`${fmt(f.train_days)}<small> 天</small>`,`最後資料日 ${f.last_data}`],
   ].map(([a,b,c])=>`<div class="card"><div class="lbl">${a}</div><div class="v">${b}</div><div class="x">${c}</div></div>`).join("");
+  // comparison table
+  const mx=Math.max(...f.order.map(k=>f.models[k].mape||0),1);
+  $("#fcN-"+sys).textContent=`回測起點 ${f.bt_origins.join("、")}，各預測 30 天（每次只用起點以前的資料）；點選列可切換模型`;
+  $("#fcTbl-"+sys).innerHTML=`<thead><tr><th>模型</th><th>回測 MAPE</th><th class="n">相對上週同日</th><th class="n">30 天預測</th></tr></thead><tbody>`+
+    f.order.map(k=>{const m=f.models[k];const w=m.mape==null?0:Math.min(100,m.mape/mx*100);
+      return `<tr data-m="${k}" class="${k===mk?"on":""}" tabindex="0"><td><i class="sw" style="background:${MCOLOR[k]}"></i>${m.name}${k===f.default?' <em>預設</em>':''}${k===f.best?' <em class="best">最佳</em>':''}</td>
+      <td><div class="mbarc"><i style="width:${w}%;background:${MCOLOR[k]}"></i></div><span>${m.mape??"—"}%</span></td>
+      <td class="n" style="color:${m.mase!=null&&m.mase<1?"#5fc38a":"var(--ink-2)"}">${m.mase??"—"}</td><td class="n">${ff(m.total)} ${u}</td></tr>`}).join("")+`</tbody>`;
+  $("#fcTbl-"+sys).onclick=e=>{const r=e.target.closest("tr[data-m]");if(r)pickModel(sys,list,id,r.dataset.m)};
+  $("#fcTbl-"+sys).onkeydown=e=>{const r=e.target.closest("tr[data-m]");if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();pickModel(sys,list,id,r.dataset.m)}};
+  // hourly 7 days from profile × selected model
   const hEl=$("#fcH-"+sys);
-  if(f.hourly7){
-    hEl.innerHTML=`<div class="card-head"><div><h3>未來 7 天逐時負載預測</h3><div class="note">日預測 × 最近 8 週同星期各小時用電占比（1 小時平均 kW = 該小時 kWh）</div></div></div><div class="chart" id="fcHC-${sys}"></div>`;
-    const x=f.hourly7.hours.map(h=>new Date(h.replace(" ","T")+":00:00Z"));
-    tsChart($("#fcHC-"+sys),{x,daily:true,unit:"kW",height:200,tfmt:tf,xfmt:d=>`${d.getUTCMonth()+1}/${d.getUTCDate()} ${WD[wdOf(d)]}`,series:[{name:"預測負載",color:"#e2c995",values:f.hourly7.kw}]});
+  if(f.profile){
+    hEl.innerHTML=`<div class="card-head"><div><h3>未來 7 天逐時負載預測（${MSHORT[mk]}）</h3><div class="note">日預測 × 最近 8 週同星期各小時用電占比（1 小時平均 kW = 該小時 kWh）</div></div></div><div class="chart" id="fcHC-${sys}"></div>`;
+    const x=[],v=[];
+    f.dates.slice(0,7).forEach((d,j)=>{const dt=P(d),wd=wdOf(dt);for(let h=0;h<24;h++){x.push(new Date(+dt+h*3600e3));const sh=f.profile[wd][h];v.push(nz(sh)&&nz(md.pred[j])?md.pred[j]*sh:null)}});
+    tsChart($("#fcHC-"+sys),{x,daily:true,unit:"kW",height:200,tfmt:tf,xfmt:d=>`${d.getUTCMonth()+1}/${d.getUTCDate()} ${WD[wdOf(d)]}`,series:[{name:"預測負載",color:series.at(-1).color,values:v}]});
   } else hEl.innerHTML="";
 }
 
@@ -670,7 +724,7 @@ function play(on){
 function footer(){
   $("#foot").innerHTML=`<div><b style="color:var(--ink-2)">資料說明</b>　資料期間 ${M.day_start} ～ ${ymd(dDate(ND-1))}，產生於 ${M.generated}（台北時間）。</div>
   <ul>${M.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
-  <div style="margin-top:8px"><b style="color:var(--ink-2)">預測模型</b>　${M.model.name}。${M.model.backtest}；預測區間為${M.model.interval}；逐時預測為${M.model.hourly}。</div>`;
+  <div style="margin-top:8px"><b style="color:var(--ink-2)">預測模型</b>　${M.model.name}。${M.model.backtest}；預測區間為${M.model.interval}；逐時預測為${M.model.hourly}。${M.model.features||""}。</div>`;
 }
 
 /* ---------- boot ---------- */

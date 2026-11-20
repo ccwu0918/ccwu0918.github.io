@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-21 00:49",
+ "generated": "2026-11-21 03:15",
  "monthly": [
   {
    "month": "2023-01",
@@ -428,7 +428,7 @@
  "spss": [
   {
    "file": "spss/nqu_spss.zip",
-   "bytes": 3329422,
+   "bytes": 3329417,
    "bundle": true
   },
   {
