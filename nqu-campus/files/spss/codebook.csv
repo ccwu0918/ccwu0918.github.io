@@ -1,0 +1,130 @@
+﻿檔案,變數名,標籤,單位,數值標籤,有效筆數,總筆數,最小值,最大值
+nqu_hourly.sav,year,年,,,34320,34320,2023.0,2026.0
+nqu_hourly.sav,month,月,,,34320,34320,1.0,12.0
+nqu_hourly.sav,quarter,季,,,34320,34320,1.0,4.0
+nqu_hourly.sav,weekday,星期（1=週一…7=週日）,,1=週一; 2=週二; 3=週三; 4=週四; 5=週五; 6=週六; 7=週日,34320,34320,1.0,7.0
+nqu_hourly.sav,weekend,週末（1=週六日）,,0=平日; 1=週末,34320,34320,0.0,1.0
+nqu_hourly.sav,datetime,日期時間（台北時間，小時起點）,,,34320,34320,,
+nqu_hourly.sav,date,日期,,,34320,34320,,
+nqu_hourly.sav,hour,小時（0–23）,,,34320,34320,0.0,23.0
+nqu_hourly.sav,kw_tot,全校總電錶 每小時平均功率（2023 年總電錶數值規模約為 2024 年後的 1/40）,kW,,31592,34320,0.0,1370.9
+nqu_hourly.sav,kw_gen_f,綜合大樓前棟 每小時平均功率,kW,,28682,34320,0.0,222.7
+nqu_hourly.sav,kw_gen_b,綜合大樓後棟 每小時平均功率,kW,,31592,34320,0.0,6984.9
+nqu_hourly.sav,kw_outdoor,戶外用電 每小時平均功率,kW,,31592,34320,0.0,75.0
+nqu_hourly.sav,kw_lib,圖資大樓 每小時平均功率,kW,,31592,34320,0.0,888.0
+nqu_hourly.sav,kw_sci,理工大樓 每小時平均功率,kW,,31592,34320,0.0,190.4
+nqu_hourly.sav,kw_multi,多功能大樓 每小時平均功率,kW,,31592,34320,0.0,137.2
+nqu_hourly.sav,kw_dorm,宿舍區 每小時平均功率,kW,,31592,34320,0.0,697.0
+nqu_hourly.sav,kw_round,圓樓 每小時平均功率,kW,,20855,34320,0.0,344801002953977.0
+nqu_hourly.sav,kw_round_ats,圓樓ATS 每小時平均功率,kW,,20854,34320,-0.0,276.2
+nqu_hourly.sav,kw_stu1,學生一舍 每小時平均功率,kW,,20855,34320,0.0,194.2
+nqu_hourly.sav,kw_stu2_380,學生二舍380V 每小時平均功率,kW,,15993,34320,0.0,2715.6
+nqu_hourly.sav,kw_stu2_220,學生二舍220V 每小時平均功率,kW,,19673,34320,-0.0,372591907483192.5
+nqu_hourly.sav,kw_stu2_ats,學生二舍ATS 每小時平均功率,kW,,20855,34320,0.0,713.5
+nqu_hourly.sav,kw_sch1,學人一舍 每小時平均功率,kW,,20855,34320,0.0,1905.3
+nqu_hourly.sav,kw_sch1_ats,學人一舍ATS 每小時平均功率,kW,,20855,34320,-0.1,847.8
+nqu_hourly.sav,kw_sch2,學人二舍 每小時平均功率,kW,,20855,34320,0.0,713.8
+nqu_hourly.sav,kw_sch2_ats,學人二舍ATS 每小時平均功率,kW,,20831,34320,0.0,47.9
+nqu_hourly.sav,kw_heatpump,熱泵系統 每小時平均功率,kW,,20831,34320,-0.2,389339810556157.0
+nqu_hourly.sav,kw_heater,電熱水器 每小時平均功率,kW,,20831,34320,-0.0,172.8
+nqu_hourly.sav,w_round,圓樓 每小時用水量,m³,,18331,34320,0.0,9.11
+nqu_hourly.sav,w_sch2,學人二舍 每小時用水量,m³,,19230,34320,0.0,18.22
+nqu_hourly.sav,w_lib,圖資大樓 每小時用水量,m³,,19232,34320,0.0,19.09
+nqu_hourly.sav,w_sch1b,學人一舍B 每小時用水量,m³,,19517,34320,0.0,1.41
+nqu_hourly.sav,w_sch1c,學人一舍C 每小時用水量,m³,,20665,34320,0.0,17.86
+nqu_hourly.sav,w_multi,多功能大樓 每小時用水量,m³,,19244,34320,0.0,16.52
+nqu_hourly.sav,temp,戶外溫度 每小時平均,°C,,12494,34320,0.0,38.5
+nqu_hourly.sav,humid,戶外相對濕度 每小時平均,%,,12545,34320,0.0,99.9
+nqu_hourly.sav,pm25,PM2.5 濃度 每小時平均,μg/m³,,12541,34320,0.0,218.8
+nqu_hourly.sav,ls_stu2,高樓門禁 學生二舍 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,31627,34320,0.0,3.0
+nqu_hourly.sav,lr_stu2,高樓門禁 學生二舍 該小時紅燈分鐘,分鐘,,31627,34320,0.0,60.0
+nqu_hourly.sav,ls_gl_f,綜合大樓左側 左前 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gl_f,綜合大樓左側 左前 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_hourly.sav,ls_gl_m,綜合大樓左側 左中 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gl_m,綜合大樓左側 左中 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_hourly.sav,ls_gl_b,綜合大樓左側 左後 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gl_b,綜合大樓左側 左後 該小時紅燈分鐘,分鐘,,16667,34320,0.0,45.0
+nqu_hourly.sav,ls_gr_f,綜合大樓右側 右前 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gr_f,綜合大樓右側 右前 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_hourly.sav,ls_gr_m,綜合大樓右側 右中 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gr_m,綜合大樓右側 右中 該小時紅燈分鐘,分鐘,,16667,34320,0.0,0.0
+nqu_hourly.sav,ls_gr_b,綜合大樓右側 右後 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gr_b,綜合大樓右側 右後 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_hourly.sav,ls_overseas,其他大樓 華僑大樓 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_overseas,其他大樓 華僑大樓 該小時紅燈分鐘,分鐘,,16667,34320,0.0,42.0
+nqu_hourly.sav,ls_sci,其他大樓 理工大樓 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_sci,其他大樓 理工大樓 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_hourly.sav,ls_round,其他大樓 圓樓 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_round,其他大樓 圓樓 該小時紅燈分鐘,分鐘,,16667,34320,0.0,51.0
+nqu_hourly.sav,ls_gym,其他大樓 體育館 該小時主要燈號,,0=綠燈; 1=黃燈; 2=紅燈; 3=無訊號; 4=白燈; 5=藍燈,16667,34320,0.0,3.0
+nqu_hourly.sav,lr_gym,其他大樓 體育館 該小時紅燈分鐘,分鐘,,16667,34320,0.0,60.0
+nqu_daily.sav,year,年,,,1430,1430,2023.0,2026.0
+nqu_daily.sav,month,月,,,1430,1430,1.0,12.0
+nqu_daily.sav,quarter,季,,,1430,1430,1.0,4.0
+nqu_daily.sav,weekday,星期（1=週一…7=週日）,,1=週一; 2=週二; 3=週三; 4=週四; 5=週五; 6=週六; 7=週日,1430,1430,1.0,7.0
+nqu_daily.sav,weekend,週末（1=週六日）,,0=平日; 1=週末,1430,1430,0.0,1.0
+nqu_daily.sav,date,日期,,,1430,1430,,
+nqu_daily.sav,kwh_tot,全校總電錶 每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,,1295,1430,55.1,20489.9
+nqu_daily.sav,kwh_gen_f,綜合大樓前棟 每日用電量,kWh,,1174,1430,16.8,2465.4
+nqu_daily.sav,kwh_gen_b,綜合大樓後棟 每日用電量,kWh,,1295,1430,17.4,6841.8
+nqu_daily.sav,kwh_outdoor,戶外用電 每日用電量,kWh,,1295,1430,9.5,1141.6
+nqu_daily.sav,kwh_lib,圖資大樓 每日用電量,kWh,,1295,1430,27.9,4061.8
+nqu_daily.sav,kwh_sci,理工大樓 每日用電量,kWh,,1295,1430,0.0,2213.4
+nqu_daily.sav,kwh_multi,多功能大樓 每日用電量,kWh,,1295,1430,4.6,1265.8
+nqu_daily.sav,kwh_dorm,宿舍區 每日用電量,kWh,,1295,1430,30.6,8956.8
+nqu_daily.sav,kwh_round,圓樓 每日用電量,kWh,,835,1430,63.3,1219559294092962.5
+nqu_daily.sav,kwh_round_ats,圓樓ATS 每日用電量,kWh,,834,1430,-0.0,5248.6
+nqu_daily.sav,kwh_stu1,學生一舍 每日用電量,kWh,,835,1430,0.0,2262.5
+nqu_daily.sav,kwh_stu2_380,學生二舍380V 每日用電量,kWh,,632,1430,865.8,4488.4
+nqu_daily.sav,kwh_stu2_220,學生二舍220V 每日用電量,kWh,,789,1430,-0.0,1247578595215502.0
+nqu_daily.sav,kwh_stu2_ats,學生二舍ATS 每日用電量,kWh,,835,1430,67.6,1221.4
+nqu_daily.sav,kwh_sch1,學人一舍 每日用電量,kWh,,835,1430,96.8,45380.5
+nqu_daily.sav,kwh_sch1_ats,學人一舍ATS 每日用電量,kWh,,835,1430,1.4,11366.8
+nqu_daily.sav,kwh_sch2,學人二舍 每日用電量,kWh,,835,1430,196.0,1539.1
+nqu_daily.sav,kwh_sch2_ats,學人二舍ATS 每日用電量,kWh,,833,1430,20.8,670.5
+nqu_daily.sav,kwh_heatpump,熱泵系統 每日用電量,kWh,,833,1430,0.0,1307913649948049.8
+nqu_daily.sav,kwh_heater,電熱水器 每日用電量,kWh,,833,1430,0.0,1921.2
+nqu_daily.sav,kwh_energy_sum,能源通訊系統 12 組電錶合計（至少 6 組有值）,kWh,,835,1430,2135.7,3775051539261193.5
+nqu_daily.sav,w_round,圓樓 每日用水量,m³,,748,1430,0.0,123.29
+nqu_daily.sav,w_sch2,學人二舍 每日用水量,m³,,791,1430,0.0,28.55
+nqu_daily.sav,w_lib,圖資大樓 每日用水量,m³,,781,1430,0.0,52.63
+nqu_daily.sav,w_sch1b,學人一舍B 每日用水量,m³,,808,1430,0.0,42.7
+nqu_daily.sav,w_sch1c,學人一舍C 每日用水量,m³,,854,1430,0.0,9.35
+nqu_daily.sav,w_multi,多功能大樓 每日用水量,m³,,790,1430,1.88,140.01
+nqu_daily.sav,w_sum,6 處水錶合計（至少 4 處有值）,m³,,796,1430,2.25,165.89
+nqu_daily.sav,temp_mean,戶外溫度 日平均,°C,,512,1430,8.588,33.996
+nqu_daily.sav,temp_max,戶外溫度 日最高,°C,,512,1430,10.4,38.5
+nqu_daily.sav,temp_min,戶外溫度 日最低,°C,,512,1430,7.3,31.3
+nqu_daily.sav,humid_mean,戶外相對濕度 日平均,%,,515,1430,0.0,99.9
+nqu_daily.sav,humid_max,戶外相對濕度 日最高,%,,515,1430,0.0,99.9
+nqu_daily.sav,humid_min,戶外相對濕度 日最低,%,,515,1430,0.0,99.9
+nqu_daily.sav,pm25_mean,PM2.5 濃度 日平均,μg/m³,,515,1430,0.0,108.133
+nqu_daily.sav,pm25_max,PM2.5 濃度 日最高,μg/m³,,515,1430,0.0,218.8
+nqu_daily.sav,lr_stu2,高樓門禁 學生二舍 每日紅燈分鐘,分鐘,,1337,1430,0.0,1440.0
+nqu_daily.sav,lr_gl_f,綜合大樓左側 左前 每日紅燈分鐘,分鐘,,699,1430,0.0,1440.0
+nqu_daily.sav,lr_gl_m,綜合大樓左側 左中 每日紅燈分鐘,分鐘,,699,1430,0.0,177.0
+nqu_daily.sav,lr_gl_b,綜合大樓左側 左後 每日紅燈分鐘,分鐘,,699,1430,0.0,108.0
+nqu_daily.sav,lr_gr_f,綜合大樓右側 右前 每日紅燈分鐘,分鐘,,699,1430,0.0,129.0
+nqu_daily.sav,lr_gr_m,綜合大樓右側 右中 每日紅燈分鐘,分鐘,,699,1430,0.0,0.0
+nqu_daily.sav,lr_gr_b,綜合大樓右側 右後 每日紅燈分鐘,分鐘,,699,1430,0.0,1260.0
+nqu_daily.sav,lr_overseas,其他大樓 華僑大樓 每日紅燈分鐘,分鐘,,699,1430,0.0,120.0
+nqu_daily.sav,lr_sci,其他大樓 理工大樓 每日紅燈分鐘,分鐘,,699,1430,6.0,1440.0
+nqu_daily.sav,lr_round,其他大樓 圓樓 每日紅燈分鐘,分鐘,,699,1430,0.0,60.0
+nqu_daily.sav,lr_gym,其他大樓 體育館 每日紅燈分鐘,分鐘,,699,1430,0.0,465.0
+nqu_daily_power_long.sav,year,年,,,20003,20003,2023.0,2026.0
+nqu_daily_power_long.sav,month,月,,,20003,20003,1.0,12.0
+nqu_daily_power_long.sav,quarter,季,,,20003,20003,1.0,4.0
+nqu_daily_power_long.sav,weekday,星期（1=週一…7=週日）,,1=週一; 2=週二; 3=週三; 4=週四; 5=週五; 6=週六; 7=週日,20003,20003,1.0,7.0
+nqu_daily_power_long.sav,weekend,週末（1=週六日）,,0=平日; 1=週末,20003,20003,0.0,1.0
+nqu_daily_power_long.sav,date,日期,,,20003,20003,,
+nqu_daily_power_long.sav,system,所屬系統,,1=校園資訊平台; 2=智慧低碳校園能源通訊系統,20003,20003,1.0,2.0
+nqu_daily_power_long.sav,circuit,用電迴路,,1=全校總電錶; 2=綜合大樓前棟; 3=綜合大樓後棟; 4=戶外用電; 5=圖資大樓; 6=理工大樓; 7=多功能大樓; 8=宿舍區; 9=圓樓; 10=圓樓ATS; 11=學生一舍; 12=學生二舍380V; 13=學生二舍220V; 14=學生二舍ATS; 15=學人一舍; 16=學人一舍ATS; 17=學人二舍; 18=學人二舍ATS; 19=熱泵系統; 20=電熱水器,20003,20003,1.0,20.0
+nqu_daily_power_long.sav,kwh,每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,,20003,20003,-0.0,1307913649948049.8
+nqu_daily_water_long.sav,year,年,,,4772,4772,2023.0,2026.0
+nqu_daily_water_long.sav,month,月,,,4772,4772,1.0,12.0
+nqu_daily_water_long.sav,quarter,季,,,4772,4772,1.0,4.0
+nqu_daily_water_long.sav,weekday,星期（1=週一…7=週日）,,1=週一; 2=週二; 3=週三; 4=週四; 5=週五; 6=週六; 7=週日,4772,4772,1.0,7.0
+nqu_daily_water_long.sav,weekend,週末（1=週六日）,,0=平日; 1=週末,4772,4772,0.0,1.0
+nqu_daily_water_long.sav,date,日期,,,4772,4772,,
+nqu_daily_water_long.sav,meter,水錶,,1=圓樓; 2=學人二舍; 3=圖資大樓; 4=學人一舍B; 5=學人一舍C; 6=多功能大樓,4772,4772,1.0,6.0
+nqu_daily_water_long.sav,m3,每日用水量,m³,,4772,4772,0.0,140.01
