@@ -437,13 +437,14 @@ function build(){
       <div class="card hero kpi"><div class="lbl">全校即時負載</div><div class="val" id="kNow">—</div><div class="ft" id="kNowFt">—</div></div>
       <div class="card kpi"><div class="lbl">當日累計用電（至游標時刻）</div><div class="val" id="kToday">—</div><div class="ft" id="kTodayFt">—</div></div>
       <div class="card kpi"><div class="lbl">本月累計用電</div><div class="val" id="kMonth">—</div><div class="ft" id="kMonthFt">—</div></div>
-      <div class="card kpi"><div class="lbl">戶外環境</div><div class="val" id="kEnv">—</div><div class="ft" id="kEnvFt">—</div></div>
+      <div class="card kpi"><div class="lbl">戶外環境（金寧氣象站）</div><div class="val" id="kEnv">—</div><div class="ft" id="kEnvFt">—</div></div>
     </div>
     <div class="grid meters" id="cMeters"></div>
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card"><div class="card-head"><div><h3>各大樓負載曲線</h3><div class="note">游標前後 3 天、每小時平均功率；點擊圖面可移動時間軸</div></div><div class="chips" id="cChips"></div></div><div class="chart" id="cLine"></div></div>
       <div class="card"><div class="card-head"><div><h3 id="cBarsT">全校用電量</h3><div class="note" id="cBarsN">—</div></div>${segHTML("cBars")}</div><div class="chart" id="cBars"></div>
-        <div class="card-head" style="margin-top:14px"><div><h3>環境資訊</h3><div class="note" id="envNote">游標前後 3 天</div></div></div><div class="chart" id="cEnv"></div></div>
+        <div class="card-head" style="margin-top:14px"><div><h3>環境資訊</h3><div class="note" id="envNote">游標前後 3 天；溫濕度：氣象署金寧站（缺測用金門站），虛線為校內感測器</div></div></div><div class="chart" id="cEnv"></div>
+        <div class="card-head" style="margin-top:14px"><div><h3>空氣品質 PM2.5</h3><div class="note" id="pmNote">游標前後 3 天；實線：環境部金門測站，虛線：校內微型感測器（僅供趨勢參考）</div></div></div><div class="chart" id="cPM"></div></div>
     </div>
     <div class="section-title"><h3>用電預測分析</h3><span class="badge">FORECAST</span></div>
     <div id="fc-campus"></div>
@@ -526,9 +527,10 @@ function renderCampus(charts){
   const d=dDate(j);let ms=0,mn=0;for(let k=j-d.getUTCDate()+1;k<=j;k++){const v=dv("e_總電",k);if(nz(v)){ms+=v;mn++}}
   $("#kMonth").innerHTML=mn?`${fmt(ms/1000)}<small>MWh</small>`:"—";
   $("#kMonthFt").textContent=`${d.getUTCMonth()+1} 月 1 日至游標日，${mn} 天有資料`;
-  const t=hv("env_溫度",i),h=hv("env_濕度",i),pm=hv("env_PM25",i);
-  if(nz(t)&&t!==0){$("#kEnv").innerHTML=`${fmt1(t)}<small>°C</small>`;$("#kEnvFt").textContent=`濕度 ${nz(h)?fmt(h):"—"}%・PM2.5 ${nz(pm)?fmt(pm):"—"} μg/m³`}
-  else{$("#kEnv").innerHTML="—";$("#kEnvFt").textContent="環境感測器此時段無資料（2025-05-02 起離線）"}
+  const t=hv("env_溫度",i),h=hv("env_濕度",i),pm=hv("env_PM25",i),aq=H.env_AQI?hv("env_AQI",i):null,tc=H["env_溫度_校內"]?hv("env_溫度_校內",i):null;
+  if(nz(t)){$("#kEnv").innerHTML=`${fmt1(t)}<small>°C</small>`;
+    $("#kEnvFt").textContent=`濕度 ${nz(h)?fmt(h):"—"}%・PM2.5 ${nz(pm)?fmt(pm):"—"} μg/m³${nz(aq)?`・AQI ${fmt(aq)}`:""}${nz(tc)?`・校內 ${fmt1(tc)}°C`:""}`}
+  else{$("#kEnv").innerHTML="—";$("#kEnvFt").textContent="此時段無氣象資料"}
   // meters
   const tot=S.campus.filter(s=>s.id!=="總電").reduce((a,s)=>a+(lastValid(s.hourly,i,2)||0),0);
   document.querySelectorAll("#cMeters .meter").forEach(el=>{
@@ -548,9 +550,13 @@ function renderCampus(charts){
   {const w=periodWin(S.per.cBars,j);$("#cBarsT").textContent=`全校${PER_NAME[w.p]}用電量`;
    $("#cBarsN").textContent=w.note+(w.p!=="d"?"；2023 年總電錶數值規模約為 2024 年後的 1/40":"，金色為游標日");
    periodChart($("#cBars"),{win:w,series:[{key:"e_總電",name:"全校用電",color:"#3987e5"}],unit:w.p==="d"?"kWh":"kWh",height:190,onPick:seekDay});}
-  const ev=H["env_溫度"].slice(a,b+1).map(v=>v===0?null:v),eh=H["env_濕度"].slice(a,b+1).map(v=>v===0?null:v);
-  tsChart($("#cEnv"),{x,daily:true,unit:"°C / %",height:160,cursor:hDate(i),tfmt:tf,
-    series:[{name:"溫度",color:"#d95926",values:ev,vfmt:fmt1},{name:"濕度",color:"#3987e5",values:eh}]});
+  const sl=k=>H[k]?H[k].slice(a,b+1):[];
+  const envS=[{name:"溫度",color:"#d95926",values:sl("env_溫度"),vfmt:fmt1},{name:"濕度",color:"#3987e5",values:sl("env_濕度")}];
+  if(sl("env_溫度_校內").some(nz))envS.splice(1,0,{name:"校內溫度",color:"#d95926",values:sl("env_溫度_校內"),dash:true,width:1.2,vfmt:fmt1});
+  tsChart($("#cEnv"),{x,daily:true,unit:"°C / %",height:160,cursor:hDate(i),tfmt:tf,series:envS});
+  const pmS=[{name:"PM2.5 環境部金門站",color:"#7a52c7",values:sl("env_PM25")}];
+  if(sl("env_PM25_校內").some(nz))pmS.push({name:"PM2.5 校內",color:"#7a52c7",values:sl("env_PM25_校內"),dash:true,width:1.2});
+  tsChart($("#cPM"),{x,daily:true,unit:"μg/m³",height:140,cursor:hDate(i),tfmt:tf,yMin:0,series:pmS});
 }
 
 function renderEnergy(charts){
