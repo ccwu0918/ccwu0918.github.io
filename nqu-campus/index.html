@@ -231,7 +231,7 @@ const PAL=["#3987e5","#d95926","#199e70","#c98500","#d55181","#0ca30c","#9085e9"
 const LAMP={0:{n:"綠燈",c:"#0ca30c",cls:"good"},1:{n:"黃燈",c:"#fab219",cls:"warn"},2:{n:"紅燈",c:"#d03b3b",cls:"crit"},3:{n:"無訊號",c:"#4a4945",cls:"off"},4:{n:"白燈",c:"#e8e6e0",cls:"white"},5:{n:"藍燈",c:"#3987e5",cls:"blue"}};
 const WD=["週一","週二","週三","週四","週五","週六","週日"];
 const fmt=d3.format(",.0f"), fmt1=d3.format(",.1f"), fmt2=d3.format(",.2f");
-const S={sys:"campus",i:0,playing:false,timer:null,per:{cBars:"d",eUse:"d",wLine:"d",sHeat:"d"}};
+const S={sys:"campus",i:0,playing:false,timer:null,per:{cBars:"d",eUse:"d",wLine:"d",sHeat:"d",cEnv:"h",cPM:"h"}};
 let M,H,D,F,A,T0,NH,ND;
 const $=s=>document.querySelector(s);
 
@@ -305,8 +305,8 @@ function tsChart(el,o){
 }
 
 /* ---------- 日／月／年 ---------- */
-const PER_NAME={d:"日",m:"月",y:"年"};
-function segHTML(id){return `<div class="seg" role="radiogroup" aria-label="時間單位" data-chart="${id}">${[["d","日"],["m","月"],["y","年"]].map(([p,t])=>`<button role="radio" data-p="${p}" aria-checked="${S.per[id]===p}">${t}</button>`).join("")}</div>`}
+const PER_NAME={h:"時",d:"日",m:"月",y:"年"};
+function segHTML(id,hour){return `<div class="seg" role="radiogroup" aria-label="時間單位" data-chart="${id}">${(hour?[["h","時"]]:[]).concat([["d","日"],["m","月"],["y","年"]]).map(([p,t])=>`<button role="radio" data-p="${p}" aria-checked="${S.per[id]===p}">${t}</button>`).join("")}</div>`}
 document.addEventListener("click",e=>{const b=e.target.closest(".seg button");if(!b)return;const g=b.parentElement,id=g.dataset.chart;
   S.per[id]=b.dataset.p;[...g.children].forEach(x=>x.setAttribute("aria-checked",x===b));renderNow(true)});
 function aggClient(){ // aggregates.json 不存在時由每日資料即時彙總
@@ -443,8 +443,8 @@ function build(){
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card"><div class="card-head"><div><h3>各大樓負載曲線</h3><div class="note">游標前後 3 天、每小時平均功率；點擊圖面可移動時間軸</div></div><div class="chips" id="cChips"></div></div><div class="chart" id="cLine"></div></div>
       <div class="card"><div class="card-head"><div><h3 id="cBarsT">全校用電量</h3><div class="note" id="cBarsN">—</div></div>${segHTML("cBars")}</div><div class="chart" id="cBars"></div>
-        <div class="card-head" style="margin-top:14px"><div><h3>環境資訊</h3><div class="note" id="envNote">游標前後 3 天；溫濕度：氣象署金寧站（缺測用金門站），虛線為校內感測器</div></div></div><div class="chart" id="cEnv"></div>
-        <div class="card-head" style="margin-top:14px"><div><h3>空氣品質 PM2.5</h3><div class="note" id="pmNote">游標前後 3 天；實線：環境部金門測站，虛線：校內微型感測器（僅供趨勢參考）</div></div></div><div class="chart" id="cPM"></div></div>
+        <div class="card-head" style="margin-top:14px"><div><h3 id="envT">環境資訊</h3><div class="note" id="envNote">游標前後 3 天；溫濕度：氣象署金寧站（缺測用金門站），虛線為校內感測器</div></div>${segHTML("cEnv",true)}</div><div class="chart" id="cEnv"></div>
+        <div class="card-head" style="margin-top:14px"><div><h3 id="pmT">空氣品質 PM2.5</h3><div class="note" id="pmNote">游標前後 3 天；實線：環境部金門測站，虛線：校內微型感測器（僅供趨勢參考）</div></div>${segHTML("cPM",true)}</div><div class="chart" id="cPM"></div></div>
     </div>
     <div class="section-title"><h3>用電預測分析</h3><span class="badge">FORECAST</span></div>
     <div id="fc-campus"></div>
@@ -550,13 +550,33 @@ function renderCampus(charts){
   {const w=periodWin(S.per.cBars,j);$("#cBarsT").textContent=`全校${PER_NAME[w.p]}用電量`;
    $("#cBarsN").textContent=w.note+(w.p!=="d"?"；2023 年總電錶數值規模約為 2024 年後的 1/40":"，金色為游標日");
    periodChart($("#cBars"),{win:w,series:[{key:"e_總電",name:"全校用電",color:"#3987e5"}],unit:w.p==="d"?"kWh":"kWh",height:190,onPick:seekDay});}
-  const sl=k=>H[k]?H[k].slice(a,b+1):[];
-  const envS=[{name:"溫度",color:"#d95926",values:sl("env_溫度"),vfmt:fmt1},{name:"濕度",color:"#3987e5",values:sl("env_濕度")}];
-  if(sl("env_溫度_校內").some(nz))envS.splice(1,0,{name:"校內溫度",color:"#d95926",values:sl("env_溫度_校內"),dash:true,width:1.2,vfmt:fmt1});
-  tsChart($("#cEnv"),{x,daily:true,unit:"°C / %",height:160,cursor:hDate(i),tfmt:tf,series:envS});
-  const pmS=[{name:"PM2.5 環境部金門站",color:"#7a52c7",values:sl("env_PM25")}];
-  if(sl("env_PM25_校內").some(nz))pmS.push({name:"PM2.5 校內",color:"#7a52c7",values:sl("env_PM25_校內"),dash:true,width:1.2});
-  tsChart($("#cPM"),{x,daily:true,unit:"μg/m³",height:140,cursor:hDate(i),tfmt:tf,yMin:0,series:pmS});
+  renderEnvPM(i,j,a,b,x,tf);
+}
+
+// 環境資訊、PM2.5：時（游標前後 3 天每小時）／日（最近 60 天日平均）／月（最近 24 個月平均）／年（各年平均）
+function renderEnvPM(i,j,a,b,x,tf){
+  const SRC_E="溫濕度：氣象署金寧站（缺測用金門站），虛線為校內感測器",SRC_P="實線：環境部金門測站，虛線：校內微型感測器（僅供趨勢參考）";
+  const E=[["env_溫度","溫度","#d95926",fmt1,false],["env_溫度_校內","校內溫度","#e8a07f",fmt1,true],["env_濕度","濕度","#3987e5",fmt,false]];
+  const P=[["env_PM25","PM2.5 環境部金門站","#7a52c7",fmt1,false],["env_PM25_校內","PM2.5 校內","#b39ddb",fmt1,true]];
+  draw("#cEnv","#envT","#envNote","環境資訊",S.per.cEnv,E,"°C / %",160,SRC_E,null);
+  draw("#cPM","#pmT","#pmNote","空氣品質 PM2.5",S.per.cPM,P,"μg/m³",140,SRC_P,0);
+  function draw(sel,tSel,nSel,title,p,defs,unit,h,src,yMin){
+    const el=$(sel);
+    if(p==="h"){
+      const ss=defs.filter(([k])=>H[k]).map(([k,n,c,vf,dash])=>({name:n,color:dash?defs.find(d=>!d[4]&&d[0]===k.replace("_校內",""))[2]:c,values:H[k].slice(a,b+1),dash,width:dash?1.2:2,vfmt:vf}))
+        .filter(s=>!s.dash||s.values.some(nz));
+      $(tSel).textContent=title;$(nSel).textContent=`游標前後 3 天（每小時）；${src}`;
+      tsChart(el,{x,daily:true,unit,height:h,cursor:hDate(i),tfmt:tf,yMin:yMin??undefined,series:ss});return}
+    const w=periodWin(p,j),avg=p==="d"?"日平均":p==="m"?"月平均":"年平均";
+    const use=defs.filter(([k])=>w.val(k).some(nz));
+    $(tSel).textContent=`${title}・${avg}`;$(nSel).textContent=`${w.note}；${src}`;
+    if(!use.length){tsChart(el,{x:w.x,unit,height:h,series:[]});return}
+    if(p==="y"){groupedBar(el,{w,series:use.map(([k,n,c])=>({key:k,name:n,color:c})),unit,vfmt:fmt1,height:h+40,onClick:seekDay});return}
+    const hiD=w.x[w.idx.indexOf(w.hi)],stp=Math.ceil(w.x.length/Math.max(3,Math.floor((el.clientWidth||600)/80)));
+    tsChart(el,{x:w.x,unit,height:h,cursor:hiD,daily:false,tfmt:w.head,xfmt:w.xfmt,onClick:seekDay,yMin:yMin??undefined,
+      tickVals:w.x.filter((d,k)=>k%stp===0),
+      series:use.map(([k,n,c,vf,dash])=>({name:n,color:dash?defs.find(d=>!d[4]&&d[0]===k.replace("_校內",""))[2]:c,values:w.val(k),dash,width:dash?1.2:2,vfmt:vf}))});
+  }
 }
 
 function renderEnergy(charts){
@@ -827,10 +847,10 @@ function footer(){
 /* ---------- boot ---------- */
 (async()=>{
   try{
-    [M,H,D,F]=await Promise.all(["meta","hourly","daily","forecast"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})));
+    [M,H,D,F]=await Promise.all(["meta","hourly","daily","forecast"].map(n=>fetch(`data/${n}.json`,{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(n);return r.json()})));
   }catch(e){$("#main").innerHTML=`<div class="loading">無法載入資料（${e.message}）。請確認 data/ 資料夾已一併上傳，或以 python -m http.server 在本機開啟。</div>`;return}
   T0=Date.parse(M.hour_start.replace(" ","T")+":00Z");NH=M.hours;ND=M.days;
-  try{const r=await fetch("data/aggregates.json");if(!r.ok)throw 0;A=await r.json()}catch(e){A=aggClient()}
+  try{const r=await fetch("data/aggregates.json",{cache:"no-cache"});if(!r.ok)throw 0;A=await r.json()}catch(e){A=aggClient()}
   build();
   const sl=$("#slider");sl.max=NH-1;
   let last=NH-1;while(last>0&&!nz(H["p_總電"][last]))last--;
