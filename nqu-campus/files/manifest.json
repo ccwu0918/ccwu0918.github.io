@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-21 13:25",
+ "generated": "2026-11-21 18:17",
  "monthly": [
   {
    "month": "2023-01",
@@ -428,7 +428,7 @@
  "spss": [
   {
    "file": "spss/nqu_spss.zip",
-   "bytes": 3332055,
+   "bytes": 3334301,
    "bundle": true
   },
   {
@@ -441,7 +441,7 @@
   },
   {
    "file": "spss/nqu_daily.csv",
-   "bytes": 293375
+   "bytes": 293450
   },
   {
    "file": "spss/nqu_daily.sav",
@@ -449,7 +449,7 @@
   },
   {
    "file": "spss/nqu_daily_power_long.csv",
-   "bytes": 878618
+   "bytes": 878693
   },
   {
    "file": "spss/nqu_daily_power_long.sav",
@@ -465,7 +465,7 @@
   },
   {
    "file": "spss/nqu_hourly.csv",
-   "bytes": 7271255
+   "bytes": 7271640
   },
   {
    "file": "spss/nqu_hourly.sav",
@@ -475,7 +475,7 @@
  "jasp": [
   {
    "file": "jasp/nqu_jasp.zip",
-   "bytes": 1599871,
+   "bytes": 1600713,
    "bundle": true
   },
   {
@@ -484,15 +484,15 @@
   },
   {
    "file": "jasp/jasp_daily.csv",
-   "bytes": 321797
+   "bytes": 321872
   },
   {
    "file": "jasp/jasp_daily_2024plus.csv",
-   "bytes": 261451
+   "bytes": 261526
   },
   {
    "file": "jasp/jasp_daily_power_long.csv",
-   "bytes": 2131290
+   "bytes": 2131365
   },
   {
    "file": "jasp/jasp_daily_water_long.csv",
@@ -500,7 +500,7 @@
   },
   {
    "file": "jasp/jasp_hourly.csv",
-   "bytes": 8994851
+   "bytes": 8995236
   },
   {
    "file": "jasp/jasp_variables.csv",
