@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-21 03:15",
+ "generated": "2026-11-21 13:25",
  "monthly": [
   {
    "month": "2023-01",
@@ -112,63 +112,63 @@
   {
    "month": "2024-01",
    "file": "monthly/2024-01.csv.zip",
-   "bytes": 3407839,
-   "csv_bytes": 11362515,
-   "sha256": "ff8090477d33a8cb70dc3bb9c15254d22d3e3588625b6b6fcbfaca0a72edf4e5",
+   "bytes": 3407819,
+   "csv_bytes": 11362485,
+   "sha256": "a09916b593e537e680bc1c4ebcb6efdbdfdfc8c7d0abebf30d5f3e36ab85ff09",
    "last": "2024-01-31 23:57",
    "complete": true
   },
   {
    "month": "2024-02",
    "file": "monthly/2024-02.csv.zip",
-   "bytes": 3038643,
-   "csv_bytes": 10059263,
-   "sha256": "4d962cf65a736c3fc7db28efa959b05f0851c08837f3389d6b317a3a63054885",
+   "bytes": 3038558,
+   "csv_bytes": 10059110,
+   "sha256": "edadc7f15bc3e1ee3cc4382ab0e8e0883c737734e94668ea899b70f9b4efd15c",
    "last": "2024-02-29 23:57",
    "complete": true
   },
   {
    "month": "2024-03",
    "file": "monthly/2024-03.csv.zip",
-   "bytes": 2892528,
-   "csv_bytes": 9795430,
-   "sha256": "0262785d15073f4e67110505ae7285af9051dec6d5c12281f7f709a039dbfae3",
+   "bytes": 2892411,
+   "csv_bytes": 9795228,
+   "sha256": "c111cfe7e3d9e8e52bd366751988fa34d767290f7cdfe09cf226f6c1b99f70fb",
    "last": "2024-03-31 23:57",
    "complete": true
   },
   {
    "month": "2024-04",
    "file": "monthly/2024-04.csv.zip",
-   "bytes": 2912915,
-   "csv_bytes": 10630538,
-   "sha256": "d9967932fea4116407fcb8fa37ecd7b4d2f67f838c5911535c92a4cfce95d286",
+   "bytes": 2912234,
+   "csv_bytes": 10626798,
+   "sha256": "07789fb5f93fffeeb4eaeaff7534f90a9a3699cb5793b1c6c10f40fff7a4394f",
    "last": "2024-04-30 23:57",
    "complete": true
   },
   {
    "month": "2024-05",
    "file": "monthly/2024-05.csv.zip",
-   "bytes": 3889880,
-   "csv_bytes": 12179872,
-   "sha256": "262f2edb38a4a03496f53c7fb11e3a6d53fdd669a8182b33e10e44578c545bb7",
+   "bytes": 3889787,
+   "csv_bytes": 12179716,
+   "sha256": "e6d374b5e43e9b0aab40d863ea755dcc0c488a5a55ae43ef066b5749914a0af2",
    "last": "2024-05-31 23:57",
    "complete": true
   },
   {
    "month": "2024-06",
    "file": "monthly/2024-06.csv.zip",
-   "bytes": 3810374,
-   "csv_bytes": 11951732,
-   "sha256": "6c16f7b5ee1175a17678e05869ec999c5a6dba3b4185e396cf6b95d9f1f68948",
+   "bytes": 3810221,
+   "csv_bytes": 11951435,
+   "sha256": "9a4659ebf0a3fe93161c7c475418e557397095851f123f85cfd1d9de96d112df",
    "last": "2024-06-30 23:57",
    "complete": true
   },
   {
    "month": "2024-07",
    "file": "monthly/2024-07.csv.zip",
-   "bytes": 3497093,
-   "csv_bytes": 11373980,
-   "sha256": "01d5d00f923db333c891389cc7c685ccf75446628b5a8a1d150ecf3d0dbc2975",
+   "bytes": 3497077,
+   "csv_bytes": 11373949,
+   "sha256": "0c161e3a21b0a74ed9b298c5e0a66a42653bf6a5a83808c288787ed0b87f83ec",
    "last": "2024-07-31 23:57",
    "complete": true
   },
@@ -184,18 +184,18 @@
   {
    "month": "2024-09",
    "file": "monthly/2024-09.csv.zip",
-   "bytes": 3949640,
-   "csv_bytes": 12190851,
-   "sha256": "b719a1ac33276b3bfd5ae348fb93a930fd64f862af284b5767bed2e61c7ab095",
+   "bytes": 3949604,
+   "csv_bytes": 12190779,
+   "sha256": "2526c1ea64bbcc0e67f0019c2f2abc514221d3a08002a0fca1ce2d5d3867fdc2",
    "last": "2024-09-30 23:57",
    "complete": true
   },
   {
    "month": "2024-10",
    "file": "monthly/2024-10.csv.zip",
-   "bytes": 4184087,
-   "csv_bytes": 12756872,
-   "sha256": "913224ce23ae6662a8fdad9aae9d319460407f5d0cb35b8a3e8b66d3e3258add",
+   "bytes": 4184088,
+   "csv_bytes": 12756868,
+   "sha256": "948ed8fda55ac8617bda52a9c2a7149e116a6bfc7bbb17e431b6f552449b7929",
    "last": "2024-10-31 23:57",
    "complete": true
   },
@@ -211,9 +211,9 @@
   {
    "month": "2024-12",
    "file": "monthly/2024-12.csv.zip",
-   "bytes": 3978795,
-   "csv_bytes": 11831755,
-   "sha256": "fe03e4fce8cfa4199082a417bcdc8961193e4025e55a36364d3c408ff6871990",
+   "bytes": 3978793,
+   "csv_bytes": 11831745,
+   "sha256": "df8ab571daac642894ca3f60c68008366bcb4e69b0b71b8ec56445aa55c17a6c",
    "last": "2024-12-31 23:57",
    "complete": true
   },
@@ -238,27 +238,27 @@
   {
    "month": "2025-03",
    "file": "monthly/2025-03.csv.zip",
-   "bytes": 4210432,
-   "csv_bytes": 12736945,
-   "sha256": "c5161bcd537607d593b56aa2cdee1982f11a430bc5f5c6a3679ebb6e85fcb6a8",
+   "bytes": 4210431,
+   "csv_bytes": 12736936,
+   "sha256": "126c2dc69d5d9191ecb13dd683e68d1c98bbfdc94aa1061d69c8334ce8376d7c",
    "last": "2025-03-31 23:57",
    "complete": true
   },
   {
    "month": "2025-04",
    "file": "monthly/2025-04.csv.zip",
-   "bytes": 4257607,
-   "csv_bytes": 12723672,
-   "sha256": "b275d83cc1117bd90ca5c987599a3c14f868d35bb6eb716e1cc605b4ac14e65d",
+   "bytes": 4257589,
+   "csv_bytes": 12723636,
+   "sha256": "32ac10d18459042941d2dca9a9b6b31ee5f0873a65aa5733d8f248b8a0f05512",
    "last": "2025-04-30 23:57",
    "complete": true
   },
   {
    "month": "2025-05",
    "file": "monthly/2025-05.csv.zip",
-   "bytes": 4312121,
-   "csv_bytes": 12994292,
-   "sha256": "8c6b50f034c60746d8127faca35e86f9f2ced24dad7c305e0737edf9629422df",
+   "bytes": 4312114,
+   "csv_bytes": 12994282,
+   "sha256": "803654edea56f17381e9f6d61293e985637ead4e6760fd9aa5edf3e195ed25ed",
    "last": "2025-05-31 23:57",
    "complete": true
   },
@@ -274,9 +274,9 @@
   {
    "month": "2025-07",
    "file": "monthly/2025-07.csv.zip",
-   "bytes": 3742608,
-   "csv_bytes": 11875903,
-   "sha256": "1e636494d9a28e903e5f8e1fea9f51ba6224056d37a6c841fd8b443b7300ed2f",
+   "bytes": 3742587,
+   "csv_bytes": 11875865,
+   "sha256": "59b26f42a01489ff37230265b441e4b9a5dc2f45ab3f651e2837264dc176e781",
    "last": "2025-07-31 23:57",
    "complete": true
   },
@@ -301,9 +301,9 @@
   {
    "month": "2025-10",
    "file": "monthly/2025-10.csv.zip",
-   "bytes": 3044293,
-   "csv_bytes": 10208923,
-   "sha256": "cd6e1f6ff502c9ecabbbddd026813e597f1b33c7b19422a62a7f17f8b9900ccd",
+   "bytes": 3044288,
+   "csv_bytes": 10208914,
+   "sha256": "4714f993748b08749ff6a2295ca18a20a1f6efbd44499cd8ad9f09c2dec3c44d",
    "last": "2025-10-31 23:57",
    "complete": true
   },
@@ -311,35 +311,35 @@
    "month": "2025-11",
    "file": "monthly/2025-11.csv.zip",
    "bytes": 2810004,
-   "csv_bytes": 8869847,
-   "sha256": "852d530bc5581cda44a4f979324e71cf5a7bf4560bd34d48bf476ce83b21426b",
+   "csv_bytes": 8869841,
+   "sha256": "9e7cc960f5cc1490b3f569d886ff31b8bc1efae6424043458345aa6d58bae19f",
    "last": "2025-11-30 23:57",
    "complete": true
   },
   {
    "month": "2025-12",
    "file": "monthly/2025-12.csv.zip",
-   "bytes": 4396433,
-   "csv_bytes": 14350033,
-   "sha256": "d1cc85fa1c3afd52df20e7dd0555a5972d8d01f688f490f9c24086b83625dd5d",
+   "bytes": 4396364,
+   "csv_bytes": 14349899,
+   "sha256": "719d966f412f19a3bbca1b4ac7451c61ad679363164d5a434894a1441ddc8210",
    "last": "2025-12-31 23:57",
    "complete": true
   },
   {
    "month": "2026-01",
    "file": "monthly/2026-01.csv.zip",
-   "bytes": 3748997,
-   "csv_bytes": 11552664,
-   "sha256": "1bed570fc2d011fadf68485932c601a18a782dbf0c3384c84f8c1ebe893d7a6d",
+   "bytes": 3749002,
+   "csv_bytes": 11552661,
+   "sha256": "3ff8ef0b9fda79921f904ca5b5e26814fae33d8086bfddb4174f16c63f4a7b90",
    "last": "2026-01-31 23:57",
    "complete": true
   },
   {
    "month": "2026-02",
    "file": "monthly/2026-02.csv.zip",
-   "bytes": 2820768,
-   "csv_bytes": 9195440,
-   "sha256": "f88ee691721e2e527e311800bc30233ec70ca5eb5cbc22d3e25bca9ba5ca5755",
+   "bytes": 2820766,
+   "csv_bytes": 9195436,
+   "sha256": "3b2f9aca5c1806d0b573a984360f035b9452213c10361e3cd19454f27853edf5",
    "last": "2026-02-28 23:57",
    "complete": true
   },
@@ -400,35 +400,35 @@
   {
    "month": "2026-09",
    "file": "monthly/2026-09.csv.zip",
-   "bytes": 4212500,
-   "csv_bytes": 13719432,
-   "sha256": "da371491e665a7a4ce953a1acb8abe06f20e7a6039133cf99e002d1da6143747",
+   "bytes": 4211434,
+   "csv_bytes": 13717366,
+   "sha256": "ccf1de38c4b98093577171228b7bc30fe6fc50cd3834d318aa7850670b9f44ba",
    "last": "2026-09-30 23:57",
    "complete": true
   },
   {
    "month": "2026-10",
    "file": "monthly/2026-10.csv.zip",
-   "bytes": 4096287,
-   "csv_bytes": 13012536,
-   "sha256": "8348db0b045c19651e234a3e0477446a14caa95f25de70a5963523373b1a3525",
+   "bytes": 4094069,
+   "csv_bytes": 13008348,
+   "sha256": "aa9f0826e45914c4db77cd867d90f7bfcb11912acd81a10dc9d16f9bcd81223b",
    "last": "2026-10-31 23:57",
    "complete": true
   },
   {
    "month": "2026-11",
    "file": "monthly/2026-11.csv.zip",
-   "bytes": 2555146,
-   "csv_bytes": 8695207,
-   "sha256": "10e8a2abf46b3960a9a827eb3d7e40d35400e72aa829a7577b8b902fe7e50333",
-   "last": "2026-11-20 07:57",
+   "bytes": 2683550,
+   "csv_bytes": 9029239,
+   "sha256": "815da7fba65bd14c533a6e3b4139d1f42ff39013c7a8074fffeb2203b3b9061a",
+   "last": "2026-11-21 07:57",
    "complete": false
   }
  ],
  "spss": [
   {
    "file": "spss/nqu_spss.zip",
-   "bytes": 3329417,
+   "bytes": 3332055,
    "bundle": true
   },
   {
@@ -437,45 +437,45 @@
   },
   {
    "file": "spss/codebook.csv",
-   "bytes": 12287
+   "bytes": 12195
   },
   {
    "file": "spss/nqu_daily.csv",
-   "bytes": 293171
+   "bytes": 293375
   },
   {
    "file": "spss/nqu_daily.sav",
-   "bytes": 607329
+   "bytes": 607753
   },
   {
    "file": "spss/nqu_daily_power_long.csv",
-   "bytes": 877765
+   "bytes": 878618
   },
   {
    "file": "spss/nqu_daily_power_long.sav",
-   "bytes": 1442106
+   "bytes": 1443546
   },
   {
    "file": "spss/nqu_daily_water_long.csv",
-   "bytes": 192174
+   "bytes": 192421
   },
   {
    "file": "spss/nqu_daily_water_long.sav",
-   "bytes": 306686
+   "bytes": 307070
   },
   {
    "file": "spss/nqu_hourly.csv",
-   "bytes": 7264983
+   "bytes": 7271255
   },
   {
    "file": "spss/nqu_hourly.sav",
-   "bytes": 16082371
+   "bytes": 16093699
   }
  ],
  "jasp": [
   {
    "file": "jasp/nqu_jasp.zip",
-   "bytes": 1598605,
+   "bytes": 1599871,
    "bundle": true
   },
   {
@@ -484,23 +484,23 @@
   },
   {
    "file": "jasp/jasp_daily.csv",
-   "bytes": 321573
+   "bytes": 321797
   },
   {
    "file": "jasp/jasp_daily_2024plus.csv",
-   "bytes": 261227
+   "bytes": 261451
   },
   {
    "file": "jasp/jasp_daily_power_long.csv",
-   "bytes": 2129149
+   "bytes": 2131290
   },
   {
    "file": "jasp/jasp_daily_water_long.csv",
-   "bytes": 349216
+   "bytes": 349660
   },
   {
    "file": "jasp/jasp_hourly.csv",
-   "bytes": 8986779
+   "bytes": 8994851
   },
   {
    "file": "jasp/jasp_variables.csv",

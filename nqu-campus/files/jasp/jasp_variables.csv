@@ -1,41 +1,41 @@
 檔案,欄名,說明,單位,JASP 類型,有效筆數
-jasp_daily.csv,year,年,,Scale,1419
-jasp_daily.csv,year_f,年（分組用）,,Nominal,1419
-jasp_daily.csv,month,月,,Scale,1419
-jasp_daily.csv,month_f,月（分組用）,,Nominal,1419
-jasp_daily.csv,quarter,季,,Scale,1419
-jasp_daily.csv,quarter_f,季（分組用）,,Nominal,1419
-jasp_daily.csv,weekday,星期（1=週一…7=週日）,,Nominal,1419
-jasp_daily.csv,weekend,週末（1=週六日）,,Nominal,1419
-jasp_daily.csv,date,日期,,Nominal（日期）,1419
-jasp_daily.csv,kwh_tot,全校總電錶 每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,1295
-jasp_daily.csv,kwh_gen_f,綜合大樓前棟 每日用電量,kWh,Scale,1174
-jasp_daily.csv,kwh_gen_b,綜合大樓後棟 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_outdoor,戶外用電 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_lib,圖資大樓 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_sci,理工大樓 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_multi,多功能大樓 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_dorm,宿舍區 每日用電量,kWh,Scale,1295
-jasp_daily.csv,kwh_round,圓樓 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_round_ats,圓樓ATS 每日用電量,kWh,Scale,834
-jasp_daily.csv,kwh_stu1,學生一舍 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_stu2_380,學生二舍380V 每日用電量,kWh,Scale,632
-jasp_daily.csv,kwh_stu2_220,學生二舍220V 每日用電量,kWh,Scale,789
-jasp_daily.csv,kwh_stu2_ats,學生二舍ATS 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_sch1,學人一舍 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_sch1_ats,學人一舍ATS 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_sch2,學人二舍 每日用電量,kWh,Scale,835
-jasp_daily.csv,kwh_sch2_ats,學人二舍ATS 每日用電量,kWh,Scale,833
-jasp_daily.csv,kwh_heatpump,熱泵系統 每日用電量,kWh,Scale,833
-jasp_daily.csv,kwh_heater,電熱水器 每日用電量,kWh,Scale,833
-jasp_daily.csv,kwh_energy_sum,能源通訊系統 12 組電錶合計（至少 6 組有值）,kWh,Scale,835
-jasp_daily.csv,w_round,圓樓 每日用水量,m³,Scale,748
-jasp_daily.csv,w_sch2,學人二舍 每日用水量,m³,Scale,791
-jasp_daily.csv,w_lib,圖資大樓 每日用水量,m³,Scale,781
-jasp_daily.csv,w_sch1b,學人一舍B 每日用水量,m³,Scale,808
-jasp_daily.csv,w_sch1c,學人一舍C 每日用水量,m³,Scale,854
-jasp_daily.csv,w_multi,多功能大樓 每日用水量,m³,Scale,790
-jasp_daily.csv,w_sum,6 處水錶合計（至少 4 處有值）,m³,Scale,796
+jasp_daily.csv,year,年,,Scale,1420
+jasp_daily.csv,year_f,年（分組用）,,Nominal,1420
+jasp_daily.csv,month,月,,Scale,1420
+jasp_daily.csv,month_f,月（分組用）,,Nominal,1420
+jasp_daily.csv,quarter,季,,Scale,1420
+jasp_daily.csv,quarter_f,季（分組用）,,Nominal,1420
+jasp_daily.csv,weekday,星期（1=週一…7=週日）,,Nominal,1420
+jasp_daily.csv,weekend,週末（1=週六日）,,Nominal,1420
+jasp_daily.csv,date,日期,,Nominal（日期）,1420
+jasp_daily.csv,kwh_tot,全校總電錶 每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,1296
+jasp_daily.csv,kwh_gen_f,綜合大樓前棟 每日用電量,kWh,Scale,1175
+jasp_daily.csv,kwh_gen_b,綜合大樓後棟 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_outdoor,戶外用電 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_lib,圖資大樓 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_sci,理工大樓 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_multi,多功能大樓 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_dorm,宿舍區 每日用電量,kWh,Scale,1296
+jasp_daily.csv,kwh_round,圓樓 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_round_ats,圓樓ATS 每日用電量,kWh,Scale,835
+jasp_daily.csv,kwh_stu1,學生一舍 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_stu2_380,學生二舍380V 每日用電量,kWh,Scale,633
+jasp_daily.csv,kwh_stu2_220,學生二舍220V 每日用電量,kWh,Scale,790
+jasp_daily.csv,kwh_stu2_ats,學生二舍ATS 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_sch1,學人一舍 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_sch1_ats,學人一舍ATS 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_sch2,學人二舍 每日用電量,kWh,Scale,836
+jasp_daily.csv,kwh_sch2_ats,學人二舍ATS 每日用電量,kWh,Scale,834
+jasp_daily.csv,kwh_heatpump,熱泵系統 每日用電量,kWh,Scale,834
+jasp_daily.csv,kwh_heater,電熱水器 每日用電量,kWh,Scale,834
+jasp_daily.csv,kwh_energy_sum,能源通訊系統 12 組電錶合計（至少 6 組有值）,kWh,Scale,836
+jasp_daily.csv,w_round,圓樓 每日用水量,m³,Scale,749
+jasp_daily.csv,w_sch2,學人二舍 每日用水量,m³,Scale,792
+jasp_daily.csv,w_lib,圖資大樓 每日用水量,m³,Scale,782
+jasp_daily.csv,w_sch1b,學人一舍B 每日用水量,m³,Scale,809
+jasp_daily.csv,w_sch1c,學人一舍C 每日用水量,m³,Scale,855
+jasp_daily.csv,w_multi,多功能大樓 每日用水量,m³,Scale,791
+jasp_daily.csv,w_sum,6 處水錶合計（至少 4 處有值）,m³,Scale,797
 jasp_daily.csv,temp_mean,戶外溫度 日平均,°C,Scale,512
 jasp_daily.csv,temp_max,戶外溫度 日最高,°C,Scale,512
 jasp_daily.csv,temp_min,戶外溫度 日最低,°C,Scale,512
@@ -44,140 +44,140 @@ jasp_daily.csv,humid_max,戶外相對濕度 日最高,%,Scale,515
 jasp_daily.csv,humid_min,戶外相對濕度 日最低,%,Scale,515
 jasp_daily.csv,pm25_mean,PM2.5 濃度 日平均,μg/m³,Scale,515
 jasp_daily.csv,pm25_max,PM2.5 濃度 日最高,μg/m³,Scale,515
-jasp_daily.csv,lr_stu2,高樓門禁 學生二舍 每日紅燈分鐘,分鐘,Scale,1336
-jasp_daily.csv,lr_gl_f,綜合大樓左側 左前 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gl_m,綜合大樓左側 左中 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gl_b,綜合大樓左側 左後 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gr_f,綜合大樓右側 右前 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gr_m,綜合大樓右側 右中 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gr_b,綜合大樓右側 右後 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_overseas,其他大樓 華僑大樓 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_sci,其他大樓 理工大樓 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_round,其他大樓 圓樓 每日紅燈分鐘,分鐘,Scale,698
-jasp_daily.csv,lr_gym,其他大樓 體育館 每日紅燈分鐘,分鐘,Scale,698
-jasp_hourly.csv,year,年,,Scale,34056
-jasp_hourly.csv,year_f,年（分組用）,,Nominal,34056
-jasp_hourly.csv,month,月,,Scale,34056
-jasp_hourly.csv,month_f,月（分組用）,,Nominal,34056
-jasp_hourly.csv,quarter,季,,Scale,34056
-jasp_hourly.csv,quarter_f,季（分組用）,,Nominal,34056
-jasp_hourly.csv,weekday,星期（1=週一…7=週日）,,Nominal,34056
-jasp_hourly.csv,weekend,週末（1=週六日）,,Nominal,34056
-jasp_hourly.csv,datetime,日期時間（台北時間，小時起點）,,Nominal（日期時間）,34056
-jasp_hourly.csv,date,日期,,Nominal（日期）,34056
-jasp_hourly.csv,hour,小時（0–23）,,Scale,34056
-jasp_hourly.csv,hour_f,小時（分組用）,,Nominal,34056
-jasp_hourly.csv,kw_tot,全校總電錶 每小時平均功率（2023 年總電錶數值規模約為 2024 年後的 1/40）,kW,Scale,31584
-jasp_hourly.csv,kw_gen_f,綜合大樓前棟 每小時平均功率,kW,Scale,28674
-jasp_hourly.csv,kw_gen_b,綜合大樓後棟 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_outdoor,戶外用電 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_lib,圖資大樓 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_sci,理工大樓 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_multi,多功能大樓 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_dorm,宿舍區 每小時平均功率,kW,Scale,31584
-jasp_hourly.csv,kw_round,圓樓 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_round_ats,圓樓ATS 每小時平均功率,kW,Scale,20846
-jasp_hourly.csv,kw_stu1,學生一舍 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_stu2_380,學生二舍380V 每小時平均功率,kW,Scale,15985
-jasp_hourly.csv,kw_stu2_220,學生二舍220V 每小時平均功率,kW,Scale,19665
-jasp_hourly.csv,kw_stu2_ats,學生二舍ATS 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_sch1,學人一舍 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_sch1_ats,學人一舍ATS 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_sch2,學人二舍 每小時平均功率,kW,Scale,20847
-jasp_hourly.csv,kw_sch2_ats,學人二舍ATS 每小時平均功率,kW,Scale,20823
-jasp_hourly.csv,kw_heatpump,熱泵系統 每小時平均功率,kW,Scale,20823
-jasp_hourly.csv,kw_heater,電熱水器 每小時平均功率,kW,Scale,20823
-jasp_hourly.csv,w_round,圓樓 每小時用水量,m³,Scale,18323
-jasp_hourly.csv,w_sch2,學人二舍 每小時用水量,m³,Scale,19222
-jasp_hourly.csv,w_lib,圖資大樓 每小時用水量,m³,Scale,19224
-jasp_hourly.csv,w_sch1b,學人一舍B 每小時用水量,m³,Scale,19509
-jasp_hourly.csv,w_sch1c,學人一舍C 每小時用水量,m³,Scale,20657
-jasp_hourly.csv,w_multi,多功能大樓 每小時用水量,m³,Scale,19236
+jasp_daily.csv,lr_stu2,高樓門禁 學生二舍 每日紅燈分鐘,分鐘,Scale,1337
+jasp_daily.csv,lr_gl_f,綜合大樓左側 左前 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gl_m,綜合大樓左側 左中 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gl_b,綜合大樓左側 左後 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gr_f,綜合大樓右側 右前 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gr_m,綜合大樓右側 右中 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gr_b,綜合大樓右側 右後 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_overseas,其他大樓 華僑大樓 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_sci,其他大樓 理工大樓 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_round,其他大樓 圓樓 每日紅燈分鐘,分鐘,Scale,699
+jasp_daily.csv,lr_gym,其他大樓 體育館 每日紅燈分鐘,分鐘,Scale,699
+jasp_hourly.csv,year,年,,Scale,34080
+jasp_hourly.csv,year_f,年（分組用）,,Nominal,34080
+jasp_hourly.csv,month,月,,Scale,34080
+jasp_hourly.csv,month_f,月（分組用）,,Nominal,34080
+jasp_hourly.csv,quarter,季,,Scale,34080
+jasp_hourly.csv,quarter_f,季（分組用）,,Nominal,34080
+jasp_hourly.csv,weekday,星期（1=週一…7=週日）,,Nominal,34080
+jasp_hourly.csv,weekend,週末（1=週六日）,,Nominal,34080
+jasp_hourly.csv,datetime,日期時間（台北時間，小時起點）,,Nominal（日期時間）,34080
+jasp_hourly.csv,date,日期,,Nominal（日期）,34080
+jasp_hourly.csv,hour,小時（0–23）,,Scale,34080
+jasp_hourly.csv,hour_f,小時（分組用）,,Nominal,34080
+jasp_hourly.csv,kw_tot,全校總電錶 每小時平均功率（2023 年總電錶數值規模約為 2024 年後的 1/40）,kW,Scale,31608
+jasp_hourly.csv,kw_gen_f,綜合大樓前棟 每小時平均功率,kW,Scale,28698
+jasp_hourly.csv,kw_gen_b,綜合大樓後棟 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_outdoor,戶外用電 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_lib,圖資大樓 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_sci,理工大樓 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_multi,多功能大樓 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_dorm,宿舍區 每小時平均功率,kW,Scale,31608
+jasp_hourly.csv,kw_round,圓樓 每小時平均功率,kW,Scale,20870
+jasp_hourly.csv,kw_round_ats,圓樓ATS 每小時平均功率,kW,Scale,20870
+jasp_hourly.csv,kw_stu1,學生一舍 每小時平均功率,kW,Scale,20871
+jasp_hourly.csv,kw_stu2_380,學生二舍380V 每小時平均功率,kW,Scale,16009
+jasp_hourly.csv,kw_stu2_220,學生二舍220V 每小時平均功率,kW,Scale,19688
+jasp_hourly.csv,kw_stu2_ats,學生二舍ATS 每小時平均功率,kW,Scale,20871
+jasp_hourly.csv,kw_sch1,學人一舍 每小時平均功率,kW,Scale,20871
+jasp_hourly.csv,kw_sch1_ats,學人一舍ATS 每小時平均功率,kW,Scale,20871
+jasp_hourly.csv,kw_sch2,學人二舍 每小時平均功率,kW,Scale,20871
+jasp_hourly.csv,kw_sch2_ats,學人二舍ATS 每小時平均功率,kW,Scale,20847
+jasp_hourly.csv,kw_heatpump,熱泵系統 每小時平均功率,kW,Scale,20847
+jasp_hourly.csv,kw_heater,電熱水器 每小時平均功率,kW,Scale,20847
+jasp_hourly.csv,w_round,圓樓 每小時用水量,m³,Scale,18347
+jasp_hourly.csv,w_sch2,學人二舍 每小時用水量,m³,Scale,19246
+jasp_hourly.csv,w_lib,圖資大樓 每小時用水量,m³,Scale,19248
+jasp_hourly.csv,w_sch1b,學人一舍B 每小時用水量,m³,Scale,19533
+jasp_hourly.csv,w_sch1c,學人一舍C 每小時用水量,m³,Scale,20681
+jasp_hourly.csv,w_multi,多功能大樓 每小時用水量,m³,Scale,19260
 jasp_hourly.csv,temp,戶外溫度 每小時平均,°C,Scale,12494
 jasp_hourly.csv,humid,戶外相對濕度 每小時平均,%,Scale,12545
 jasp_hourly.csv,pm25,PM2.5 濃度 每小時平均,μg/m³,Scale,12541
-jasp_hourly.csv,ls_stu2,高樓門禁 學生二舍 該小時主要燈號,,Nominal,31619
-jasp_hourly.csv,lr_stu2,高樓門禁 學生二舍 該小時紅燈分鐘,分鐘,Scale,31619
-jasp_hourly.csv,ls_gl_f,綜合大樓左側 左前 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gl_f,綜合大樓左側 左前 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gl_m,綜合大樓左側 左中 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gl_m,綜合大樓左側 左中 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gl_b,綜合大樓左側 左後 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gl_b,綜合大樓左側 左後 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gr_f,綜合大樓右側 右前 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gr_f,綜合大樓右側 右前 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gr_m,綜合大樓右側 右中 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gr_m,綜合大樓右側 右中 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gr_b,綜合大樓右側 右後 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gr_b,綜合大樓右側 右後 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_overseas,其他大樓 華僑大樓 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_overseas,其他大樓 華僑大樓 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_sci,其他大樓 理工大樓 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_sci,其他大樓 理工大樓 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_round,其他大樓 圓樓 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_round,其他大樓 圓樓 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_hourly.csv,ls_gym,其他大樓 體育館 該小時主要燈號,,Nominal,16659
-jasp_hourly.csv,lr_gym,其他大樓 體育館 該小時紅燈分鐘,分鐘,Scale,16659
-jasp_daily_power_long.csv,year,年,,Scale,20003
-jasp_daily_power_long.csv,year_f,年（分組用）,,Nominal,20003
-jasp_daily_power_long.csv,month,月,,Scale,20003
-jasp_daily_power_long.csv,month_f,月（分組用）,,Nominal,20003
-jasp_daily_power_long.csv,quarter,季,,Scale,20003
-jasp_daily_power_long.csv,quarter_f,季（分組用）,,Nominal,20003
-jasp_daily_power_long.csv,weekday,星期（1=週一…7=週日）,,Nominal,20003
-jasp_daily_power_long.csv,weekend,週末（1=週六日）,,Nominal,20003
-jasp_daily_power_long.csv,date,日期,,Nominal（日期）,20003
-jasp_daily_power_long.csv,system,所屬系統,,Nominal,20003
-jasp_daily_power_long.csv,circuit,用電迴路,,Nominal,20003
-jasp_daily_power_long.csv,kwh,每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,20003
-jasp_daily_water_long.csv,year,年,,Scale,4772
-jasp_daily_water_long.csv,year_f,年（分組用）,,Nominal,4772
-jasp_daily_water_long.csv,month,月,,Scale,4772
-jasp_daily_water_long.csv,month_f,月（分組用）,,Nominal,4772
-jasp_daily_water_long.csv,quarter,季,,Scale,4772
-jasp_daily_water_long.csv,quarter_f,季（分組用）,,Nominal,4772
-jasp_daily_water_long.csv,weekday,星期（1=週一…7=週日）,,Nominal,4772
-jasp_daily_water_long.csv,weekend,週末（1=週六日）,,Nominal,4772
-jasp_daily_water_long.csv,date,日期,,Nominal（日期）,4772
-jasp_daily_water_long.csv,meter,水錶,,Nominal,4772
-jasp_daily_water_long.csv,m3,每日用水量,m³,Scale,4772
-jasp_daily_2024plus.csv,year,年,,Scale,1054
-jasp_daily_2024plus.csv,year_f,年（分組用）,,Nominal,1054
-jasp_daily_2024plus.csv,month,月,,Scale,1054
-jasp_daily_2024plus.csv,month_f,月（分組用）,,Nominal,1054
-jasp_daily_2024plus.csv,quarter,季,,Scale,1054
-jasp_daily_2024plus.csv,quarter_f,季（分組用）,,Nominal,1054
-jasp_daily_2024plus.csv,weekday,星期（1=週一…7=週日）,,Nominal,1054
-jasp_daily_2024plus.csv,weekend,週末（1=週六日）,,Nominal,1054
-jasp_daily_2024plus.csv,date,日期,,Nominal（日期）,1054
-jasp_daily_2024plus.csv,kwh_tot,全校總電錶 每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_gen_f,綜合大樓前棟 每日用電量,kWh,Scale,839
-jasp_daily_2024plus.csv,kwh_gen_b,綜合大樓後棟 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_outdoor,戶外用電 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_lib,圖資大樓 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_sci,理工大樓 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_multi,多功能大樓 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_dorm,宿舍區 每日用電量,kWh,Scale,960
-jasp_daily_2024plus.csv,kwh_round,圓樓 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_round_ats,圓樓ATS 每日用電量,kWh,Scale,767
-jasp_daily_2024plus.csv,kwh_stu1,學生一舍 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_stu2_380,學生二舍380V 每日用電量,kWh,Scale,565
-jasp_daily_2024plus.csv,kwh_stu2_220,學生二舍220V 每日用電量,kWh,Scale,724
-jasp_daily_2024plus.csv,kwh_stu2_ats,學生二舍ATS 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_sch1,學人一舍 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_sch1_ats,學人一舍ATS 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_sch2,學人二舍 每日用電量,kWh,Scale,768
-jasp_daily_2024plus.csv,kwh_sch2_ats,學人二舍ATS 每日用電量,kWh,Scale,766
-jasp_daily_2024plus.csv,kwh_heatpump,熱泵系統 每日用電量,kWh,Scale,766
-jasp_daily_2024plus.csv,kwh_heater,電熱水器 每日用電量,kWh,Scale,766
-jasp_daily_2024plus.csv,kwh_energy_sum,能源通訊系統 12 組電錶合計（至少 6 組有值）,kWh,Scale,768
-jasp_daily_2024plus.csv,w_round,圓樓 每日用水量,m³,Scale,680
-jasp_daily_2024plus.csv,w_sch2,學人二舍 每日用水量,m³,Scale,718
-jasp_daily_2024plus.csv,w_lib,圖資大樓 每日用水量,m³,Scale,708
-jasp_daily_2024plus.csv,w_sch1b,學人一舍B 每日用水量,m³,Scale,784
-jasp_daily_2024plus.csv,w_sch1c,學人一舍C 每日用水量,m³,Scale,781
-jasp_daily_2024plus.csv,w_multi,多功能大樓 每日用水量,m³,Scale,717
-jasp_daily_2024plus.csv,w_sum,6 處水錶合計（至少 4 處有值）,m³,Scale,723
+jasp_hourly.csv,ls_stu2,高樓門禁 學生二舍 該小時主要燈號,,Nominal,31643
+jasp_hourly.csv,lr_stu2,高樓門禁 學生二舍 該小時紅燈分鐘,分鐘,Scale,31643
+jasp_hourly.csv,ls_gl_f,綜合大樓左側 左前 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gl_f,綜合大樓左側 左前 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gl_m,綜合大樓左側 左中 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gl_m,綜合大樓左側 左中 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gl_b,綜合大樓左側 左後 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gl_b,綜合大樓左側 左後 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gr_f,綜合大樓右側 右前 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gr_f,綜合大樓右側 右前 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gr_m,綜合大樓右側 右中 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gr_m,綜合大樓右側 右中 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gr_b,綜合大樓右側 右後 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gr_b,綜合大樓右側 右後 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_overseas,其他大樓 華僑大樓 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_overseas,其他大樓 華僑大樓 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_sci,其他大樓 理工大樓 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_sci,其他大樓 理工大樓 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_round,其他大樓 圓樓 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_round,其他大樓 圓樓 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_hourly.csv,ls_gym,其他大樓 體育館 該小時主要燈號,,Nominal,16683
+jasp_hourly.csv,lr_gym,其他大樓 體育館 該小時紅燈分鐘,分鐘,Scale,16683
+jasp_daily_power_long.csv,year,年,,Scale,20023
+jasp_daily_power_long.csv,year_f,年（分組用）,,Nominal,20023
+jasp_daily_power_long.csv,month,月,,Scale,20023
+jasp_daily_power_long.csv,month_f,月（分組用）,,Nominal,20023
+jasp_daily_power_long.csv,quarter,季,,Scale,20023
+jasp_daily_power_long.csv,quarter_f,季（分組用）,,Nominal,20023
+jasp_daily_power_long.csv,weekday,星期（1=週一…7=週日）,,Nominal,20023
+jasp_daily_power_long.csv,weekend,週末（1=週六日）,,Nominal,20023
+jasp_daily_power_long.csv,date,日期,,Nominal（日期）,20023
+jasp_daily_power_long.csv,system,所屬系統,,Nominal,20023
+jasp_daily_power_long.csv,circuit,用電迴路,,Nominal,20023
+jasp_daily_power_long.csv,kwh,每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,20023
+jasp_daily_water_long.csv,year,年,,Scale,4778
+jasp_daily_water_long.csv,year_f,年（分組用）,,Nominal,4778
+jasp_daily_water_long.csv,month,月,,Scale,4778
+jasp_daily_water_long.csv,month_f,月（分組用）,,Nominal,4778
+jasp_daily_water_long.csv,quarter,季,,Scale,4778
+jasp_daily_water_long.csv,quarter_f,季（分組用）,,Nominal,4778
+jasp_daily_water_long.csv,weekday,星期（1=週一…7=週日）,,Nominal,4778
+jasp_daily_water_long.csv,weekend,週末（1=週六日）,,Nominal,4778
+jasp_daily_water_long.csv,date,日期,,Nominal（日期）,4778
+jasp_daily_water_long.csv,meter,水錶,,Nominal,4778
+jasp_daily_water_long.csv,m3,每日用水量,m³,Scale,4778
+jasp_daily_2024plus.csv,year,年,,Scale,1055
+jasp_daily_2024plus.csv,year_f,年（分組用）,,Nominal,1055
+jasp_daily_2024plus.csv,month,月,,Scale,1055
+jasp_daily_2024plus.csv,month_f,月（分組用）,,Nominal,1055
+jasp_daily_2024plus.csv,quarter,季,,Scale,1055
+jasp_daily_2024plus.csv,quarter_f,季（分組用）,,Nominal,1055
+jasp_daily_2024plus.csv,weekday,星期（1=週一…7=週日）,,Nominal,1055
+jasp_daily_2024plus.csv,weekend,週末（1=週六日）,,Nominal,1055
+jasp_daily_2024plus.csv,date,日期,,Nominal（日期）,1055
+jasp_daily_2024plus.csv,kwh_tot,全校總電錶 每日用電量（2023 年總電錶數值規模約為 2024 年後的 1/40）,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_gen_f,綜合大樓前棟 每日用電量,kWh,Scale,840
+jasp_daily_2024plus.csv,kwh_gen_b,綜合大樓後棟 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_outdoor,戶外用電 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_lib,圖資大樓 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_sci,理工大樓 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_multi,多功能大樓 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_dorm,宿舍區 每日用電量,kWh,Scale,961
+jasp_daily_2024plus.csv,kwh_round,圓樓 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_round_ats,圓樓ATS 每日用電量,kWh,Scale,768
+jasp_daily_2024plus.csv,kwh_stu1,學生一舍 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_stu2_380,學生二舍380V 每日用電量,kWh,Scale,566
+jasp_daily_2024plus.csv,kwh_stu2_220,學生二舍220V 每日用電量,kWh,Scale,725
+jasp_daily_2024plus.csv,kwh_stu2_ats,學生二舍ATS 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_sch1,學人一舍 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_sch1_ats,學人一舍ATS 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_sch2,學人二舍 每日用電量,kWh,Scale,769
+jasp_daily_2024plus.csv,kwh_sch2_ats,學人二舍ATS 每日用電量,kWh,Scale,767
+jasp_daily_2024plus.csv,kwh_heatpump,熱泵系統 每日用電量,kWh,Scale,767
+jasp_daily_2024plus.csv,kwh_heater,電熱水器 每日用電量,kWh,Scale,767
+jasp_daily_2024plus.csv,kwh_energy_sum,能源通訊系統 12 組電錶合計（至少 6 組有值）,kWh,Scale,769
+jasp_daily_2024plus.csv,w_round,圓樓 每日用水量,m³,Scale,681
+jasp_daily_2024plus.csv,w_sch2,學人二舍 每日用水量,m³,Scale,719
+jasp_daily_2024plus.csv,w_lib,圖資大樓 每日用水量,m³,Scale,709
+jasp_daily_2024plus.csv,w_sch1b,學人一舍B 每日用水量,m³,Scale,785
+jasp_daily_2024plus.csv,w_sch1c,學人一舍C 每日用水量,m³,Scale,782
+jasp_daily_2024plus.csv,w_multi,多功能大樓 每日用水量,m³,Scale,718
+jasp_daily_2024plus.csv,w_sum,6 處水錶合計（至少 4 處有值）,m³,Scale,724
 jasp_daily_2024plus.csv,temp_mean,戶外溫度 日平均,°C,Scale,442
 jasp_daily_2024plus.csv,temp_max,戶外溫度 日最高,°C,Scale,442
 jasp_daily_2024plus.csv,temp_min,戶外溫度 日最低,°C,Scale,442
@@ -186,14 +186,14 @@ jasp_daily_2024plus.csv,humid_max,戶外相對濕度 日最高,%,Scale,445
 jasp_daily_2024plus.csv,humid_min,戶外相對濕度 日最低,%,Scale,445
 jasp_daily_2024plus.csv,pm25_mean,PM2.5 濃度 日平均,μg/m³,Scale,445
 jasp_daily_2024plus.csv,pm25_max,PM2.5 濃度 日最高,μg/m³,Scale,445
-jasp_daily_2024plus.csv,lr_stu2,高樓門禁 學生二舍 每日紅燈分鐘,分鐘,Scale,978
-jasp_daily_2024plus.csv,lr_gl_f,綜合大樓左側 左前 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gl_m,綜合大樓左側 左中 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gl_b,綜合大樓左側 左後 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gr_f,綜合大樓右側 右前 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gr_m,綜合大樓右側 右中 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gr_b,綜合大樓右側 右後 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_overseas,其他大樓 華僑大樓 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_sci,其他大樓 理工大樓 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_round,其他大樓 圓樓 每日紅燈分鐘,分鐘,Scale,673
-jasp_daily_2024plus.csv,lr_gym,其他大樓 體育館 每日紅燈分鐘,分鐘,Scale,673
+jasp_daily_2024plus.csv,lr_stu2,高樓門禁 學生二舍 每日紅燈分鐘,分鐘,Scale,979
+jasp_daily_2024plus.csv,lr_gl_f,綜合大樓左側 左前 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gl_m,綜合大樓左側 左中 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gl_b,綜合大樓左側 左後 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gr_f,綜合大樓右側 右前 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gr_m,綜合大樓右側 右中 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gr_b,綜合大樓右側 右後 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_overseas,其他大樓 華僑大樓 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_sci,其他大樓 理工大樓 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_round,其他大樓 圓樓 每日紅燈分鐘,分鐘,Scale,674
+jasp_daily_2024plus.csv,lr_gym,其他大樓 體育館 每日紅燈分鐘,分鐘,Scale,674
